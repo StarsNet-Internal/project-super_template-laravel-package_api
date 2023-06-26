@@ -1,5 +1,5 @@
 {
-  "name": "starsnet/project-package",
+  "name": "starsnet/project",
   "minimum-stability": "stable",
   "description": "External APIs and functionalities for Laravel-based Super E-commerce Project Template",
   "type": "project",
@@ -7,7 +7,7 @@
   "require": {},
   "autoload": {
     "psr-4": {
-      "StarsNet\\ProjectPackage\\": "src/"
+      "StarsNet\\Project\\": "src/"
     }
   }
 }
