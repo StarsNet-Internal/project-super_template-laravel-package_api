@@ -10,7 +10,7 @@ class testingController extends Controller
     public function healthCheck()
     {
         return response()->json([
-            'message' => 'package healthy'
+            'message' => 'branch package healthy'
         ], 200);
     }
 }
