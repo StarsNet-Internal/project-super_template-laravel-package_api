@@ -10,5 +10,10 @@
       "email": "haystack312@gmail.com"
     }
   ],
-  "require": {}
+  "require": {},
+  "autoload": {
+    "psr-4": {
+      "StarsNet\\Project\\": "src/"
+    }
+  }
 }
