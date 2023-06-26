@@ -1,0 +1,14 @@
+{
+  "name": "starsnet/project",
+  "minimum-stability": "dev",
+  "description": "External APIs and functionalities for Laravel-based Super E-commerce Project Template",
+  "type": "library",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "fai",
+      "email": "haystack312@gmail.com"
+    }
+  ],
+  "require": {}
+}
