@@ -9,7 +9,7 @@ class TestingController extends Controller
     public function healthCheck()
     {
         return response()->json([
-            'message' => 'course branch tag v1.0.0 healthy'
+            'message' => 'testing second course branch healthy'
         ], 200);
     }
 }
