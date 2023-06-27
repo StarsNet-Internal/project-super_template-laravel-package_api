@@ -3,7 +3,8 @@
 // Default Imports
 use Illuminate\Support\Facades\Route;
 
-use StarsNet\Project\OrderController;
+use StarsNet\Project\App\Http\Controllers\Customer\TestingController;
+use StarsNet\Project\App\Http\Controllers\Customer\OrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,6 +16,21 @@ use StarsNet\Project\OrderController;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+/*
+|--------------------------------------------------------------------------
+| Development Uses
+|--------------------------------------------------------------------------
+*/
+
+Route::group(
+    ['prefix' => 'tests'],
+    function () {
+        $defaultController = TestingController::class;
+
+        Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
 
 /*
 |--------------------------------------------------------------------------

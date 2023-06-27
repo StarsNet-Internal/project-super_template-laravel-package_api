@@ -3,7 +3,7 @@
 // Default Imports
 use Illuminate\Support\Facades\Route;
 
-use StarsNet\Project\TestingController;
+use StarsNet\Project\App\Http\Controllers\Admin\TestingController;
 
 /*
 |--------------------------------------------------------------------------

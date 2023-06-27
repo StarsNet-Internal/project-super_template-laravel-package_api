@@ -1,6 +1,6 @@
 <?php
 
-namespace StarsNet\Project\App\Http\Controllers\Admin;
+namespace StarsNet\Project\App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 
 class ProjectServiceProvider extends ServiceProvider
 {
-    protected $namespace = 'StarsNet\Project';
+    protected $namespace = 'Starsnet\Project\App\Http\Controllers';
 
     protected $routePrefix = 'project';
 

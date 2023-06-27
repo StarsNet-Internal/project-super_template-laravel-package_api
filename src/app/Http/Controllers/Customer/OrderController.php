@@ -1,6 +1,6 @@
 <?php
 
-namespace StarsNet\Project;
+namespace StarsNet\Project\App\Http\Controllers\Customer;
 
 use App\Constants\Model\CheckoutType;
 use App\Constants\Model\ShipmentDeliveryStatus;
