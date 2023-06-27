@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project;
+namespace StarsNet\Project;
 
 use Illuminate\Support\ServiceProvider;
 
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 
 class ProjectServiceProvider extends ServiceProvider
 {
-    protected $namespace = 'Starsnet\Project';
+    protected $namespace = 'StarsNet\Project';
 
     protected $routePrefix = 'project';
 
