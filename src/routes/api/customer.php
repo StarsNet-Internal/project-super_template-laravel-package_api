@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\App\Http\Controllers\Customer\TestingController;
+use StarsNet\Project\App\Http\Controllers\Customer\ProductManagementController;
 
 /*
 |--------------------------------------------------------------------------
