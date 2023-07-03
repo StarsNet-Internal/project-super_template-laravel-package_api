@@ -76,6 +76,7 @@ class Deal extends Eloquent
         // 'discount' => null,
         'images' => [],
         'remarks' => null,
+        'max_qty' => 0,
         'commission' => 0,
         'status' => Status::DRAFT,
 
