@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Http\Controllers\Admin;
+namespace StarsNet\Project\App\Http\Controllers\Admin;
 
 use App\Constants\Model\CheckoutApprovalStatus;
 use App\Constants\Model\DiscountTemplateType;
@@ -18,7 +18,7 @@ use App\Models\OrderStatus;
 use App\Models\ProductVariant;
 use App\Models\RefundRequest;
 use App\Models\Store;
-use Starsnet\Project\App\Models\DealGroupOrderCartItem;
+use StarsNet\Project\App\Models\DealGroupOrderCartItem;
 use App\Traits\Controller\ReviewTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;

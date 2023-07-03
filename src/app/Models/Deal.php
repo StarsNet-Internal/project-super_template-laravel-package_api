@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Models;
+namespace StarsNet\Project\App\Models;
 
 // Constants
 use App\Constants\CollectionName;

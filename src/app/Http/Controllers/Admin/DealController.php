@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Http\Controllers\Admin;
+namespace StarsNet\Project\App\Http\Controllers\Admin;
 
 use App\Constants\Model\ProductVariantDiscountType;
 use App\Constants\Model\ReplyStatus;
@@ -15,9 +15,9 @@ use App\Models\ProductReview;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantDiscount;
 use App\Models\ProductVariantOption;
-use Starsnet\Project\App\Models\Deal;
-use Starsnet\Project\App\Models\DealCategory;
-use Starsnet\Project\App\Models\Tier;
+use StarsNet\Project\App\Models\Deal;
+use StarsNet\Project\App\Models\DealCategory;
+use StarsNet\Project\App\Models\Tier;
 use App\Traits\Controller\Cacheable;
 use App\Traits\Controller\ProductTrait;
 use App\Traits\Controller\ReviewTrait;
@@ -162,7 +162,7 @@ class DealController extends Controller
         ]), [
             'id' => [
                 'required',
-                'exists:Starsnet\Project\App\Models\Deal,_id'
+                'exists:StarsNet\Project\App\Models\Deal,_id'
             ],
             'product_id' => [
                 'exists:App\Models\Product,_id',

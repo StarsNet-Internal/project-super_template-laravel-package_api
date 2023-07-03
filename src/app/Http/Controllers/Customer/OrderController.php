@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Http\Controllers\Customer;
+namespace StarsNet\Project\App\Http\Controllers\Customer;
 
 use App\Constants\Model\CheckoutType;
 use App\Constants\Model\ShipmentDeliveryStatus;
@@ -13,7 +13,7 @@ use App\Models\Checkout;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\RefundRequest;
-use Starsnet\Project\App\Models\DealGroupOrderCartItem;
+use StarsNet\Project\App\Models\DealGroupOrderCartItem;
 use App\Traits\Controller\CheckoutTrait;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Http\Request;

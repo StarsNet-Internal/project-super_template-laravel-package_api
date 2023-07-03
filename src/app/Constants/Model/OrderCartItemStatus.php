@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Constants\Model;
+namespace StarsNet\Project\App\Constants\Model;
 
 class OrderCartItemStatus
 {

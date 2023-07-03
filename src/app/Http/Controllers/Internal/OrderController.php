@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Http\Controllers\Internal;
+namespace StarsNet\Project\App\Http\Controllers\Internal;
 
 use App\Constants\Model\CheckoutType;
 use App\Constants\Model\OrderDeliveryMethod;
@@ -17,15 +17,15 @@ use App\Models\MembershipPoint;
 use App\Models\OrderCartItem;
 use App\Models\ProductVariant;
 use App\Models\Store;
-use Starsnet\Project\App\Constants\Model\OrderCartItemStatus;
-use Starsnet\Project\App\Models\Deal;
-use Starsnet\Project\App\Models\DealGroup;
-use Starsnet\Project\App\Models\DealGroupOrderCartItem;
-use Starsnet\Project\App\Models\RefundCredit;
+use StarsNet\Project\App\Constants\Model\OrderCartItemStatus;
+use StarsNet\Project\App\Models\Deal;
+use StarsNet\Project\App\Models\DealGroup;
+use StarsNet\Project\App\Models\DealGroupOrderCartItem;
+use StarsNet\Project\App\Models\RefundCredit;
 use App\Traits\Controller\CheckoutTrait;
 use App\Traits\Controller\ShoppingCartTrait;
 use App\Traits\Controller\WarehouseInventoryTrait;
-use Starsnet\Project\App\Traits\Controller\ProjectShoppingCartTrait;
+use StarsNet\Project\App\Traits\Controller\ProjectShoppingCartTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;

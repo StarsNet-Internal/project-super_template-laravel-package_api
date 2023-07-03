@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Http\Controllers\Customer;
+namespace StarsNet\Project\App\Http\Controllers\Customer;
 
 use App\Constants\Model\CheckoutType;
 use App\Constants\Model\OrderDeliveryMethod;
@@ -14,12 +14,12 @@ use App\Models\Checkout;
 use App\Models\DiscountCode;
 use App\Models\ProductVariant;
 use App\Models\Store;
-use Starsnet\Project\App\Models\DealGroupShoppingCartItem;
-use Starsnet\Project\App\Models\DealGroupOrderCartItem;
+use StarsNet\Project\App\Models\DealGroupShoppingCartItem;
+use StarsNet\Project\App\Models\DealGroupOrderCartItem;
 use App\Traits\Controller\CheckoutTrait;
 use App\Traits\Controller\ShoppingCartTrait;
 use App\Traits\Controller\WarehouseInventoryTrait;
-use Starsnet\Project\App\Traits\Controller\ProjectShoppingCartTrait;
+use StarsNet\Project\App\Traits\Controller\ProjectShoppingCartTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;

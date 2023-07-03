@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Http\Controllers\Customer;
+namespace StarsNet\Project\App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
@@ -8,8 +8,8 @@ use App\Traits\Controller\AuthenticationTrait;
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Customer\ProfileController as CustomerProfileController;
-use Starsnet\Project\App\Models\RefundCredit;
-use Starsnet\Project\App\Models\RefundCreditHistory;
+use StarsNet\Project\App\Models\RefundCredit;
+use StarsNet\Project\App\Models\RefundCreditHistory;
 
 class ProfileController extends CustomerProfileController
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Models;
+namespace StarsNet\Project\App\Models;
 
 // Constants
 use App\Constants\CollectionName;
@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 use Jenssegers\Mongodb\Relations\EmbedsMany;
 use Jenssegers\Mongodb\Relations\EmbedsOne;
-use Starsnet\Project\App\Constants\Model\OrderCartItemStatus;
+use StarsNet\Project\App\Constants\Model\OrderCartItemStatus;
 
 class DealGroupOrderCartItem extends Eloquent
 {

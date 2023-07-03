@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Http\Controllers\Customer;
+namespace StarsNet\Project\App\Http\Controllers\Customer;
 
 use App\Constants\Model\ProductVariantDiscountType;
 use App\Constants\Model\Status;
@@ -12,8 +12,8 @@ use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 use App\Models\RefundRequest;
 use App\Models\Store;
-use Starsnet\Project\App\Models\Deal;
-use Starsnet\Project\App\Models\Link;
+use StarsNet\Project\App\Models\Deal;
+use StarsNet\Project\App\Models\Link;
 use App\Traits\Controller\AuthenticationTrait;
 use App\Traits\Controller\Cacheable;
 use App\Traits\Controller\DummyDataTrait;

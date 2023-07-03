@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Http\Controllers\Customer;
+namespace StarsNet\Project\App\Http\Controllers\Customer;
 
 use App\Constants\Model\OrderDeliveryMethod;
 use App\Http\Controllers\Controller;
@@ -10,12 +10,12 @@ use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 use App\Models\ShoppingCartItem;
 use App\Models\Store;
-use Starsnet\Project\App\Models\DealGroup;
-use Starsnet\Project\App\Models\DealGroupShoppingCartItem;
+use StarsNet\Project\App\Models\DealGroup;
+use StarsNet\Project\App\Models\DealGroupShoppingCartItem;
 use App\Traits\Controller\AuthenticationTrait;
 use App\Traits\Controller\ShoppingCartTrait;
 use App\Traits\Controller\WarehouseInventoryTrait;
-use Starsnet\Project\App\Traits\Controller\ProjectShoppingCartTrait;
+use StarsNet\Project\App\Traits\Controller\ProjectShoppingCartTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 

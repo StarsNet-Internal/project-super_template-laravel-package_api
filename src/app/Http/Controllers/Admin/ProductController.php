@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Http\Controllers\Admin;
+namespace StarsNet\Project\App\Http\Controllers\Admin;
 
 use App\Constants\Model\ProductVariantDiscountType;
 use App\Constants\Model\ReplyStatus;
@@ -15,7 +15,7 @@ use App\Models\ProductReview;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantDiscount;
 use App\Models\ProductVariantOption;
-use Starsnet\Project\App\Models\Deal;
+use StarsNet\Project\App\Models\Deal;
 use App\Traits\Controller\Cacheable;
 use App\Traits\Controller\ProductTrait;
 use App\Traits\Controller\ReviewTrait;

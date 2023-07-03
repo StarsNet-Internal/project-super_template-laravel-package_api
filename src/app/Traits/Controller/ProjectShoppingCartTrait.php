@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Traits\Controller;
+namespace StarsNet\Project\App\Traits\Controller;
 
 // Default
 
@@ -16,9 +16,9 @@ use App\Models\ProductVariant;
 use App\Models\ShoppingCartItem;
 use App\Models\Store;
 use App\Models\WarehouseInventory;
-use Starsnet\Project\App\Models\DealGroup;
-use Starsnet\Project\App\Models\DealGroupShoppingCartItem;
-use Starsnet\Project\App\Models\DealGroupOrderCartItem;
+use StarsNet\Project\App\Models\DealGroup;
+use StarsNet\Project\App\Models\DealGroupShoppingCartItem;
+use StarsNet\Project\App\Models\DealGroupOrderCartItem;
 use App\Traits\Utils\RoundingTrait;
 use App\Traits\Controller\ShoppingCartTrait;
 use Illuminate\Database\Eloquent\Builder;

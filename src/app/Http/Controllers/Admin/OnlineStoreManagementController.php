@@ -1,6 +1,6 @@
 <?php
 
-namespace Starsnet\Project\App\Http\Controllers\Admin;
+namespace StarsNet\Project\App\Http\Controllers\Admin;
 
 use App\Constants\Model\DiscountTemplateType;
 use App\Constants\Model\ReplyStatus;
@@ -15,8 +15,8 @@ use App\Models\Store;
 use App\Traits\StarsNet\TypeSenseSearchEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Starsnet\Project\App\Models\Deal;
-use Starsnet\Project\App\Models\DealCategory;
+use StarsNet\Project\App\Models\Deal;
+use StarsNet\Project\App\Models\DealCategory;
 
 class OnlineStoreManagementController extends Controller
 {
