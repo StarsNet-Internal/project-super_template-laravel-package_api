@@ -17,20 +17,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use StarsNet\Project\App\Models\Deal;
 use StarsNet\Project\App\Models\DealCategory;
+use App\Traits\Controller\StoreDependentTrait;
 
 class OnlineStoreManagementController extends Controller
 {
+    use StoreDependentTrait;
+
     /** @var Store $store */
     protected $store;
 
     public function __construct(Request $request)
     {
-        // Extract attributes from $request
-        $storeID = $request->route('store_id');
-
-        // Assign as properties
-        /** @var Store $store */
-        $this->store = Store::find($storeID);
+        $this->store = $this->getStoreByValue($request->route('store_id'));
     }
 
     public function getAllCategories(Request $request)

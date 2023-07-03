@@ -19,6 +19,7 @@ use App\Traits\Controller\Cacheable;
 use App\Traits\Controller\DummyDataTrait;
 use App\Traits\Controller\ProductTrait;
 use App\Traits\Controller\Sortable;
+use App\Traits\Controller\StoreDependentTrait;
 use App\Traits\Controller\WishlistItemTrait;
 use App\Traits\StarsNet\TypeSenseSearchEngine;
 use Illuminate\Database\Eloquent\Collection;
@@ -31,6 +32,7 @@ class DealManagementController extends Controller
     use AuthenticationTrait,
         ProductTrait,
         Sortable,
+        StoreDependentTrait,
         WishlistItemTrait;
 
     use Cacheable;
@@ -40,12 +42,7 @@ class DealManagementController extends Controller
 
     public function __construct(Request $request)
     {
-        // Extract attributes from $request
-        $storeID = $request->route('store_id');
-
-        // Assign as properties
-        /** @var Store $store */
-        $this->store = Store::find($storeID);
+        $this->store = $this->getStoreByValue($request->route('store_id'));
     }
 
     public function getAllDealCategories(Request $request)
