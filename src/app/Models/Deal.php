@@ -58,6 +58,7 @@ class Deal extends Eloquent
         // Relationships
         'category_ids' => [],
         'product_id' => null,
+        'active_product_variant_ids' => [],
 
         // Default
         'title' => [
@@ -75,6 +76,7 @@ class Deal extends Eloquent
         // 'discount' => null,
         'images' => [],
         'remarks' => null,
+        'commission' => 0,
         'status' => Status::DRAFT,
 
         // Timestamps
