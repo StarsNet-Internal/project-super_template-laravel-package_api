@@ -40,13 +40,16 @@ class ProductController extends AdminProductController
         $products = parent::getAllProducts($request);
 
         if (!$this->checkIfAccountIsSuperAdminOrAdmin($account)) {
-            $access = AccountProduct::where('account_id', $account->_id);
+            $access = AccountProduct::where('account_id', $account->_id)->first();
 
-            $ids = $access['product_ids'];
+            if ($access) {
+                $ids = $access['product_ids'];
 
-            return array_filter($products->toArray(), function ($product) use ($ids) {
-                return in_array($product['_id'], $ids);
-            });
+                return array_filter($products->toArray(), function ($product) use ($ids) {
+                    return in_array($product['_id'], $ids);
+                });
+            }
+            return new Collection();
         }
 
         return $products;

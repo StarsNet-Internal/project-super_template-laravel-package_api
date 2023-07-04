@@ -43,13 +43,17 @@ class DealController extends Controller
         ])->get();
 
         if (!$this->checkIfAccountIsSuperAdminOrAdmin($account)) {
-            $access = AccountDeal::where('account_id', $account->_id);
+            $access = AccountDeal::where('account_id', $account->_id)->first();
 
-            $ids = $access['deal_ids'];
+            if ($access) {
+                $ids = $access['deal_ids'];
 
-            return array_filter($deals->toArray(), function ($deal) use ($ids) {
-                return in_array($deal['_id'], $ids);
-            });
+                return array_filter($deals->toArray(), function ($deal) use ($ids) {
+                    return in_array($deal['_id'], $ids);
+                });
+            }
+
+            return new Collection();
         }
 
         return $deals;

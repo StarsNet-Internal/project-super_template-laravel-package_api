@@ -14,7 +14,9 @@ trait ProjectAccountTrait
     {
         $role = $account->role()->first();
 
-        if ($role['slug'] == 'super-admin' || $role['slug'] == 'admin') {
+        $slug = $role['slug'];
+
+        if ($slug == 'super-admin' && $slug == 'admin') {
             return true;
         }
         return false;
