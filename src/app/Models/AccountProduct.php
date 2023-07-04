@@ -44,7 +44,7 @@ class AccountProduct extends Eloquent
     protected $attributes = [
         // Relationships
         'account_id' => null,
-        'product_ids' => [],
+        'product_id' => null,
 
         // Timestamps
     ];
@@ -77,9 +77,9 @@ class AccountProduct extends Eloquent
     // Relationship Begins
     // -----------------------------
 
-    public function products(): BelongsToMany
+    public function product(): BelongsTo
     {
-        return $this->belongsToMany(
+        return $this->belongsTo(
             Product::class,
         );
     }
@@ -119,23 +119,16 @@ class AccountProduct extends Eloquent
         return $this->save();
     }
 
-    public function attachProducts(Collection $products): void
+    public function associateProduct(Product $product): bool
     {
-        $productIDs = $products->pluck('_id')->all();
-        $this->products()->attach($productIDs);
-        return;
+        $this->product()->associate($product);
+        return $this->save();
     }
 
-    public function detachProducts(Collection $products): int
+    public function dissociateProduct(): bool
     {
-        $productIDs = $products->pluck('_id')->all();
-        return $this->products()->detach($productIDs);
-    }
-
-    public function syncProducts(Collection $products): array
-    {
-        $productIDs = $products->pluck('_id')->all();
-        return $this->products()->sync($productIDs);
+        $this->product()->dissociate();
+        return $this->save();
     }
 
     // -----------------------------

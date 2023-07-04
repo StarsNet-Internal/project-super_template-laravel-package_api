@@ -43,7 +43,7 @@ class AccountDeal extends Eloquent
     protected $attributes = [
         // Relationships
         'account_id' => null,
-        'deal_ids' => [],
+        'deal_id' => null,
 
         // Timestamps
     ];
@@ -76,9 +76,9 @@ class AccountDeal extends Eloquent
     // Relationship Begins
     // -----------------------------
 
-    public function deals(): BelongsToMany
+    public function deal(): BelongsTo
     {
-        return $this->belongsToMany(
+        return $this->belongsTo(
             Deal::class,
         );
     }
@@ -118,23 +118,16 @@ class AccountDeal extends Eloquent
         return $this->save();
     }
 
-    public function attachDeals(Collection $deals): void
+    public function associateDeal(Deal $deal): bool
     {
-        $dealIDs = $deals->pluck('_id')->all();
-        $this->deals()->attach($dealIDs);
-        return;
+        $this->deal()->associate($deal);
+        return $this->save();
     }
 
-    public function detachDeals(Collection $deals): int
+    public function dissociateDeal(): bool
     {
-        $dealIDs = $deals->pluck('_id')->all();
-        return $this->deals()->detach($dealIDs);
-    }
-
-    public function syncDeals(Collection $deals): array
-    {
-        $dealIDs = $deals->pluck('_id')->all();
-        return $this->deals()->sync($dealIDs);
+        $this->deal()->dissociate();
+        return $this->save();
     }
 
     // -----------------------------
