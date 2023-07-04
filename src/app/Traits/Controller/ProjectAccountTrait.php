@@ -16,7 +16,7 @@ trait ProjectAccountTrait
 
         $slug = $role['slug'];
 
-        if ($slug == 'super-admin' && $slug == 'admin') {
+        if ($slug == 'super-admin' || $slug == 'admin') {
             return true;
         }
         return false;

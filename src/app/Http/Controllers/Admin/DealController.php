@@ -42,21 +42,19 @@ class DealController extends Controller
             'tiers',
         ])->get();
 
-        if (!$this->checkIfAccountIsSuperAdminOrAdmin($account)) {
-            $access = AccountDeal::where('account_id', $account->_id)->first();
-
-            if ($access) {
-                $ids = $access['deal_ids'];
-
-                return array_filter($deals->toArray(), function ($deal) use ($ids) {
-                    return in_array($deal['_id'], $ids);
-                });
-            }
-
-            return new Collection();
+        if ((bool) $this->checkIfAccountIsSuperAdminOrAdmin($account)) {
+            return $deals;
         }
 
-        return $deals;
+        $access = AccountDeal::where('account_id', $account->_id)->first();
+        if ($access) {
+            $ids = $access['deal_ids'];
+
+            return array_filter($deals->toArray(), function ($deal) use ($ids) {
+                return in_array($deal['_id'], $ids);
+            });
+        }
+        return new Collection();
     }
 
     public function deleteDeals(Request $request)
