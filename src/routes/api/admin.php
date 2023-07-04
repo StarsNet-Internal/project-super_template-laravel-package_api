@@ -42,6 +42,9 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
+                Route::post('/', [$defaultController, 'createProduct']);
+
                 Route::post('/{id}/details', [$defaultController, 'editProductAndDiscountDetails']);
             }
         );

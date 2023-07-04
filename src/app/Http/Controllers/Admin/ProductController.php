@@ -15,6 +15,7 @@ use App\Models\ProductReview;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantDiscount;
 use App\Models\ProductVariantOption;
+use StarsNet\Project\App\Models\AccountProduct;
 use StarsNet\Project\App\Models\Deal;
 use App\Traits\Controller\Cacheable;
 use App\Traits\Controller\ProductTrait;
@@ -26,9 +27,44 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use StarsNet\Project\App\Traits\Controller\ProjectAccountTrait;
 
 class ProductController extends AdminProductController
 {
+    use ProjectAccountTrait;
+
+    public function getAllProducts(Request $request)
+    {
+        $account = $this->account();
+
+        $products = parent::getAllProducts($request);
+
+        if (!$this->checkIfAccountIsSuperAdminOrAdmin($account)) {
+            $access = AccountProduct::where('account_id', $account->_id);
+
+            $ids = $access['product_ids'];
+
+            return array_filter($products->toArray(), function ($product) use ($ids) {
+                return in_array($product['_id'], $ids);
+            });
+        }
+
+        return $products;
+    }
+
+    public function createProduct(Request $request)
+    {
+        $account = $this->account();
+
+        $product = parent::createProduct($request);
+
+        $access = AccountProduct::create([]);
+        $access->associateAccount($account);
+        $access->attachProducts(collect($product));
+
+        return $product;
+    }
+
     public function editProductAndDiscountDetails(Request $request)
     {
         $productID = $request->route('id');
@@ -43,7 +79,7 @@ class ProductController extends AdminProductController
             }
         }
 
-        $product = parent::editProductAndDiscountDetails(($request));
+        $product = parent::editProductAndDiscountDetails($request);
 
         return $product;
     }

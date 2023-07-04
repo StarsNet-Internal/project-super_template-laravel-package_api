@@ -2,26 +2,19 @@
 
 namespace StarsNet\Project\App\Http\Controllers\Admin;
 
-use App\Constants\Model\ProductVariantDiscountType;
-use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\Status;
 use App\Http\Controllers\Controller;
-use App\Models\CustomerGroup;
-use App\Models\Store;
 use Illuminate\Http\Request;
 
 use App\Models\Product;
-use App\Models\ProductReview;
-use App\Models\ProductVariant;
-use App\Models\ProductVariantDiscount;
-use App\Models\ProductVariantOption;
+use StarsNet\Project\App\Models\AccountDeal;
 use StarsNet\Project\App\Models\Deal;
 use StarsNet\Project\App\Models\DealCategory;
 use StarsNet\Project\App\Models\Tier;
 use App\Traits\Controller\Cacheable;
 use App\Traits\Controller\ProductTrait;
 use App\Traits\Controller\ReviewTrait;
-use App\Traits\StarsNet\TypeSenseSearchEngine;
+use StarsNet\Project\App\Traits\Controller\ProjectAccountTrait;
 use App\Traits\Utils\Flattenable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -31,12 +24,14 @@ use Carbon\Carbon;
 
 class DealController extends Controller
 {
-    use ProductTrait, ReviewTrait;
+    use ProductTrait, ReviewTrait, ProjectAccountTrait;
 
     use Flattenable, Cacheable;
 
     public function getAllDeals(Request $request)
     {
+        $account = $this->account();
+
         $statuses = (array) $request->input('status', Status::$typesForAdmin);
 
         // Retrieve required models
@@ -47,7 +42,17 @@ class DealController extends Controller
             'tiers',
         ])->get();
 
-        return $deals->append(['successful_deal_groups', 'failed_deal_groups', 'is_editable']);
+        if (!$this->checkIfAccountIsSuperAdminOrAdmin($account)) {
+            $access = AccountDeal::where('account_id', $account->_id);
+
+            $ids = $access['deal_ids'];
+
+            return array_filter($deals->toArray(), function ($deal) use ($ids) {
+                return in_array($deal['_id'], $ids);
+            });
+        }
+
+        return $deals;
     }
 
     public function deleteDeals(Request $request)
@@ -126,9 +131,15 @@ class DealController extends Controller
 
     public function createDeal(Request $request)
     {
+        $account = $this->account();
+
         // Create Deal
         /** @var Deal $deal */
         $deal = Deal::create($request->all());
+
+        $access = AccountDeal::create([]);
+        $access->associateAccount($account);
+        $access->attachDeals(collect($deal));
 
         // Return success message
         return response()->json([
