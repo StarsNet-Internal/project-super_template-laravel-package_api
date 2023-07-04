@@ -161,6 +161,13 @@ class Deal extends Eloquent
         );
     }
 
+    public function accountDeal(): HasOne
+    {
+        return $this->hasOne(
+            AccountDeal::class
+        );
+    }
+
     // -----------------------------
     // Relationship Ends
     // -----------------------------
