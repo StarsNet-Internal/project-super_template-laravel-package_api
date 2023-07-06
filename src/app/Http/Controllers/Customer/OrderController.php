@@ -15,6 +15,7 @@ use App\Models\ProductVariant;
 use App\Models\RefundRequest;
 use StarsNet\Project\App\Models\DealGroupOrderCartItem;
 use App\Traits\Controller\CheckoutTrait;
+use App\Traits\Controller\StoreDependentTrait;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -25,7 +26,8 @@ use App\Http\Controllers\Customer\OrderController as CustomerOrderController;
 
 class OrderController extends CustomerOrderController
 {
-    use CheckoutTrait;
+    use CheckoutTrait,
+        StoreDependentTrait;
 
     public function getAll(Request $request)
     {
