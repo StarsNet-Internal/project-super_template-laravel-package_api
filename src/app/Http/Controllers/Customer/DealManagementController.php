@@ -21,7 +21,7 @@ use App\Traits\Controller\ProductTrait;
 use App\Traits\Controller\Sortable;
 use App\Traits\Controller\StoreDependentTrait;
 use App\Traits\Controller\WishlistItemTrait;
-use App\Traits\Controller\ProjectShoppingCartTrait;
+use StarsNet\Project\App\Traits\Controller\ProjectShoppingCartTrait;
 use App\Traits\StarsNet\TypeSenseSearchEngine;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
