@@ -212,7 +212,9 @@ class DealController extends Controller
 
         // Update Associated Product
         $product = Product::find($request->product_id);
-        $deal->associateProduct($product);
+        if ($product) {
+            $deal->associateProduct($product);
+        }
 
         // Update Tier
         /** @var array $input */
