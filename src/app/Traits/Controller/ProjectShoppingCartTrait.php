@@ -162,6 +162,18 @@ trait ProjectShoppingCartTrait
         $rationalizedCalculation = $this->rationalizeRawCalculation($rawCalculation);
         $roundedCalculation = $this->roundingNestedArray($rationalizedCalculation); // Round off values
 
+        foreach ($cartItems as $index => $item) {
+            $group = DealGroupShoppingCartItem::where('shopping_cart_item_id', $item['_id'])
+                ->first()
+                ->dealGroup()
+                ->first();
+            $price = $this->getDiscountedPrice($group);
+
+            $item->deal_price_per_unit = $price;
+            $item->deal_subtotal_price = $this->roundingValue($price * $item->qty);
+            $item->is_valid_deal = $group->isDealGroupValid() ? true : false;
+        }
+
         // Return data
         $data = [
             'cart_items' => $cartItems,

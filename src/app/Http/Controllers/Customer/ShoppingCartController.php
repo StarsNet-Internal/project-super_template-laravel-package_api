@@ -101,8 +101,8 @@ class ShoppingCartController extends CustomerShoppingCartController
         );
 
         $data['cart_items'] = array_map(function ($item) {
-            $item['discounted_price_per_unit'] = $item['deal_price_per_unit'] ?? '0.00';
-            $item['subtotal_price'] = $item['deal_subtotal_price'] ?? '0.00';
+            $item['discounted_price_per_unit'] = $item['deal_price_per_unit'];
+            $item['subtotal_price'] = $item['deal_subtotal_price'];
             return $item;
         },  $data['cart_items']->toArray());
 
