@@ -111,6 +111,8 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllOrdersByStore'])->middleware(['pagination']);
+
                 Route::get('/{id}/details', [$defaultController, 'getOrderDetails']);
             }
         );

@@ -43,9 +43,9 @@ class ProductController extends AdminProductController
             return $products;
         }
 
-        $access = AccountProduct::where('account_id', $account->_id)->first();
+        $access = AccountProduct::where('account_id', $account->_id)->get();
         if ($access) {
-            $ids = $access['product_ids'];
+            $ids = $access->pluck('product_id')->all();
 
             return array_filter($products->toArray(), function ($product) use ($ids) {
                 return in_array($product['_id'], $ids);
@@ -62,7 +62,7 @@ class ProductController extends AdminProductController
 
         $access = AccountProduct::create([]);
         $access->associateAccount($account);
-        $access->attachProducts(collect($product));
+        $access->associateProduct($product);
 
         return $product;
     }

@@ -27,16 +27,52 @@ class OrderController extends CustomerOrderController
 {
     use CheckoutTrait;
 
-    public function getDetails(Request $request)
+    public function getAll(Request $request)
     {
-        $order = json_decode(json_encode(parent::getDetails($request)), true)['original'];
+        // Extract attributes from $request
+        $storeID = $request->input('store_id');
 
-        foreach ($order['cart_items'] as $index => $item) {
-            $groupCartItem = DealGroupOrderCartItem::where('order_cart_item_id', $item['_id'])->first();
+        // Get Store
+        /** @var Store $store */
+        $store = $this->getStoreByValue($storeID);
 
-            $order['cart_items'][$index]['status'] = $groupCartItem->status;
-            $order['cart_items'][$index]['deal'] = $groupCartItem->dealGroup()->first()->deal()->first();
+        if (is_null($store)) {
+            return response()->json([
+                'message' => 'Store not found'
+            ], 404);
         }
+
+        // Get authenticated User information
+        $customer = $this->customer();
+
+        // Get Order(s)
+        /** @var Collection $orders */
+        $orders = Order::byStore($store)
+            ->byCustomer($customer)
+            ->whereNotNull('parent_order_id')
+            ->get()
+            ->makeHidden(['cart_items', 'gift_items']);
+
+        // Return data
+        return $orders;
+    }
+
+    public function getOrderAndDealDetailsAsCustomer(Request $request)
+    {
+        $order = json_decode(json_encode(parent::getOrderDetailsAsCustomer($request)), true)['original'];
+
+        $order['cart_items'] = array_map(function ($item) {
+            $deal = DealGroupOrderCartItem::with([
+                'dealGroup', 'dealGroup.deal'
+            ])->where('order_cart_item_id', $item['_id'])
+                ->first();
+            if ($deal) {
+                $item['product_title'] = $deal['dealGroup']['deal']['title'];
+            }
+            $item['discounted_price_per_unit'] = $item['deal_price_per_unit'];
+            $item['subtotal_price'] = $item['deal_subtotal_price'];
+            return $item;
+        },  $order['cart_items']);
 
         return $order;
     }

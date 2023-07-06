@@ -10,6 +10,7 @@ use App\Constants\Model\WarehouseInventoryHistoryType;
 use App\Events\Common\Order\OrderCreated;
 use App\Events\Common\Order\OrderPaid;
 use App\Http\Controllers\Controller;
+use App\Models\Alias;
 use App\Models\Checkout;
 use App\Models\DiscountCode;
 use App\Models\ProductVariant;
@@ -18,6 +19,7 @@ use StarsNet\Project\App\Models\DealGroupShoppingCartItem;
 use StarsNet\Project\App\Models\DealGroupOrderCartItem;
 use App\Traits\Controller\CheckoutTrait;
 use App\Traits\Controller\ShoppingCartTrait;
+use App\Traits\Controller\StoreDependentTrait;
 use App\Traits\Controller\WarehouseInventoryTrait;
 use StarsNet\Project\App\Traits\Controller\ProjectShoppingCartTrait;
 use Illuminate\Http\Request;
@@ -32,6 +34,7 @@ class CheckoutController extends CustomerCheckoutController
     use ShoppingCartTrait,
         CheckoutTrait,
         WarehouseInventoryTrait,
+        StoreDependentTrait,
         ProjectShoppingCartTrait;
 
     public function checkOut(Request $request)
@@ -178,18 +181,7 @@ class CheckoutController extends CustomerCheckoutController
                 $customer->getUser()
             );
 
-            $cartItem = $order->createCartItem($attributes);
-            $group = DealGroupShoppingCartItem::where('shopping_cart_item_id', $item['_id'])
-                ->first()
-                ->dealGroup()
-                ->first();
-            $group->attachOrders(collect([$order]));
-            $group->attachOrderCartItems(collect([$cartItem]));
-
-            $groupCartItem = DealGroupOrderCartItem::create([]);
-            $groupCartItem->associateDealGroup($group);
-            $groupCartItem->associateOrder($order);
-            $groupCartItem->associateOrderCartItem($cartItem);
+            $order->createCartItem($attributes);
         }
 
         // Create OrderGiftItem(s)
@@ -262,14 +254,6 @@ class CheckoutController extends CustomerCheckoutController
         // Delete ShoppingCartItem(s)
         if ($paymentMethod === CheckoutType::OFFLINE) {
             $variants = ProductVariant::objectIDs($request->checkout_product_variant_ids)->get();
-
-            $cartItems = $customer
-                ->shoppingCartItems()
-                ->byStore($this->store)
-                ->pluck('_id');
-            $items = DealGroupShoppingCartItem::whereIn('shopping_cart_item_id', $cartItems);
-            $items->delete();
-
             $customer->clearCartByStore($this->store, $variants);
         }
 

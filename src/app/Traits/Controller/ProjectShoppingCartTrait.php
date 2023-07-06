@@ -40,7 +40,7 @@ trait ProjectShoppingCartTrait
         ?string $courierID = null
     ): array {
         // Get local discount
-        $subtotalPrice = $this->getSumByKey($cartItems, 'deal_subtotal_price');
+        $subtotalPrice = $this->getSumByKey($cartItems, 'original_subtotal_price');
         $localPriceDiscount = $this->getLocalPriceDiscount($cartItems);
         $totalPrice = $subtotalPrice - $localPriceDiscount; // Intermediate $totalPrice value
 
@@ -86,7 +86,7 @@ trait ProjectShoppingCartTrait
 
         foreach ($tiers as $tier) {
             if ($count >= $tier['user_count']) {
-                return $tier['discounted_price'];
+                return $this->roundingValue($tier['discounted_price']);
             }
         }
         // If userCount is lower than any tier, return price of first active variant

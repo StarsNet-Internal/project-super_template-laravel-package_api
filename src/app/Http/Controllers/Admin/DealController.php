@@ -46,9 +46,9 @@ class DealController extends Controller
             return $deals;
         }
 
-        $access = AccountDeal::where('account_id', $account->_id)->first();
+        $access = AccountDeal::where('account_id', $account->_id)->get();
         if ($access) {
-            $ids = $access['deal_ids'];
+            $ids = $access->pluck('deal_id')->all();
 
             return array_filter($deals->toArray(), function ($deal) use ($ids) {
                 return in_array($deal['_id'], $ids);
@@ -141,7 +141,7 @@ class DealController extends Controller
 
         $access = AccountDeal::create([]);
         $access->associateAccount($account);
-        $access->attachDeals(collect($deal));
+        $access->associateDeal($deal);
 
         // Return success message
         return response()->json([

@@ -9,17 +9,20 @@ use StarsNet\Project\App\Http\Controllers\Customer\DealManagementController;
 use StarsNet\Project\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\App\Http\Controllers\Customer\CheckoutController;
 use StarsNet\Project\App\Http\Controllers\Customer\OrderController;
+use StarsNet\Project\App\Http\Controllers\Customer\PaymentController;
 use StarsNet\Project\App\Http\Controllers\Customer\LinkController;
 
 class CustomerProjectRouteName
 {
     const PROFILE = 'profiles';
 
-    const DEAL_MANAGEMENT = 'deal-management';
+    const DEAL_MANAGEMENT = 'product-management';
     const SHOPPING_CART = 'shopping-cart';
     const ORDER = 'orders';
 
     const CHECKOUT = 'checkouts';
+
+    const PAYMENT = 'payments';
 
     const LINK = 'links';
 }
@@ -59,11 +62,17 @@ Route::group(
                 $defaultController = DealManagementController::class;
 
                 Route::get('/categories/all', [$defaultController, 'getAllDealCategories'])->middleware(['pagination']);
-                Route::get('/categories/all/hierarchy', [$defaultController, 'getAllDealCategoryHierarchy'])->middleware(['pagination']);
-                Route::get('/deals/filter', [$defaultController, 'filterDealsByCategories'])->middleware(['pagination']);
-                Route::get('/deals/{deal_id}/details', [$defaultController, 'getDealDetails']);
+                Route::get('/categories/all/hierachy', [$defaultController, 'getAllDealCategoryHierarchy'])->middleware(['pagination']);
+                Route::get('/products/filter', [$defaultController, 'filterDealsByCategories'])->middleware(['pagination']);
+                Route::get('/products/{deal_id}/details', [$defaultController, 'getDealDetails']);
+                Route::get('/products/{product_id}/reviews', [$defaultController, 'getDealReviews'])->middleware(['pagination']);
+
+                Route::get('/related-products-urls', [$defaultController, 'getRelatedDealsUrls'])->middleware(['pagination']);
+                Route::get('/products/ids', [$defaultController, 'getDealsByIDs'])->name('deals.ids')->middleware(['pagination']);
 
                 Route::post('/deals/{deal_id}/groups', [$defaultController, 'createGroup']);
+
+                Route::get('/time', [$defaultController, 'getCurrentServerTime']);
             }
         );
 
@@ -74,6 +83,8 @@ Route::group(
                 $defaultController = ShoppingCartController::class;
 
                 Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                    Route::get('/related-products-urls', [$defaultController, 'getRelatedDealsUrls'])->middleware(['pagination']);
+
                     Route::post('/add-to-cart', [$defaultController, 'addToCartByDealGroup']);
 
                     Route::post('/all', [$defaultController, 'getAll']);
@@ -104,8 +115,20 @@ Route::group(
         $defaultController = OrderController::class;
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
-            Route::get('/{order_id}/details', [$defaultController, 'getDetails']);
+            Route::get('/all', [$defaultController, 'getAll'])->middleware(['pagination']);
+
+            Route::get('/{order_id}/details', [$defaultController, 'getOrderAndDealDetailsAsCustomer']);
         });
+    }
+);
+
+// PAYMENT
+Route::group(
+    ['prefix' => CustomerProjectRouteName::PAYMENT],
+    function () {
+        $defaultController = PaymentController::class;
+
+        Route::post('/callback', [$defaultController, 'onlinePaymentCallback']);
     }
 );
 
