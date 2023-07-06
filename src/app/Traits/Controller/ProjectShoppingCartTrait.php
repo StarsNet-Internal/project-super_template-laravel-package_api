@@ -129,6 +129,7 @@ trait ProjectShoppingCartTrait
             $item->deal_price_per_unit = $price;
             $item->deal_subtotal_price = $this->roundingValue($price * $item->qty);
             $item->is_valid_deal = $group->isDealGroupValid() ? true : false;
+            $item->deal_group_id = $group->_id;
         }
 
         // Get Applied DiscountTemplate(s) (Global Discount)
@@ -172,6 +173,7 @@ trait ProjectShoppingCartTrait
             $item->deal_price_per_unit = $price;
             $item->deal_subtotal_price = $this->roundingValue($price * $item->qty);
             $item->is_valid_deal = $group->isDealGroupValid() ? true : false;
+            $item->deal_group_id = $group->_id;
         }
 
         // Return data
