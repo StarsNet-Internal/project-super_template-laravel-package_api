@@ -58,13 +58,17 @@ class ProductController extends AdminProductController
     {
         $account = $this->account();
 
-        $product = parent::createProduct($request);
+        $product = Product::create($request->all());
 
         $access = AccountProduct::create([]);
         $access->associateAccount($account);
         $access->associateProduct($product);
 
-        return $product;
+        // Return success message
+        return response()->json([
+            'message' => 'Created New Product successfully',
+            '_id' => $product->_id
+        ], 200);
     }
 
     public function editProductAndDiscountDetails(Request $request)

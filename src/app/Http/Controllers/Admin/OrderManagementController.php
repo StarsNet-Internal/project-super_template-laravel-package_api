@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
+use App\Traits\Controller\StoreDependentTrait;
 use StarsNet\Project\App\Traits\Controller\ProjectAccountTrait;
 
 use App\Http\Controllers\Admin\OrderManagementController as AdminOrderManagementController;
