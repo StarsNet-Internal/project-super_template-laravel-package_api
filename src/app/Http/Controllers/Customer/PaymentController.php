@@ -6,7 +6,7 @@ use App\Constants\Model\CheckoutApprovalStatus;
 use App\Constants\Model\ShipmentDeliveryStatus;
 use App\Constants\Model\Status;
 use App\Events\Common\Order\OrderPaid;
-use App\Events\Common\Payment\PaidFromPinkiePay;
+use StarsNet\Project\App\Events\Common\Payment\PaidFromPinkiePay;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;

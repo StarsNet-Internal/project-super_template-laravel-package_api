@@ -5,7 +5,7 @@ namespace StarsNet\Project;
 use App\Events\Common\Checkout\OfflineCheckoutImageUploaded;
 use App\Events\Common\Order\OrderCreated;
 use App\Events\Common\Order\OrderPaid;
-use App\Events\Common\Payment\PaidFromPinkiePay;
+use SStarsNet\Project\App\Events\Common\Payment\PaidFromPinkiePay;
 use App\Events\Customer\Authentication\CustomerLogin;
 use App\Events\Customer\Authentication\CustomerRegistration;
 use App\Listeners\Common\Checkout\ApproveOfflineCheckoutImage;
@@ -73,7 +73,7 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        // parent::boot();
+        parent::boot();
 
         // $this->schedulableModels();
 
