@@ -133,6 +133,13 @@ class CheckoutController extends CustomerCheckoutController
             $courierID
         );
 
+        // Override existing attributes
+        $checkoutDetails['cart_items'] = array_map(function ($item) {
+            $item['discounted_price_per_unit'] = $item['deal_price_per_unit'];
+            $item['subtotal_price'] = $item['deal_subtotal_price'];
+            return $item;
+        },  $checkoutDetails['cart_items']->toArray());
+
         // Validate Customer membership points
         $requiredPoints = $checkoutDetails['calculations']['point']['total'];
         if (!$customer->isEnoughMembershipPoints($requiredPoints)) {
