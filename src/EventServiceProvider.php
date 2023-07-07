@@ -5,7 +5,7 @@ namespace StarsNet\Project;
 use App\Events\Common\Checkout\OfflineCheckoutImageUploaded;
 use App\Events\Common\Order\OrderCreated;
 use App\Events\Common\Order\OrderPaid;
-use SStarsNet\Project\App\Events\Common\Payment\PaidFromPinkiePay;
+use StarsNet\Project\App\Events\Common\Payment\PaidFromPinkiePay;
 use App\Events\Customer\Authentication\CustomerLogin;
 use App\Events\Customer\Authentication\CustomerRegistration;
 use App\Listeners\Common\Checkout\ApproveOfflineCheckoutImage;
