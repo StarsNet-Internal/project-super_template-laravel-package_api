@@ -134,11 +134,11 @@ class CheckoutController extends CustomerCheckoutController
         );
 
         // Override existing attributes
-        $checkoutDetails['cart_items'] = array_map(function ($item) {
-            $item['discounted_price_per_unit'] = $item['deal_price_per_unit'];
-            $item['subtotal_price'] = $item['deal_subtotal_price'];
-            return $item;
-        },  $checkoutDetails['cart_items']->toArray());
+        // $checkoutDetails['cart_items'] = array_map(function ($item) {
+        //     $item['discounted_price_per_unit'] = $item['deal_price_per_unit'];
+        //     $item['subtotal_price'] = $item['deal_subtotal_price'];
+        //     return $item;
+        // },  $checkoutDetails['cart_items']->toArray());
 
         // Validate Customer membership points
         $requiredPoints = $checkoutDetails['calculations']['point']['total'];
@@ -173,6 +173,8 @@ class CheckoutController extends CustomerCheckoutController
 
         foreach ($checkoutItems as $item) {
             $attributes = $item->toArray();
+            $attributes['discounted_price_per_unit'] = $attributes['deal_price_per_unit'];
+            $attributes['subtotal_price'] = $item['deal_subtotal_price'];
             unset($attributes['_id'], $attributes['is_checkout']);
 
             // Update WarehouseInventory(s)

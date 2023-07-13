@@ -50,8 +50,8 @@ class ShoppingCartController extends CustomerShoppingCartController
 
         $existingCartItem = $customer
             ->shoppingCartItems()
+            ->byProductVariant($variant)
             ->byStore($this->store)
-            ->where('product_variant_id', $productVariantID)
             ->first();
 
         $res = $this->addToCart($request);
@@ -62,8 +62,8 @@ class ShoppingCartController extends CustomerShoppingCartController
         } else if (is_null($existingCartItem)) {
             $cartItem = $customer
                 ->shoppingCartItems()
+                ->byProductVariant($variant)
                 ->byStore($this->store)
-                ->where('product_variant_id', $productVariantID)
                 ->first();
             $item = DealGroupShoppingCartItem::create([]);
             $item->associateDealGroup($group);
