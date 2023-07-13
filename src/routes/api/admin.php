@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\App\Http\Controllers\Admin\TestingController;
+use StarsNet\Project\App\Http\Controllers\Admin\OrderManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,5 +29,22 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+// ORDER
+Route::group(
+    ['prefix' => 'orders'],
+    function () {
+        $defaultController = OrderManagementController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/{id}/details', [$defaultController, 'getCustomOrderDetails']);
+
+                Route::post('/{id}/quote', [$defaultController, 'createCustomOrderQuote']);
+            }
+        );
     }
 );
