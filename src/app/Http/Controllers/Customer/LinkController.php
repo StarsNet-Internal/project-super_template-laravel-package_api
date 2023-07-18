@@ -91,12 +91,12 @@ class LinkController extends Controller
 
         $customer = $this->customer();
 
-        $deals = Deal::objectIDs($dealIDs)->with(['product'])->get();
+        $deals = Deal::objectIDs($dealIDs)->get();
 
         $ids = [];
 
         foreach ($deals as $deal) {
-            $url = env('CUSTOMER_URL') . '/shop/main/product/' . $deal['product_id'] . '/' . $this->titleToSlug($deal['product']['title']['zh']) . '?affiliator_id=' . $customer['_id'];
+            $url = env('CUSTOMER_URL') . '/shop/deal/product/' . $deal->_id . '/' . $this->titleToSlug($deal['product']['title']['zh']) . '?affiliator_id=' . $customer['_id'];
 
             $link = Link::create([
                 'value' => $url,
@@ -105,7 +105,7 @@ class LinkController extends Controller
             $link->associateCustomer($customer);
             $link->associateDeal($deal);
 
-            $ids[] = $link->_id;
+            $ids[] = $url;
         }
 
         return response()->json([

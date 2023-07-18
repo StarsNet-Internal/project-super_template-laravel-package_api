@@ -14,10 +14,12 @@ trait ProjectAccountTrait
     {
         $role = $account->role()->first();
 
-        $slug = $role['slug'];
+        if (!is_null($role)) {
+            $slug = $role['slug'];
 
-        if ($slug == 'super-admin' || $slug == 'admin') {
-            return true;
+            if ($slug == 'super-admin' || $slug == 'admin') {
+                return true;
+            }
         }
         return false;
     }

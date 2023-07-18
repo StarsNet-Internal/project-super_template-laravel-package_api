@@ -22,6 +22,7 @@ use App\Traits\StarsNet\InvoiceReceiptGenerator;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class UpdateOrderCheckoutIsPaid
 {
@@ -124,8 +125,9 @@ class UpdateOrderCheckoutIsPaid
             $newOrder->parent_order_id = $order->_id;
             unset($newOrder->store, $newOrder->image, $newOrder->customer, $newOrder->order_statuses);
             $newOrder->save();
+
+            Log::info($newOrder);
         }
-        return;
 
         // Fire Event(s)
         // Deduct MembershipPoint(s)

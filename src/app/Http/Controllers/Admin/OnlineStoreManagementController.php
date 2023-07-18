@@ -15,13 +15,15 @@ use App\Models\Store;
 use App\Traits\StarsNet\TypeSenseSearchEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use StarsNet\Project\App\Models\AccountDeal;
 use StarsNet\Project\App\Models\Deal;
 use StarsNet\Project\App\Models\DealCategory;
 use App\Traits\Controller\StoreDependentTrait;
+use StarsNet\Project\App\Traits\Controller\ProjectAccountTrait;
 
 class OnlineStoreManagementController extends Controller
 {
-    use StoreDependentTrait;
+    use StoreDependentTrait, ProjectAccountTrait;
 
     /** @var Store $store */
     protected $store;
@@ -33,6 +35,8 @@ class OnlineStoreManagementController extends Controller
 
     public function getAllCategories(Request $request)
     {
+        $account = $this->account();
+
         // Extract attributes from $request
         $statuses = (array) $request->input('status', Status::$typesForAdmin);
         $includeIDs = $request->include_ids;
@@ -40,12 +44,19 @@ class OnlineStoreManagementController extends Controller
 
         // Get all active DealCategory(s)
         $categories = DealCategory::whereItemType('Deal')
-            ->statusesAllowed(Status::$typesForAdmin, $statuses)
-            ->get()
-            ->append('deal_count');
+            ->statusesAllowed(Status::$typesForAdmin, $statuses);
 
         // Return DealCategory(s)
-        return $categories;
+        // return $categories;
+
+        if ((bool) $this->checkIfAccountIsSuperAdminOrAdmin($account)) {
+            return $categories
+                ->get()
+                ->append('deal_count');
+        }
+        return $categories->where('account_id', $account->_id)
+            ->get()
+            ->append('deal_count');
     }
 
     public function deleteCategories(Request $request)
@@ -126,12 +137,16 @@ class OnlineStoreManagementController extends Controller
 
     public function createCategory(Request $request)
     {
+        $account = $this->account();
+
         // Create DealCategory
         /** @var DealCategory $category */
         $category = DealCategory::create($request->all());
 
         // Update Relationship
         $category->associateStore($this->store);
+        $category->account_id = $account->_id;
+        $category->save();
 
         // Return success message
         return response()->json([
@@ -205,6 +220,8 @@ class OnlineStoreManagementController extends Controller
 
     public function getCategoryAssignedDeals(Request $request)
     {
+        $account = $this->account();
+
         // Extract attributes from $request
         $categoryID = $request->route('category_id');
 
@@ -224,11 +241,26 @@ class OnlineStoreManagementController extends Controller
             ->get();
 
         // Return Deal(s)
-        return $deals;
+        // return $deals;
+        if ((bool) $this->checkIfAccountIsSuperAdminOrAdmin($account)) {
+            return $deals;
+        }
+
+        $access = AccountDeal::where('account_id', $account->_id)->get();
+        if ($access) {
+            $ids = $access->pluck('deal_id')->all();
+
+            return array_filter($deals->toArray(), function ($deal) use ($ids) {
+                return in_array($deal['_id'], $ids);
+            });
+        }
+        return new Collection();
     }
 
     public function getCategoryUnassignedDeals(Request $request)
     {
+        $account = $this->account();
+
         // Extract attributes from $request
         $categoryID = $request->route('category_id');
         $statuses = (array) $request->input('status', Status::$typesForAdmin);
@@ -251,7 +283,20 @@ class OnlineStoreManagementController extends Controller
             ->get();
 
         // Return Deal(s)
-        return $deals;
+        // return $deals;
+        if ((bool) $this->checkIfAccountIsSuperAdminOrAdmin($account)) {
+            return $deals;
+        }
+
+        $access = AccountDeal::where('account_id', $account->_id)->get();
+        if ($access) {
+            $ids = $access->pluck('deal_id')->all();
+
+            return array_filter($deals->toArray(), function ($deal) use ($ids) {
+                return in_array($deal['_id'], $ids);
+            });
+        }
+        return new Collection();
     }
 
     public function assignDealsToCategory(Request $request)

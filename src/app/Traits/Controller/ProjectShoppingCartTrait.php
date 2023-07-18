@@ -24,6 +24,7 @@ use App\Traits\Controller\ShoppingCartTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 trait ProjectShoppingCartTrait
 {
@@ -34,6 +35,13 @@ trait ProjectShoppingCartTrait
         return $cartItems->sum($key);
     }
 
+    private function getLocalDealPriceDiscount(Collection $cartItems)
+    {
+        return $cartItems->sum(function ($item) {
+            return $item['original_subtotal_price'] - $item['deal_subtotal_price'];
+        });
+    }
+
     private function getRawCalculationByCartItemsAndDeals(
         Collection $cartItems,
         Collection $discounts,
@@ -41,7 +49,7 @@ trait ProjectShoppingCartTrait
     ): array {
         // Get local discount
         $subtotalPrice = $this->getSumByKey($cartItems, 'original_subtotal_price');
-        $localPriceDiscount = $this->getLocalPriceDiscount($cartItems);
+        $localPriceDiscount = $this->getLocalDealPriceDiscount($cartItems);
         $totalPrice = $subtotalPrice - $localPriceDiscount; // Intermediate $totalPrice value
 
         // Get global discount
@@ -130,6 +138,7 @@ trait ProjectShoppingCartTrait
             $item->deal_subtotal_price = $this->roundingValue($price * $item->qty);
             $item->is_valid_deal = $group->isDealGroupValid() ? true : false;
             $item->deal_group_id = $group->_id;
+            $item->deal_id = $group->deal()->first()->_id;
         }
 
         // Get Applied DiscountTemplate(s) (Global Discount)
@@ -174,6 +183,7 @@ trait ProjectShoppingCartTrait
             $item->deal_subtotal_price = $this->roundingValue($price * $item->qty);
             $item->is_valid_deal = $group->isDealGroupValid() ? true : false;
             $item->deal_group_id = $group->_id;
+            $item->deal_id = $group->deal()->first()->_id;
         }
 
         // Return data

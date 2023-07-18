@@ -71,8 +71,8 @@ class OrderController extends CustomerOrderController
             if ($deal) {
                 $item['product_title'] = $deal['dealGroup']['deal']['title'];
             }
-            $item['discounted_price_per_unit'] = $item['deal_price_per_unit'];
-            $item['subtotal_price'] = $item['deal_subtotal_price'];
+            // $item['discounted_price_per_unit'] = $item['deal_price_per_unit'];
+            // $item['subtotal_price'] = $item['deal_subtotal_price'];
             return $item;
         },  $order['cart_items']);
 

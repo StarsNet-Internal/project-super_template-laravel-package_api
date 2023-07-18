@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 
 use App\Http\Controllers\Customer\CheckoutController as CustomerCheckoutController;
 
@@ -171,10 +172,16 @@ class CheckoutController extends CustomerCheckoutController
                 return $item->is_checkout;
             })->values();
 
+        Log::info($checkoutItems);
+
         foreach ($checkoutItems as $item) {
             $attributes = $item->toArray();
-            $attributes['discounted_price_per_unit'] = $attributes['deal_price_per_unit'];
-            $attributes['subtotal_price'] = $item['deal_subtotal_price'];
+            $attributes['deal'] = [
+                'discounted_price_per_unit' => $attributes['deal_price_per_unit'],
+                'subtotal_price' => $item['deal_subtotal_price']
+            ];
+            // $attributes['discounted_price_per_unit'] = $attributes['deal_price_per_unit'];
+            // $attributes['subtotal_price'] = $item['deal_subtotal_price'];
             unset($attributes['_id'], $attributes['is_checkout']);
 
             // Update WarehouseInventory(s)
@@ -280,6 +287,7 @@ class CheckoutController extends CustomerCheckoutController
         }
 
         // TODO: Used count per discount
+        Log::info($order);
 
         // Return data
         $data = [

@@ -28,6 +28,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class DealManagementController extends Controller
 {
@@ -127,7 +128,7 @@ class DealManagementController extends Controller
         $output['remaining_qty'] = $deal->max_qty - $currentOrderQty;
         $output['commission'] = $this->roundingValue($deal->commission);
         $output['current_order_qty'] = $currentOrderQty;
-        $output['current_tier_price'] = $hasDealGroup ? $this->getDiscountedPrice($deal['dealGroups'][0]) : $retailPrice;
+        // $output['current_tier_price'] = $hasDealGroup ? $this->getDiscountedPrice($deal['dealGroups'][0]) : $retailPrice;
         $unsortedTiers = $deal['tiers']->toArray();
         usort($unsortedTiers, function ($a, $b) {
             return $b['user_count'] <=> $a['user_count'];
@@ -138,16 +139,20 @@ class DealManagementController extends Controller
             }
         }
 
+        usort($unsortedTiers, function ($a, $b) {
+            return $a['user_count'] <=> $b['user_count'];
+        });
+        foreach ($unsortedTiers as $tier) {
+            if ($currentOrderQty >= $tier['user_count']) {
+                $output['current_tier_price'] = $this->roundingValue($tier['discounted_price']);
+            }
+        }
+        $output['current_tier_price'] = $output['current_tier_price'] ?? $retailPrice;
+
         $output['supplier'] = [
             'username' => $deal['accountDeal']['account']['username'],
             'avatar' => $deal['accountDeal']['account']['avatar'],
         ];
-        // foreach ($deal['product']['variants'] as $variant) {
-        //     $variant['price'] = $this->roundingValue($variant['price']);
-        // }
-        usort($unsortedTiers, function ($a, $b) {
-            return $a['user_count'] <=> $b['user_count'];
-        });
         $output['tiers'] = array_map(function ($tier) {
             return [
                 'user_count' => $tier['user_count'],
@@ -263,7 +268,9 @@ class DealManagementController extends Controller
         foreach ($deal['product']['variants'] as $variant) {
             $variant->appendDisplayableFieldsForCustomer($this->store);
             unset($variant['product']);
-            $output['variants'][] = $variant;
+            if (in_array($variant['_id'], $deal->active_product_variant_ids)) {
+                $output['variants'][] = $variant;
+            }
         }
 
         return $output;
