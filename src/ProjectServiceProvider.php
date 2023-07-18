@@ -14,7 +14,7 @@ class ProjectServiceProvider extends ServiceProvider
 {
     protected $namespace = 'Starsnet\Project\App\Http\Controllers';
 
-    protected $routePrefix = 'project';
+    protected $routePrefix = 'tuen-sir';
 
     /**
      * Register services.
