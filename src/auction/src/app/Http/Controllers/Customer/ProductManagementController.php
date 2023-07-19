@@ -437,6 +437,7 @@ class ProductManagementController extends Controller
         }
 
         $orders = Order::where('cart_items.product_variant_id', $variantID)
+            ->where('is_paid', true)
             ->with(['customer' => function ($customer) {
                 $customer->with(['account']);
             }])
