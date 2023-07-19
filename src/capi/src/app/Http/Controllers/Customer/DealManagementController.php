@@ -455,10 +455,10 @@ class DealManagementController extends Controller
 
         $urls = [];
         foreach ($dealIDsSet as $IDsSet) {
-            $urls[] = str_replace('https', 'http', route('deals.ids', [
+            $urls[] = route('deals.ids', [
                 'store_id' => $this->store->_id,
                 'ids' => $IDsSet->all()
-            ]));
+            ]);
         }
 
         // Return urls
