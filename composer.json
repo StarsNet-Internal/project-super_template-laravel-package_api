@@ -7,7 +7,21 @@
   "require": {},
   "autoload": {
     "psr-4": {
-      "StarsNet\\Project\\": "src/"
+      "StarsNet\\Project\\Capi\\": "src/capi/src/",
+      "StarsNet\\Project\\TuenSir\\": "src/tuen-sir/src/",
+      "StarsNet\\Project\\Auction\\": "src/auction/src/",
+      "StarsNet\\Project\\CasaModernism\\": "src/casa-modernism/src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "StarsNet\\Project\\Capi\\ProjectServiceProvider",
+        "StarsNet\\Project\\Capi\\EventServiceProvider",
+        "StarsNet\\Project\\TuenSir\\ProjectServiceProvider",
+        "StarsNet\\Project\\Auction\\ProjectServiceProvider",
+        "StarsNet\\Project\\CasaModernism\\ProjectServiceProvider"
+      ]
     }
   }
 }

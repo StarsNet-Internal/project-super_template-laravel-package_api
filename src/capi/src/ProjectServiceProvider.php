@@ -1,20 +1,20 @@
 <?php
 
-namespace StarsNet\Project;
+namespace StarsNet\Project\Capi;
 
 use Illuminate\Support\ServiceProvider;
 
 // Import the controller here directly
-// use StarsNet\Project\App\Http\Controllers\Customer\FakerController;
+// use StarsNet\Project\Capi\App\Http\Controllers\Customer\FakerController;
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
 
 class ProjectServiceProvider extends ServiceProvider
 {
-    protected $namespace = 'StarsNet\Project\App\Http\Controllers';
+    protected $namespace = 'StarsNet\Project\Capi\App\Http\Controllers';
 
-    protected $routePrefix = 'project';
+    protected $routePrefix = 'capi';
 
     /**
      * Register services.
@@ -47,6 +47,7 @@ class ProjectServiceProvider extends ServiceProvider
             $this->getAdminRoutes();
             // $this->getCommandRoutes();
             $this->getCustomerRoutes();
+            $this->getInternalRoutes();
         };
 
         // Load all required routes
@@ -106,6 +107,27 @@ class ProjectServiceProvider extends ServiceProvider
         $routeAttributes = [
             'prefix' => 'customer' . '/' . $this->routePrefix,
             'namespace' => 'Customer'
+        ];
+
+        // Include routes to be loaded from
+        $requireRoutes = function () use ($path) {
+            require $path;
+        };
+
+        // Define routes to be loaded from
+        $routes = Route::group($routeAttributes, $requireRoutes);
+
+        return $routes;
+    }
+
+    private function getInternalRoutes()
+    {
+        $path = __DIR__ . '/routes/api/internal.php';
+
+        // Define route attributes
+        $routeAttributes = [
+            'prefix' => 'internal' . '/' . $this->routePrefix,
+            'namespace' => 'Internal'
         ];
 
         // Include routes to be loaded from

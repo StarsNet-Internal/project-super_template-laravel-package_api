@@ -1,20 +1,20 @@
 <?php
 
-namespace StarsNet\Project;
+namespace StarsNet\Project\CasaModernism;
 
 use Illuminate\Support\ServiceProvider;
 
 // Import the controller here directly
-// use StarsNet\Project\App\Http\Controllers\Customer\FakerController;
+// use StarsNet\Project\CasaModernism\App\Http\Controllers\Customer\FakerController;
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
 
 class ProjectServiceProvider extends ServiceProvider
 {
-    protected $namespace = 'StarsNet\Project\App\Http\Controllers';
+    protected $namespace = 'StarsNet\Project\CasaModernism\App\Http\Controllers';
 
-    protected $routePrefix = 'project';
+    protected $routePrefix = 'casa-modernism';
 
     /**
      * Register services.
