@@ -49,14 +49,14 @@ class OnlineStoreManagementController extends Controller
         // Return DealCategory(s)
         // return $categories;
 
-        if ((bool) $this->checkIfAccountIsSuperAdminOrAdmin($account)) {
-            return $categories
-                ->get()
-                ->append('deal_count');
-        }
-        return $categories->where('account_id', $account->_id)
+        // if ((bool) $this->checkIfAccountIsSuperAdminOrAdmin($account)) {
+        return $categories
             ->get()
             ->append('deal_count');
+        // }
+        // return $categories->where('account_id', $account->_id)
+        //     ->get()
+        //     ->append('deal_count');
     }
 
     public function deleteCategories(Request $request)
