@@ -43,11 +43,11 @@ class ShoppingCartController extends CustomerShoppingCartController
 
         if ($quote) {
             foreach ($quote->cart_items as $cart_item) {
-                $request = [
+                $modifiedRequest = $request->merge([
                     'product_variant_id' => $cart_item['product_variant_id'],
                     'qty' => $cart_item['subtotal_price']
-                ];
-                $res = $this->addToCart($request);
+                ]);
+                $res = $this->addToCart($modifiedRequest);
             }
         } else {
             $res = $this->addToCart($request);
