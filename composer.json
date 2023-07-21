@@ -10,7 +10,8 @@
       "StarsNet\\Project\\Capi\\": "src/capi/src/",
       "StarsNet\\Project\\TuenSir\\": "src/tuen-sir/src/",
       "StarsNet\\Project\\Auction\\": "src/auction/src/",
-      "StarsNet\\Project\\CasaModernism\\": "src/casa-modernism/src/"
+      "StarsNet\\Project\\CasaModernism\\": "src/casa-modernism/src/",
+      "StarsNet\\Project\\Commads\\": "src/commads/src/"
     }
   },
   "extra": {
@@ -20,7 +21,8 @@
         "StarsNet\\Project\\Capi\\EventServiceProvider",
         "StarsNet\\Project\\TuenSir\\ProjectServiceProvider",
         "StarsNet\\Project\\Auction\\ProjectServiceProvider",
-        "StarsNet\\Project\\CasaModernism\\ProjectServiceProvider"
+        "StarsNet\\Project\\CasaModernism\\ProjectServiceProvider",
+        "StarsNet\\Project\\Commads\\ProjectServiceProvider"
       ]
     }
   }
