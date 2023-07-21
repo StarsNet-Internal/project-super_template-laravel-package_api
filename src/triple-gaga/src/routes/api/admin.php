@@ -2,8 +2,9 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
-
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\TestingController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\RefillInventoryRequestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,17 +17,35 @@ use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\TestingController;
 |
 */
 
-/*
-|--------------------------------------------------------------------------
-| Development Uses
-|--------------------------------------------------------------------------
-*/
-
 Route::group(
     ['prefix' => 'tests'],
     function () {
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+
+Route::group(
+    ['prefix' => 'refills'],
+    function () {
+        $defaultController = RefillInventoryRequestController::class;
+
+        Route::post('/', [$defaultController, 'createRefillInventoryRequest']);
+        Route::get('/all', [$defaultController, 'getRefillInventoryRequests']);
+        Route::get('/{id}/details', [$defaultController, 'getRefillInventoryRequestDetails']);
+        Route::put('/{id}/approve', [$defaultController, 'approveRefillInventoryRequest']);
+        Route::put('/{id}/delete', [$defaultController, 'deleteRefillInventoryRequest']);
+    }
+);
+
+Route::group(
+    ['prefix' => 'products'],
+    function () {
+        $defaultController = ProductController::class;
+
+        Route::post('/', [$defaultController, 'createProduct']);
+        Route::get('/all', [$defaultController, 'getTenantProducts']);
     }
 );
