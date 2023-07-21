@@ -31,9 +31,9 @@ Route::group(
     function () {
         $defaultController = TenantController::class;
 
-        Route::get('/all', [$defaultController, 'getAllTenants']);
+        Route::get('/all', [$defaultController, 'getAllTenants'])->middleware(['pagination']);
         Route::get('/{account_id}/details', [$defaultController, 'getTenantDetails']);
-        Route::get('/{account_id}/categories/hierarchy', [$defaultController, 'getTenantCategoryHierarchy']);
-        Route::get('/{account_id}/stores/{store_id}/products', [$defaultController, 'filterTenantProductsByCategories']);
+        Route::get('/{account_id}/categories/hierarchy', [$defaultController, 'getTenantCategoryHierarchy'])->middleware(['pagination']);
+        Route::get('/{account_id}/stores/{store_id}/products', [$defaultController, 'filterTenantProductsByCategories'])->middleware(['pagination']);
     }
 );

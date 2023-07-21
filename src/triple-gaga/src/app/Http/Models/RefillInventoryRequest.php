@@ -53,7 +53,7 @@ class RefillInventoryRequest extends Eloquent
 
         // Default
         'items' => [],
-        'request_items_qty' => 0,
+        'requested_items_qty' => 0,
         'approved_items_qty' => 0,
         'status' => Status::ACTIVE,
         'reply_status' => ReplyStatus::PENDING,

@@ -62,32 +62,13 @@ class TenantController extends Controller
 
         // Get Hierarchy
         $hierarchy = optional(Hierarchy::whereModelID($store->_id)->first())->hierarchy;
-
         if (is_null($hierarchy)) return new Collection();
-        $this->recusriveAppendIsKeep($hierarchy, $categoryIds);
+
+        $this->recursiveAppendIsKeep($hierarchy, $categoryIds);
         $hierarchy = $this->recursiveRemoveItem($hierarchy);
+        $this->recursiveGetCategoryInfo($hierarchy);
 
-        // Get Categories
-        $categories = [];
-        foreach ($hierarchy as $branch) {
-            $category = Category::objectID($branch['category_id'])
-                ->statusActive()
-                ->with(['children' => function ($query) {
-                    $query->statusActive()->get(['_id', 'parent_id', 'title']);
-                }])
-                ->first(['parent_id', 'title']);
-            if (is_null($category)) continue;
-            $categories[] = $category;
-        }
-        return $categories;
-
-        // $flattenedHierarchy = $this->flatten($hierarchy);
-
-        // $filteredTarget = array_filter($flattenedHierarchy, function ($id) use ($categoryIds) {
-        //     return in_array($id, $categoryIds);
-        // });
-
-        // return $filteredTarget;
+        return $hierarchy;
     }
 
     public function filterTenantProductsByCategories(Request $request)

@@ -18,6 +18,18 @@ class ProductController extends Controller
 
     public function createProduct(Request $request)
     {
+        // Validate
+        $account = $this->account();
+        $skuCount = $account->sku_count ?? 0;
+        $productCount = Product::where('created_by_account_id', $account->_id)->where('status', '!=', Status::DELETED)->count();
+
+        if ($skuCount <= $productCount) {
+            return response()->json([
+                'message' => 'User can not create any more products',
+            ], 403);
+        }
+
+        // Create Product
         $product = Product::create($request->all());
         $product->update(['created_by_account_id' => $this->account()->_id]);
 

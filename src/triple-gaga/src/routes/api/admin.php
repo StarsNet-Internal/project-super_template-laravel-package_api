@@ -33,7 +33,7 @@ Route::group(
         $defaultController = RefillInventoryRequestController::class;
 
         Route::post('/', [$defaultController, 'createRefillInventoryRequest']);
-        Route::get('/all', [$defaultController, 'getRefillInventoryRequests']);
+        Route::get('/all', [$defaultController, 'getRefillInventoryRequests'])->middleware(['pagination']);
         Route::get('/{id}/details', [$defaultController, 'getRefillInventoryRequestDetails']);
         Route::put('/{id}/approve', [$defaultController, 'approveRefillInventoryRequest']);
         Route::put('/{id}/delete', [$defaultController, 'deleteRefillInventoryRequest']);
@@ -46,6 +46,6 @@ Route::group(
         $defaultController = ProductController::class;
 
         Route::post('/', [$defaultController, 'createProduct']);
-        Route::get('/all', [$defaultController, 'getTenantProducts']);
+        Route::get('/all', [$defaultController, 'getTenantProducts'])->middleware(['pagination']);
     }
 );

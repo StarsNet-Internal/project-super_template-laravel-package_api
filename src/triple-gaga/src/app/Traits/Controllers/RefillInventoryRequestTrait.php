@@ -18,7 +18,13 @@ trait RefillInventoryRequestTrait
             $refillQuery = $refillQuery->where($key, $value);
         }
 
-        return $refillQuery->get();
+        return $refillQuery->with([
+            'requestedAccount',
+            'approvedAccount',
+            'requestedWarehouse',
+            'approvedWarehouse',
+            'items'
+        ])->get();
     }
 
     public function getRefillInventoryRequestFullDetails(RefillInventoryRequest $refill): RefillInventoryRequest
