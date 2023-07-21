@@ -4,6 +4,7 @@ namespace StarsNet\Project\TripleGaga\App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Models\Category;
 use App\Models\Hierarchy;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -47,14 +48,13 @@ class TenantController extends Controller
         return $account;
     }
 
-
-
     public function getTenantCategoryHierarchy(Request $request)
     {
         // Get all Categories
         $accountId = $request->account_id;
-        $categoryIdsArray = Product::where('created_by_account_id', $accountId)->statusActive()->pluck("category_ids")->all();
-        $categoryIds = array_unique(array_merge(...$categoryIdsArray));
+        $categoryIds = Product::where('created_by_account_id', $accountId)->statusActive()->pluck("category_ids")->collapse()->unique()->all();
+        $parentCategoryIds = Category::objectIDs($categoryIds)->whereNotNull('parent_id')->pluck('parent_id')->unique()->all();
+        $categoryIds = array_unique(array_merge($categoryIds, $parentCategoryIds));
 
         // Extract attributes from $request
         $storeId = $request->store_id;
@@ -62,12 +62,24 @@ class TenantController extends Controller
 
         // Get Hierarchy
         $hierarchy = optional(Hierarchy::whereModelID($store->_id)->first())->hierarchy;
+
         if (is_null($hierarchy)) return new Collection();
-        $this->recursiveAppendKey($hierarchy, $categoryIds);
-        $hierarchy = $this->remove_if_not_keep($hierarchy);
+        $this->recusriveAppendIsKeep($hierarchy, $categoryIds);
+        $hierarchy = $this->recursiveRemoveItem($hierarchy);
 
-        return $hierarchy;
-
+        // Get Categories
+        $categories = [];
+        foreach ($hierarchy as $branch) {
+            $category = Category::objectID($branch['category_id'])
+                ->statusActive()
+                ->with(['children' => function ($query) {
+                    $query->statusActive()->get(['_id', 'parent_id', 'title']);
+                }])
+                ->first(['parent_id', 'title']);
+            if (is_null($category)) continue;
+            $categories[] = $category;
+        }
+        return $categories;
 
         // $flattenedHierarchy = $this->flatten($hierarchy);
 

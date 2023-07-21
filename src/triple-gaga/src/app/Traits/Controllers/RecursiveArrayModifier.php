@@ -8,12 +8,45 @@ use StarsNet\Project\TripleGaga\App\Models\RefillInventoryRequest;
 
 trait RecursiveArrayModifier
 {
-    private function recursiveAppendKey(&$array, $matchingCategoryIds)
+    private function recusriveAppendIsKeep(&$array, $matchingCategoryIds)
     {
         if (array_key_exists("category_id", $array)) {
-            $array['is_keep'] = true;
+            $array['is_keep'] = false;
             if (in_array($array["category_id"], $matchingCategoryIds)) {
-                $array['is_keep'] = false;
+                $array['is_keep'] = true;
+            }
+        }
+
+        foreach ($array as &$value) {
+            if (is_array($value)) {
+                $this->recusriveAppendIsKeep(
+                    $value,
+                    $matchingCategoryIds
+                );
+            }
+        }
+    }
+
+    private function recursiveRemoveItem($arr)
+    {
+        $result = [];
+        foreach ($arr as $el) {
+            if ($el['is_keep'] === true) {
+                if (!empty($el['children'])) {
+                    $el['children'] = $this->recursiveRemoveItem($el['children']);
+                }
+                $result[] = $el;
+            }
+        }
+        return $result;
+    }
+
+    private function filterArray(&$array, $matchingCategoryIds)
+    {
+        if (array_key_exists("category_id", $array)) {
+            $array['is_keep'] = false;
+            if (in_array($array["category_id"], $matchingCategoryIds)) {
+                $array['is_keep'] = true;
             }
         }
 
@@ -25,19 +58,5 @@ trait RecursiveArrayModifier
                 );
             }
         }
-    }
-
-    private function remove_if_not_keep($arr)
-    {
-        $result = [];
-        foreach ($arr as $el) {
-            if ($el['is_keep'] === true) {
-                if (!empty($el['children'])) {
-                    $el['children'] = $this->remove_if_not_keep($el['children']);
-                }
-                $result[] = $el;
-            }
-        }
-        return $result;
     }
 }
