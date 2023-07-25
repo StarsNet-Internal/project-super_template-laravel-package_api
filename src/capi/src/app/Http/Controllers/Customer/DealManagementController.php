@@ -230,15 +230,17 @@ class DealManagementController extends Controller
             ->all();
 
         // TODO Get matching keywords from Typesense
-        // if (!is_null($keyword)) {
-        //     $typesense = new TypeSenseSearchEngine('deals');
-        //     $dealIDsByKeyword = $typesense->getIDsFromSearch(
-        //         $keyword,
-        //         'title.en,title.zh'
-        //     );
-        //     if (count($dealIDsByKeyword) === 0) return new Collection();
-        //     $dealIDs = array_intersect($dealIDs, $dealIDsByKeyword);
-        // }
+        if (!is_null($keyword)) {
+            // $typesense = new TypeSenseSearchEngine('deals');
+            $dealIDsByKeyword = $this->getIDsFromSearch(
+                'http://capi_typesense_node_nginx',
+                'capi_deals',
+                $keyword,
+                'title.en,title.zh'
+            );
+            if (count($dealIDsByKeyword) === 0) return new Collection();
+            $dealIDs = array_intersect($dealIDs, $dealIDsByKeyword);
+        }
         $dealIDs = array_values($dealIDs);
         if (count($dealIDs) === 0) return new Collection();
 
@@ -475,5 +477,41 @@ class DealManagementController extends Controller
 
         // Return data
         return $deals;
+    }
+
+    public function search(string $baseUrl, string $collection, string $keyword, string $queryBy)
+    {
+        $url = $baseUrl . '/typesense/search';
+
+        $request = [
+            'collection' => $collection,
+            'keyword' => $keyword,
+            'queryBy' => $queryBy,
+        ];
+
+        // Get response from TypeSense Service
+        try {
+            $response = Http::get($url, $request);
+        } catch (\Throwable $th) {
+            return null;
+        }
+
+        // Extract properties from $data
+        $data = json_decode($response->getBody()->getContents(), true);
+
+        return $data;
+    }
+
+    public function getIDsFromSearch(
+        string $baseUrl,
+        string $collection,
+        string $keyword,
+        string $queryBy,
+        string $sortByColumn = 'created_at',
+        string $sortByOrder = 'desc'
+    ): ?array {
+        $data = $this->search($baseUrl,  $collection, $keyword, $queryBy);
+        $IDs = array_map(fn ($value): string => $value['document']['id'], $data['hits']);
+        return $IDs;
     }
 }
