@@ -234,7 +234,7 @@ class DealManagementController extends Controller
             // $typesense = new TypeSenseSearchEngine('deals');
             $dealIDsByKeyword = $this->getIDsFromSearch(
                 'http://capi_typesense_node_nginx',
-                'deals',
+                'capi_deals',
                 $keyword,
                 'title.en,title.zh'
             );
