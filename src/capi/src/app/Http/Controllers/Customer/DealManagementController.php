@@ -481,7 +481,7 @@ class DealManagementController extends Controller
 
     public function search(string $baseUrl, string $collection, string $keyword, string $queryBy)
     {
-        $url = $baseUrl . '/typesense/search';
+        $url = $baseUrl . '/capi/typesense/search';
 
         $request = [
             'collection' => $collection,
