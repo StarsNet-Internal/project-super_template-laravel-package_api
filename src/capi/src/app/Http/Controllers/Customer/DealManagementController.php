@@ -233,7 +233,7 @@ class DealManagementController extends Controller
         if (!is_null($keyword)) {
             // $typesense = new TypeSenseSearchEngine('deals');
             $dealIDsByKeyword = $this->getIDsFromSearch(
-                'http://capi_typesense_node_nginx',
+                'https://backend1.super.starsnet.com.hk/capi',
                 'capi_deals',
                 $keyword,
                 'title.en,title.zh'
@@ -481,7 +481,7 @@ class DealManagementController extends Controller
 
     public function search(string $baseUrl, string $collection, string $keyword, string $queryBy)
     {
-        $url = $baseUrl . '/capi/typesense/search';
+        $url = $baseUrl . '/typesense/search';
 
         $request = [
             'collection' => $collection,
