@@ -20,6 +20,7 @@ use App\Models\RefundRequest;
 use App\Models\Store;
 use App\Traits\Controller\ReviewTrait;
 use App\Traits\Controller\StoreDependentTrait;
+use StarsNet\Project\Commads\App\Traits\Controller\OrderTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
@@ -32,35 +33,29 @@ use StarsNet\Project\Commads\App\Models\CustomStoreQuote;
 
 class OrderManagementController extends AdminOrderManagementController
 {
-    use ReviewTrait, StoreDependentTrait;
+    use ReviewTrait, StoreDependentTrait, OrderTrait;
 
     protected $model = Order::class;
 
-    public function getCustomOrderDetails(Request $request)
+    public function getAllOrdersAndQuotesByStore(Request $request)
     {
-        $orderId = $request->route('id');
+        $orders = $this->getAllOrdersByStore($request);
 
-        $order = json_decode(json_encode($this->getOrderDetails($request)), true)['original'];
-
-        $quote = CustomStoreQuote::where('quote_order_id', $orderId)
-            ->orWhere('purchase_order_id', $orderId)
-            ->first();
-
-        if (!is_null($quote)) {
-            $images = CustomOrderImage::where('order_id', $quote->quote_order_id)
-                ->orWhere('order_id', $quote->purchase_order_id)
-                ->latest()
-                ->first();
-        } else {
-            $images = CustomOrderImage::where('order_id', $orderId)
-                ->latest()
-                ->first();
+        foreach ($orders as $key => $order) {
+            $orders[$key] = array_merge($order->toArray(), $this->getQuoteDetails($order));
         }
 
-        $order['quote'] = $quote;
-        $order['custom_order_images'] = $images;
+        return $orders;
+    }
 
-        return response()->json($order, 200);
+    public function getCustomOrderDetails(Request $request)
+    {
+        $response = $this->getOrderDetails($request);
+        $order = json_decode($response->getContent(), true);
+
+        $order = array_merge($order, $this->getQuoteDetails($order));
+
+        return response()->json($order, $response->getStatusCode());
     }
 
     public function createCustomOrderQuote(Request $request)

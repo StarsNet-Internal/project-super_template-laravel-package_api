@@ -41,6 +41,8 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllOrdersAndQuotesByStore'])->middleware(['pagination']);
+
                 Route::get('/{id}/details', [$defaultController, 'getCustomOrderDetails']);
 
                 Route::post('/{id}/quote', [$defaultController, 'createCustomOrderQuote']);
