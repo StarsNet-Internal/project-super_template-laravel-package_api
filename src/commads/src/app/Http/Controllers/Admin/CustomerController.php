@@ -42,13 +42,13 @@ class CustomerController extends AdminCustomerController
         $data = json_decode($response->getContent(), true);
 
         foreach ($data['main'] as $key => $order) {
-            $data['main'][$key] = array_merge($order->toArray(), $this->getQuoteDetails($order));
+            $data['main'][$key] = array_merge($order, $this->getQuoteDetails($order));
         }
         foreach ($data['mini'] as $key => $order) {
-            $data['mini'][$key] = array_merge($order->toArray(), $this->getQuoteDetails($order));
+            $data['mini'][$key] = array_merge($order, $this->getQuoteDetails($order));
         }
         foreach ($data['offline'] as $key => $order) {
-            $data['offline'][$key] = array_merge($order->toArray(), $this->getQuoteDetails($order));
+            $data['offline'][$key] = array_merge($order, $this->getQuoteDetails($order));
         }
 
         return response()->json($data, $response->getStatusCode());
