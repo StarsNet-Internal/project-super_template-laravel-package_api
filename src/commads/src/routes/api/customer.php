@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\Commads\App\Http\Controllers\Customer\TestingController;
+use StarsNet\Project\Commads\App\Http\Controllers\Customer\AuthenticationController;
 use StarsNet\Project\Commads\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\Commads\App\Http\Controllers\Customer\CheckoutController;
 use StarsNet\Project\Commads\App\Http\Controllers\Customer\OrderController;
@@ -32,6 +33,21 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+// AUTHENTICATION
+Route::group(
+    ['prefix' => 'auth'],
+    function () {
+        $defaultController = AuthenticationController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/migrate', [$defaultController, 'migrateToTyped']);
+            }
+        );
     }
 );
 
@@ -82,6 +98,8 @@ Route::group(
     ['prefix' => 'orders'],
     function () {
         $defaultController = OrderController::class;
+
+        Route::get('/{order_id}/details/guest', [$defaultController, 'getOrderAndQuoteDetailsAsGuest']);
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
             Route::get('/all', [$defaultController, 'getAllWithQuoteDetails'])->middleware(['pagination']);

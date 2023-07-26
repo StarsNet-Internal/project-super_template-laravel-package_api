@@ -56,6 +56,16 @@ class OrderController extends CustomerOrderController
         return response()->json($order, $response->getStatusCode());
     }
 
+    public function getOrderAndQuoteDetailsAsGuest(Request $request)
+    {
+        $response = $this->getOrderDetailsAsGuest($request);
+        $order = json_decode($response->getContent(), true);
+
+        $order = array_merge($order, $this->getQuoteDetails($order));
+
+        return response()->json($order, $response->getStatusCode());
+    }
+
     public function uploadCustomOrderImage(Request $request)
     {
         // Extract attributes from $request
