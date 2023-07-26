@@ -37,11 +37,11 @@ class ShoppingCartController extends CustomerShoppingCartController
 
     public function addQuotedItemsToCart(Request $request)
     {
-        $this->clearCart();
-
         $quote = CustomStoreQuote::where('quote_order_id', $request['order_id'])->first();
 
         if ($quote) {
+            $this->clearCart();
+
             foreach ($quote->cart_items as $cart_item) {
                 $modifiedRequest = $request->merge([
                     'product_variant_id' => $cart_item['product_variant_id'],
