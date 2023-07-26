@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\Commads\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\Commads\App\Http\Controllers\Admin\OrderManagementController;
+use StarsNet\Project\Commads\App\Http\Controllers\Admin\CustomerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,6 +30,21 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+// CUSTOMER
+Route::group(
+    ['prefix' => 'customers'],
+    function () {
+        $defaultController = CustomerController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/{id}/orders/all', [$defaultController, 'getOrdersAndQuotesByAllStores']);
+            }
+        );
     }
 );
 
