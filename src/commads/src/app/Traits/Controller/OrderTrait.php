@@ -6,6 +6,7 @@ namespace StarsNet\Project\Commads\App\Traits\Controller;
 
 use App\Constants\Model\ProductVariantDiscountType;
 use App\Models\DiscountTemplate;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
 use StarsNet\Project\Commads\App\Models\CustomOrderImage;
