@@ -33,36 +33,38 @@ class OrderController extends CustomerOrderController
 
     protected $model = Order::class;
 
-    public function appendQuoteDetails($order)
+    public function getQuoteDetails($order)
     {
         $orderId = $order['_id'];
 
         $quote = CustomStoreQuote::where('quote_order_id', $orderId)
             ->orWhere('purchase_order_id', $orderId)
             ->first();
-        $order['quote'] = $quote;
 
         if (!is_null($quote)) {
             $images = CustomOrderImage::where('order_id', $quote->quote_order_id)
                 ->orWhere('order_id', $quote->purchase_order_id)
                 ->latest()
                 ->first();
-            $order['quote']['is_paid'] = $quote['purchase_order_id'] ? Order::find($quote['purchase_order_id'])['is_paid'] : false;
+            $quote['is_paid'] = $quote['purchase_order_id'] ? Order::find($quote['purchase_order_id'])['is_paid'] : false;
         } else {
             $images = CustomOrderImage::where('order_id', $orderId)
                 ->latest()
                 ->first();
         }
 
-        $order['custom_order_images'] = $images;
+        return [
+            'quote' => $quote ? $quote->toArray() : $quote,
+            'custom_order_images' => $images
+        ];
     }
 
     public function getAllWithQuoteDetails(Request $request)
     {
         $orders = $this->getAll($request);
 
-        foreach ($orders as $order) {
-            $this->appendQuoteDetails($order);
+        foreach ($orders as $key => $order) {
+            $orders[$key] = array_merge($order->toArray(), $this->getQuoteDetails($order));
         }
 
         return $orders;
@@ -71,10 +73,9 @@ class OrderController extends CustomerOrderController
     public function getOrderAndQuoteDetailsAsCustomer(Request $request)
     {
         $response = $this->getOrderDetailsAsCustomer($request);
+        $order = json_decode($response->getContent(), true);
 
-        $order = json_decode(json_encode($response), true)['original'];
-
-        $this->appendQuoteDetails($order);
+        $order = array_merge($order, $this->getQuoteDetails($order));
 
         return response()->json($order, $response->getStatusCode());
     }
