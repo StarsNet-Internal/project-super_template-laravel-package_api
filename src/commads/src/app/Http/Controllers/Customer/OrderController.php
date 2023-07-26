@@ -33,13 +33,9 @@ class OrderController extends CustomerOrderController
 
     protected $model = Order::class;
 
-    public function getOrderAndQuoteDetailsAsCustomer(Request $request)
+    public function appendQuoteDetails($order)
     {
-        $orderId = $request->route('order_id');
-
-        $response = $this->getOrderDetailsAsCustomer($request);
-
-        $order = json_decode(json_encode($response), true)['original'];
+        $orderId = $order['_id'];
 
         $quote = CustomStoreQuote::where('quote_order_id', $orderId)
             ->orWhere('purchase_order_id', $orderId)
@@ -59,6 +55,26 @@ class OrderController extends CustomerOrderController
         }
 
         $order['custom_order_images'] = $images;
+    }
+
+    public function getAllWithQuoteDetails(Request $request)
+    {
+        $orders = $this->getAll($request);
+
+        foreach ($orders as $order) {
+            $this->appendQuoteDetails($order);
+        }
+
+        return $orders;
+    }
+
+    public function getOrderAndQuoteDetailsAsCustomer(Request $request)
+    {
+        $response = $this->getOrderDetailsAsCustomer($request);
+
+        $order = json_decode(json_encode($response), true)['original'];
+
+        $this->appendQuoteDetails($order);
 
         return response()->json($order, $response->getStatusCode());
     }
