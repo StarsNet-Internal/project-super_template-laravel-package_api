@@ -48,7 +48,7 @@ Route::group(
                 Route::get('/products/filter', [$defaultController, 'filterProductsByCategories'])->middleware(['pagination']);
 
                 Route::get('/related-products-urls', [$defaultController, 'getRelatedProductsUrls'])->middleware(['pagination']);
-                Route::get('/products/ids', [$defaultController, 'getProductsByIDs'])->name('products.ids')->middleware(['pagination']);
+                Route::get('/products/ids', [$defaultController, 'getProductsByIDs'])->name('commads.products.ids')->middleware(['pagination']);
             }
         );
 
