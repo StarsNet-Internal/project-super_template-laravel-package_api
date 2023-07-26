@@ -78,7 +78,8 @@ class OrderManagementController extends AdminOrderManagementController
 
         $items = [];
         foreach ($cartItems as $cartItem) {
-            $variant = ProductVariant::where('product_id', $cartItem['product_id'])
+            $variant = ProductVariant::where('remarks', $cartItem['product_variant_id'])->first() ??
+                ProductVariant::where('product_id', $cartItem['product_id'])
                 ->where('price', 1)
                 ->first();
             $items[] = [
