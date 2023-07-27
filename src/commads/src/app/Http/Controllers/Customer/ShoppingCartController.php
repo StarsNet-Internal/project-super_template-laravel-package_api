@@ -189,10 +189,10 @@ class ShoppingCartController extends CustomerShoppingCartController
 
         $urls = [];
         foreach ($productIDsSet as $IDsSet) {
-            $urls[] = str_replace('https', 'http', route('commads.products.ids', [
+            $urls[] = route('commads.products.ids', [
                 'store_id' => $this->store->_id,
                 'ids' => $IDsSet->all()
-            ]));
+            ]);
         }
 
         // Return url(s)
