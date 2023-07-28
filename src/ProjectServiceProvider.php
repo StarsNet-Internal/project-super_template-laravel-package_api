@@ -3,11 +3,6 @@
 namespace StarsNet\Project;
 
 use Illuminate\Support\ServiceProvider;
-
-// Import the controller here directly
-// use StarsNet\Project\App\Http\Controllers\Customer\FakerController;
-
-// Default Imports
 use Illuminate\Support\Facades\Route;
 
 class ProjectServiceProvider extends ServiceProvider
