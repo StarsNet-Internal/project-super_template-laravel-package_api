@@ -32,11 +32,16 @@ Route::group(
     function () {
         $defaultController = RefillInventoryRequestController::class;
 
-        Route::post('/', [$defaultController, 'createRefillInventoryRequest']);
-        Route::get('/all', [$defaultController, 'getRefillInventoryRequests'])->middleware(['pagination']);
-        Route::get('/{id}/details', [$defaultController, 'getRefillInventoryRequestDetails']);
-        Route::put('/{id}/approve', [$defaultController, 'approveRefillInventoryRequest']);
-        Route::put('/{id}/delete', [$defaultController, 'deleteRefillInventoryRequest']);
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/', [$defaultController, 'createRefillInventoryRequest']);
+                Route::get('/all', [$defaultController, 'getRefillInventoryRequests'])->middleware(['pagination']);
+                Route::get('/{id}/details', [$defaultController, 'getRefillInventoryRequestDetails']);
+                Route::put('/{id}/approve', [$defaultController, 'approveRefillInventoryRequest']);
+                Route::put('/{id}/delete', [$defaultController, 'deleteRefillInventoryRequest']);
+            }
+        );
     }
 );
 
@@ -45,7 +50,12 @@ Route::group(
     function () {
         $defaultController = ProductController::class;
 
-        Route::post('/', [$defaultController, 'createProduct']);
-        Route::get('/all', [$defaultController, 'getTenantProducts'])->middleware(['pagination']);
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/', [$defaultController, 'createProduct']);
+                Route::get('/all', [$defaultController, 'getTenantProducts'])->middleware(['pagination']);
+            }
+        );
     }
 );
