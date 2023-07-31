@@ -16,6 +16,7 @@ use StarsNet\Project\TripleGaga\App\Models\RefillInventoryRequest;
 use App\Models\Warehouse;
 use App\Traits\Controller\ProductTrait;
 use App\Traits\Controller\Sortable;
+use App\Traits\Controller\StoreDependentTrait;
 use App\Traits\StarsNet\TypeSenseSearchEngine;
 use App\Traits\Utils\Flattenable;
 use Illuminate\Http\Request;
@@ -24,7 +25,14 @@ use StarsNet\Project\TripleGaga\Traits\Controllers\RecursiveArrayModifier;
 
 class TenantController extends Controller
 {
-    use Flattenable, ProductTrait, Sortable, RecursiveArrayModifier;
+    use Flattenable, ProductTrait, Sortable, StoreDependentTrait, RecursiveArrayModifier;
+
+    protected $store;
+
+    public function __construct(Request $request)
+    {
+        $this->store = self::getStoreByValue($request->route('store_id'));
+    }
 
     public function getAllTenants(Request $request)
     {
@@ -58,7 +66,7 @@ class TenantController extends Controller
 
         // Extract attributes from $request
         $storeId = $request->store_id;
-        $store = Store::find($storeId);
+        $store = $this->store;
 
         // Get Hierarchy
         $hierarchy = optional(Hierarchy::whereModelID($store->_id)->first())->hierarchy;
@@ -98,7 +106,7 @@ class TenantController extends Controller
         }
 
         // Get all ProductCategory(s)
-        $store = Store::find($storeId);
+        $store = $this->store;
         if (count($categoryIDs) === 0) {
             $categoryIDs = $store
                 ->productCategories()
