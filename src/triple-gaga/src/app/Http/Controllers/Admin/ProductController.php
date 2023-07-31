@@ -47,7 +47,9 @@ class ProductController extends Controller
         $statuses = (array) $request->input('status', Status::$typesForAdmin);
 
         // Retrieve required models
-        $products = Product::where('created_by_account_id', $accountId)
+        $products = Product::when(!is_null($accountId), function ($query) use ($accountId) {
+            $query->where('created_by_account_id', $accountId);
+        })
             ->statusesAllowed(Status::$typesForAdmin, $statuses)
             ->with([
                 'variants' => function ($productVariant) {
