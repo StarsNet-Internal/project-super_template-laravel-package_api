@@ -65,14 +65,13 @@ class RefillInventoryRequestController extends Controller
 
     public function getRefillInventoryRequestDetails(Request $request)
     {
-        $refill = RefillInventoryRequest::find($request->route('id'))
-            ->with([
-                'requestedAccount',
-                'approvedAccount',
-                'requestedWarehouse',
-                'approvedWarehouse',
-                'items'
-            ])->first();
+        $refill = RefillInventoryRequest::with([
+            'requestedAccount',
+            'approvedAccount',
+            'requestedWarehouse',
+            'approvedWarehouse',
+            'items'
+        ])->find($request->route('id'));
 
         return $refill;
     }
