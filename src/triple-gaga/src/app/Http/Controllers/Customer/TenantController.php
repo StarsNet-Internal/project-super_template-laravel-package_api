@@ -27,13 +27,6 @@ class TenantController extends Controller
 {
     use Flattenable, ProductTrait, Sortable, StoreDependentTrait, RecursiveArrayModifier;
 
-    protected $store;
-
-    public function __construct(Request $request)
-    {
-        $this->store = self::getStoreByValue($request->route('store_id'));
-    }
-
     public function getAllTenants(Request $request)
     {
         $roleSlug = $request->input('role_slug', 'staff');
@@ -66,7 +59,7 @@ class TenantController extends Controller
 
         // Extract attributes from $request
         $storeId = $request->store_id;
-        $store = $this->store;
+        $store = $this->getStoreByValue($storeId);
 
         // Get Hierarchy
         $hierarchy = optional(Hierarchy::whereModelID($store->_id)->first())->hierarchy;
@@ -106,7 +99,7 @@ class TenantController extends Controller
         }
 
         // Get all ProductCategory(s)
-        $store = $this->store;
+        $store = $this->getStoreByValue($storeId);
         if (count($categoryIDs) === 0) {
             $categoryIDs = $store
                 ->productCategories()
