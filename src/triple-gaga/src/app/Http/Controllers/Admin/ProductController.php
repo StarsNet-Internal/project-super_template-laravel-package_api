@@ -5,6 +5,7 @@ namespace StarsNet\Project\TripleGaga\App\Http\Controllers\Admin;
 use App\Constants\Model\Status;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use StarsNet\Project\TripleGaga\App\Models\RefillInventoryRequest;
 use StarsNet\Project\TripleGaga\Traits\Controllers\RefillInventoryRequestTrait;
 
