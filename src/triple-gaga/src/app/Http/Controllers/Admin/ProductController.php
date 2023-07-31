@@ -70,4 +70,24 @@ class ProductController extends Controller
 
         return $products;
     }
+
+    public function getTenantProductVariants(Request $request)
+    {
+        // Extract attributes from $request
+        $accountId = $request->account_id;
+        $statuses = (array) $request->input('status', Status::$typesForAdmin);
+
+        // Retrieve required models
+        $productIds = Product::when(!is_null($accountId), function ($query) use ($accountId) {
+            $query->where('created_by_account_id', $accountId);
+        })
+            ->pluck('_id')
+            ->all();
+
+        $variants = ProductVariant::whereIn('product_id', $productIds)
+            ->statusesAllowed(Status::$typesForAdmin, $statuses)
+            ->get();
+
+        return $variants;
+    }
 }

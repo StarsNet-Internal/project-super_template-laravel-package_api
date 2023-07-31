@@ -82,6 +82,7 @@ Route::group(
             function () use ($defaultController) {
                 Route::post('/', [$defaultController, 'createProduct']);
                 Route::get('/all', [$defaultController, 'getTenantProducts'])->middleware(['pagination']);
+                Route::get('/variants/all', [$defaultController, 'getTenantProductVariants'])->middleware(['pagination']);
             }
         );
     }
