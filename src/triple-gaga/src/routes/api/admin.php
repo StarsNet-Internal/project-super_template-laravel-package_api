@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\RefillInventoryRequestController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\OrderManagementController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\CustomerController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\StaffManagementController;
 
@@ -81,6 +82,20 @@ Route::group(
             function () use ($defaultController) {
                 Route::post('/', [$defaultController, 'createProduct']);
                 Route::get('/all', [$defaultController, 'getTenantProducts'])->middleware(['pagination']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'orders'],
+    function () {
+        $defaultController = OrderManagementController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::put('/{id}/tracking-number', [$defaultController, 'updateTrackingNumber']);
             }
         );
     }
