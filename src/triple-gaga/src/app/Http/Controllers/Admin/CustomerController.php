@@ -42,7 +42,6 @@ class CustomerController extends Controller
             'user',
             'country',
             'gender',
-            'birthday',
             'last_logged_in_at',
             'email',
             'area_code',
@@ -60,7 +59,11 @@ class CustomerController extends Controller
             ], 404);
         }
 
+        $data = array_merge($customer->toArray(), [
+            'birthday' => $customer->account->birthday
+        ]);
+
         // Return Customer
-        return response()->json($customer, 200);
+        return response()->json($data, 200);
     }
 }
