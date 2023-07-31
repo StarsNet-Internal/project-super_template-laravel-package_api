@@ -2,9 +2,10 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
-use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\TestingController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\RefillInventoryRequestController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\StaffManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -57,5 +58,16 @@ Route::group(
                 Route::get('/all', [$defaultController, 'getTenantProducts'])->middleware(['pagination']);
             }
         );
+    }
+);
+
+Route::group(
+    ['prefix' => 'staff'],
+    function () {
+        $defaultController = StaffManagementController::class;
+
+        Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::put('/tenants/{account_id}/details', [$defaultController, 'updateTenantDetails']);
+        });
     }
 );
