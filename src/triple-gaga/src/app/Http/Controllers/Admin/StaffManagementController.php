@@ -43,6 +43,8 @@ class StaffManagementController extends Controller
     {
         // Extract attributes from $request
         $accountId = $request->route('id');
+        $start = $request->start_datetime;
+        $end = $request->end_datetime;
 
         $productIds = Product::when(!is_null($accountId), function ($query) use ($accountId) {
             $query->where('created_by_account_id', $accountId);
@@ -54,7 +56,9 @@ class StaffManagementController extends Controller
             ->all();
 
         // Get Order(s)
-        $orders = Order::whereIn('cart_items.product_variant_id', $productVariantIds)->get();
+        $orders = Order::whereIn('cart_items.product_variant_id', $productVariantIds)
+            ->whereBetween('created_at', [$start, $end])
+            ->get();
 
         foreach ($orders as $order) {
             $filteredCartItems = $order->cart_items->filter(function ($cartItem) use ($productVariantIds) {
