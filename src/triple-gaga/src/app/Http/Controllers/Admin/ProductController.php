@@ -76,7 +76,7 @@ class ProductController extends Controller
     {
         // Extract attributes from $request
         $accountId = $request->account_id;
-        $statuses = (array) $request->input('status', Status::$typesForAdmin);
+        $statuses = (array) $request->input('status', Status::$types);
 
         // Retrieve required models
         $productIds = Product::when(!is_null($accountId), function ($query) use ($accountId) {
@@ -86,7 +86,7 @@ class ProductController extends Controller
             ->all();
 
         $variants = ProductVariant::whereIn('product_id', $productIds)
-            ->statusesAllowed(Status::$typesForAdmin, $statuses)
+            ->statusesAllowed(Status::$types, $statuses)
             ->get();
 
         return $variants;

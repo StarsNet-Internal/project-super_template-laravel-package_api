@@ -50,6 +50,8 @@ Route::group(
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
             Route::put('/tenants/{account_id}/details', [$defaultController, 'updateTenantDetails']);
+
+            Route::get('/{id}/orders/all', [$defaultController, 'getOrdersByAllStores']);
         });
     }
 );
