@@ -22,6 +22,7 @@ use App\Traits\Controller\AuthenticationTrait;
 use App\Traits\Controller\ShoppingCartTrait;
 use App\Traits\Utils\RoundingTrait;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class StaffManagementController extends Controller
 {
@@ -43,8 +44,8 @@ class StaffManagementController extends Controller
     {
         // Extract attributes from $request
         $accountId = $request->route('id');
-        $start = $request->start_datetime;
-        $end = $request->end_datetime;
+        $start = Carbon::create($request->start_datetime);
+        $end = Carbon::create($request->end_datetime);
 
         $productIds = Product::when(!is_null($accountId), function ($query) use ($accountId) {
             $query->where('created_by_account_id', $accountId);
