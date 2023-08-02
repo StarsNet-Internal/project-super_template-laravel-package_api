@@ -3,7 +3,6 @@
 namespace StarsNet\Project\WhiskyWhiskers\App\Models;
 
 // Constants
-use App\Constants\CollectionName;
 use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\Status;
 
@@ -23,9 +22,10 @@ use Jenssegers\Mongodb\Relations\EmbedsMany;
 use Jenssegers\Mongodb\Relations\EmbedsOne;
 
 use App\Models\Account;
-use App\Models\Warehouse;
+use App\Models\Product;
+use App\Models\ProductVariant;
 
-class RefillInventoryRequest extends Eloquent
+class AuctionRequest extends Eloquent
 {
     use ObjectIDTrait,
         StatusFieldTrait;
@@ -42,21 +42,19 @@ class RefillInventoryRequest extends Eloquent
      *
      * @var string
      */
-    protected $collection = 'refill_inventory_requests';
+    protected $collection = 'auction_requests';
 
     protected $attributes = [
         // Relationships
         'requested_by_account_id' => null,
         'approved_by_account_id' => null,
-        'requested_warehouse_id' => null,
-        'approved_warehouse_id' => null,
+        'product_id' => null,
+        'product_variant_id' => null,
 
         // Default
-        'items' => [],
-        'requested_items_qty' => 0,
-        'approved_items_qty' => 0,
         'status' => Status::ACTIVE,
         'reply_status' => ReplyStatus::PENDING,
+        'remarks' => null,
 
         // Timestamps
         'deleted_at' => null
@@ -100,27 +98,17 @@ class RefillInventoryRequest extends Eloquent
         );
     }
 
-    public function requestedWarehouse(): BelongsTo
+    public function product(): BelongsTo
     {
         return $this->belongsTo(
-            Warehouse::class,
-            'requested_warehouse_id'
+            Product::class,
         );
     }
 
-    public function approvedWarehouse(): BelongsTo
+    public function productVariant(): BelongsTo
     {
         return $this->belongsTo(
-            Warehouse::class,
-            'approved_warehouse_id'
-        );
-    }
-
-    public function items(): EmbedsMany
-    {
-        return $this->embedsMany(
-            RefillInventoryRequestItem::class,
-            'items'
+            ProductVariant::class,
         );
     }
 
@@ -131,6 +119,18 @@ class RefillInventoryRequest extends Eloquent
     // -----------------------------
     // Accessor Begins
     // -----------------------------
+
+    public function getProductInfoAttribute(): array
+    {
+        $account = $this->requestedAccount()->first();
+
+        return [
+            'user_id' => optional($account)->user->id,
+            'account_id' => optional($account)->_id,
+            'username' => optional($account)->username,
+            'avatar' => optional($account)->avatar
+        ];
+    }
 
     public function getRequestedAccountAttribute(): array
     {
@@ -176,22 +176,20 @@ class RefillInventoryRequest extends Eloquent
         return $this->save();
     }
 
-    public function associateRequestedWarehouse(Warehouse $warehouse): bool
-    {
-        $this->requestedWarehouse()->associate($warehouse);
-        return $this->save();
-    }
-
-    public function associateApprovedWarehouse(Warehouse $warehouse): bool
-    {
-        $this->approvedWarehouse()->associate($warehouse);
-        return $this->save();
-    }
-
     public function updateReplyStatus(string $status): bool
     {
         $this->reply_status = $status;
         return $this->save();
+    }
+
+    public function getProduct(): Product
+    {
+        return $this->product()->first();
+    }
+
+    public function getProductVariant(): ProductVariant
+    {
+        return $this->productVariant()->first();
     }
 
     // -----------------------------
