@@ -48,7 +48,7 @@ Route::group(
 
                 Route::get('/categories/all', [$defaultController, 'getAllDealCategories'])->middleware(['pagination']);
                 Route::get('/categories/all/hierachy', [$defaultController, 'getAllDealCategoryHierarchy'])->middleware(['pagination']);
-                Route::get('/products/filter', [$defaultController, 'filterDealsByCategories'])->middleware(['pagination']);
+                Route::get('/products/filter', [$defaultController, 'filterDealsByCategories'])->middleware(['capi_pagination']);
                 Route::get('/products/{deal_id}/details', [$defaultController, 'getDealDetails']);
                 Route::get('/products/{product_id}/reviews', [$defaultController, 'getDealReviews'])->middleware(['pagination']);
 

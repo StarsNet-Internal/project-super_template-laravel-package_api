@@ -10,6 +10,8 @@ use Illuminate\Support\ServiceProvider;
 // Default Imports
 use Illuminate\Support\Facades\Route;
 
+use StarsNet\Project\Capi\App\Http\Middleware\Pagination;
+
 class ProjectServiceProvider extends ServiceProvider
 {
     protected $namespace = 'StarsNet\Project\Capi\App\Http\Controllers';
@@ -150,4 +152,8 @@ class ProjectServiceProvider extends ServiceProvider
     {
         // $this->app->make(FakerController::class);
     }
+
+    protected $routeMiddleware = [
+        'capi_pagination' => Pagination::class,
+    ];
 }
