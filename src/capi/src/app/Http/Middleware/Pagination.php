@@ -27,7 +27,7 @@ class Pagination
             $currentData = collect($currentData);
 
             // Sort collection
-            $collection = $this->sortCollectionWithRequest($currentData, $request);
+            $collection = $this->caseInsensitiveSortCollectionWithRequest($currentData, $request);
 
             // Retrieve paginated result
             $paginator = $this->paginateCollectionWithRequest($collection, $request);

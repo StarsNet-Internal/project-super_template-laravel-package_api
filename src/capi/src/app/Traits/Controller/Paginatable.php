@@ -46,7 +46,7 @@ trait Paginatable
      * ---------------------------------------------------------------------------------------------------------
      * @return \Illuminate\Support\Collection   Sorted collection, fallback sort is by "created_at" in "desc" order. 
      */
-    private function sortCollectionWithRequest(Collection $collection, Request $request): Collection
+    private function caseInsensitiveSortCollectionWithRequest(Collection $collection, Request $request): Collection
     {
         // Extract pagination inputs
         $sortBy = $request->input('sort_by', 'created_at');
