@@ -151,9 +151,18 @@ class ProjectServiceProvider extends ServiceProvider
     public function boot()
     {
         // $this->app->make(FakerController::class);
+        $this->registerMiddleware();
     }
 
     protected $routeMiddleware = [
         'capi_pagination' => Pagination::class,
     ];
+
+    protected function registerMiddleware()
+    {
+        $router = $this->app['router'];
+        foreach ($this->routeMiddleware as $key => $middleware) {
+            $router->aliasMiddleware($key, $middleware);
+        }
+    }
 }
