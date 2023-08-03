@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\URL;
 
 trait Paginatable
 {
-    private function sortCollection(
+    private function caseInsensitiveSortCollection(
         Collection $collection,
         string $sortBy = 'created_at',
         string $sortOrder = 'desc'
@@ -53,6 +53,6 @@ trait Paginatable
         $sortOrder = $request->input('sort_order', 'desc');
         $sortOrder = strtolower($sortOrder);
 
-        return $this->sortCollection($collection, $sortBy, $sortOrder);
+        return $this->caseInsensitiveSortCollection($collection, $sortBy, $sortOrder);
     }
 }
