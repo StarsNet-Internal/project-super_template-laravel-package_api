@@ -33,6 +33,19 @@ class ConsignmentRequestController extends Controller
         return $forms;
     }
 
+    public function getConsignmentRequestDetails(Request $request)
+    {
+        $request = ConsignmentRequest::with([
+            'requestedAccount',
+            'approvedAccount',
+            'requestedWarehouse',
+            'approvedWarehouse',
+            'items'
+        ])->find($request->route('id'));
+
+        return $request;
+    }
+
     public function approveConsignmentRequest(Request $request)
     {
         $form = ConsignmentRequest::find($request->route('id'));

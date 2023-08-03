@@ -42,6 +42,8 @@ Route::group(
         $defaultController = AuctionRequestController::class;
 
         Route::get('/all', [$defaultController, 'getAllAuctionRequests'])->middleware(['pagination']);
+        Route::get('/{id}/details', [$defaultController, 'getConsignmentRequestDetails']);
+
         Route::put('/{id}/approve', [$defaultController, 'approveAuctionRequest']);
     }
 );
