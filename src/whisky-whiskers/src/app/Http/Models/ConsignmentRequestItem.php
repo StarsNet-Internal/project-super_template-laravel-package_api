@@ -38,11 +38,12 @@ class ConsignmentRequestItem extends Eloquent
 
     protected $attributes = [
         // Relationships
-        'product_id' => null,
+        // 'product_id' => null,
 
         // Default
         'title' => null,
         'description' => null,
+        'images' => [],
 
         'is_approved' => false,
         'evaluated_price' => 0,
@@ -58,9 +59,9 @@ class ConsignmentRequestItem extends Eloquent
 
     protected $appends = [
         // Product-related
-        'product_title',
-        'product_variant_title',
-        'image'
+        // 'product_title',
+        // 'product_variant_title',
+        // 'image'
     ];
 
     /**
@@ -77,12 +78,12 @@ class ConsignmentRequestItem extends Eloquent
     // Relationship Begins
     // -----------------------------
 
-    public function product(): BelongsTo
-    {
-        return $this->belongsTo(
-            Product::class,
-        );
-    }
+    // public function product(): BelongsTo
+    // {
+    //     return $this->belongsTo(
+    //         Product::class,
+    //     );
+    // }
 
     // -----------------------------
     // Relationship Ends
@@ -92,18 +93,18 @@ class ConsignmentRequestItem extends Eloquent
     // Accessor Begins
     // -----------------------------
 
-    public function getProductTitleAttribute(): ?array
-    {
-        return optional($this->getProduct())->title;
-    }
+    // public function getProductTitleAttribute(): ?array
+    // {
+    //     return optional($this->getProduct())->title;
+    // }
 
-    public function getImageAttribute(): ?string
-    {
-        $productImages = optional($this->getProduct())->images;
-        if (!is_null($productImages) && count($productImages) > 0) return $productImages[0];
+    // public function getImageAttribute(): ?string
+    // {
+    //     $productImages = optional($this->getProduct())->images;
+    //     if (!is_null($productImages) && count($productImages) > 0) return $productImages[0];
 
-        return null;
-    }
+    //     return null;
+    // }
 
     // -----------------------------
     // Accessor Ends
@@ -113,16 +114,16 @@ class ConsignmentRequestItem extends Eloquent
     // Action Begins
     // -----------------------------
 
-    public function associateProduct(Product $product): bool
-    {
-        $this->product()->associate($product);
-        return $this->save();
-    }
+    // public function associateProduct(Product $product): bool
+    // {
+    //     $this->product()->associate($product);
+    //     return $this->save();
+    // }
 
-    public function getProduct(): Product
-    {
-        return $this->product()->first();
-    }
+    // public function getProduct(): Product
+    // {
+    //     return $this->product()->first();
+    // }
 
     // -----------------------------
     // Action Ends

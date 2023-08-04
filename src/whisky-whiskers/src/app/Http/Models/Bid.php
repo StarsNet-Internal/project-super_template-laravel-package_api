@@ -37,6 +37,13 @@ class Bid extends Eloquent
      */
     protected $connection = 'mongodb';
 
+    /**
+     * The database collection used by the model.
+     *
+     * @var string
+     */
+    protected $collection = 'bids';
+
     protected $attributes = [
         // Relationships
         'account_id' => null,
