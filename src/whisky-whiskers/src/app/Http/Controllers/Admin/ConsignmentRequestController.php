@@ -38,8 +38,6 @@ class ConsignmentRequestController extends Controller
         $request = ConsignmentRequest::with([
             'requestedAccount',
             'approvedAccount',
-            'requestedWarehouse',
-            'approvedWarehouse',
             'items'
         ])->find($request->route('id'));
 
