@@ -2,10 +2,13 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionController;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuthenticationController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\BidController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ConsignmentRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\OrderController;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ProductController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\TestingController;
 
 /*
