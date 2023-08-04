@@ -60,8 +60,13 @@ class ConsignmentRequestController extends Controller
             if (is_null($formItem)) continue;
             unset($item['_id']);
             $formItem->update($item);
-            if ($formItem->requested_qty <= $item['approved_qty']) $approvedItemCount++;
+            // if ($formItem->requested_qty <= $item['approved_qty']) $approvedItemCount++;
+            if ($item['is_approved'] == true) $approvedItemCount++;
         }
+        $form->update([
+            'approved_items_qty' => $approvedItemCount,
+            'reply_status' => $request->reply_status
+        ]);
 
         return response()->json([
             'message' => 'Approved RefillInventoryRequest successfully',
