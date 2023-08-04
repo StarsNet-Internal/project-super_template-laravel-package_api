@@ -18,22 +18,26 @@ trait Paginatable
     ): Collection {
         if (strtoupper($sortBy) === 'DEFAULT') return $collection;
 
-        $sortedCollection = $collection->toArray();
-
-        usort($sortedCollection, function ($a, $b) use ($sortBy, $sortOrder) {
+        $sortFunction = function ($a, $b) use ($sortBy) {
             $valueA = data_get($a, $sortBy);
             $valueB = data_get($b, $sortBy);
 
-            // Custom sorting logic to sort uppercase letters before lowercase letters
-            if (is_string($valueA) && is_string($valueB)) {
-                return strcmp(strtoupper($valueA), strtoupper($valueB));
+            // Convert values to float if they are numeric
+            if (is_numeric($valueA) && is_numeric($valueB)) {
+                $valueA = (float) $valueA;
+                $valueB = (float) $valueB;
             }
 
-            // For other data types, use the default comparison
-            return $valueA <=> $valueB;
-        });
+            // Perform a numeric comparison if both values are numeric
+            if (is_numeric($valueA) && is_numeric($valueB)) {
+                return $valueA - $valueB;
+            }
 
-        return $sortOrder === 'asc' ? collect($sortedCollection) : collect(array_reverse($sortedCollection));
+            // Perform a case-insensitive string comparison otherwise
+            return strcasecmp($valueA, $valueB);
+        };
+
+        return $sortOrder === 'asc' ? $collection->sort($sortFunction) : $collection->sort($sortFunction)->reverse();
     }
 
     /**
