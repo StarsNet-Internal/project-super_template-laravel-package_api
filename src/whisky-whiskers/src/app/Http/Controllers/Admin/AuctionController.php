@@ -34,11 +34,24 @@ class AuctionController extends Controller
             'is_system' => true,
         ]);
 
+        // Create one default Category
+        $categoryTitle = 'all_products' . $store->_id;;
+        $category = $store->productCategories()->create([
+            'slug' => Str::slug($categoryTitle),
+            'title' => [
+                'en' => $categoryTitle,
+                'zh' => $categoryTitle,
+                'cn' => $categoryTitle
+            ],
+            'is_system' => true,
+        ]);
+
         // Return success message
         return response()->json([
-            'message' => 'Created New Store successfully',
+            'message' => 'Created new Auction successfully',
             '_id' => $store->_id,
-            'warehouse_id' => $warehouse->_id
+            'warehouse_id' => $warehouse->_id,
+            'category_id' => $category->_id,
         ], 200);
     }
 }

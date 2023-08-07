@@ -24,6 +24,7 @@ use Jenssegers\Mongodb\Relations\EmbedsOne;
 use App\Models\Account;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Store;
 
 class AuctionRequest extends Eloquent
 {
@@ -50,8 +51,12 @@ class AuctionRequest extends Eloquent
         'approved_by_account_id' => null,
         'product_id' => null,
         'product_variant_id' => null,
+        'store_id' => null,
 
         // Default
+        'starting_price' => 0,
+        'reserve_price' => 0,
+
         'status' => Status::ACTIVE,
         'reply_status' => ReplyStatus::PENDING,
         'remarks' => null,
@@ -109,6 +114,13 @@ class AuctionRequest extends Eloquent
     {
         return $this->belongsTo(
             ProductVariant::class,
+        );
+    }
+
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(
+            Store::class,
         );
     }
 
@@ -173,6 +185,12 @@ class AuctionRequest extends Eloquent
     public function associateApprovedAccount(Account $account): bool
     {
         $this->approvedAccount()->associate($account);
+        return $this->save();
+    }
+
+    public function associateStore(Store $store): bool
+    {
+        $this->store()->associate($store);
         return $this->save();
     }
 

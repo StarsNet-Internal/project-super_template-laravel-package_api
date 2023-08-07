@@ -51,7 +51,7 @@ class ConsignmentRequestController extends Controller
         }
 
         return response()->json([
-            'message' => 'Approved RefillInventoryRequest successfully',
+            'message' => 'Approved ConsignmentRequest successfully',
             '_id' => $form->_id,
             'requested_items_qty' => $form->requested_items_qty,
             'approved_items_qty' => $approvedItemCount

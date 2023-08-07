@@ -14,14 +14,38 @@ class AuctionController extends Controller
 {
     public function getAllAuctions(Request $request)
     {
-        $auctions = Store::whereType(StoreType::OFFLINE)->statuses([Status::ACTIVE, Status::ARCHIVED])->get();
+        // Extract attributes from $request
+        $statuses = (array) $request->input('status', [Status::ACTIVE, Status::ARCHIVED]);
+
+        // Get Auction Store(s)
+        $auctions = Store::whereType(StoreType::OFFLINE)
+            ->statuses($statuses)
+            ->get();
+
         return $auctions;
     }
 
     public function getAuctionDetails(Request $request)
     {
-        $storeId = $request->route('store_id');
+        // Extract attributes from $request
+        $storeId = $request->route('auction_id');
+
+        // Get Auction Store(s)
         $auction = Store::find($storeId);
+
+        if (is_null($auction)) {
+            return response()->json([
+                'message' => 'Auction not found'
+            ], 404);
+        }
+
+        if (!in_array($auction->status, [Status::ACTIVE, Status::ARCHIVED])) {
+            return response()->json([
+                'message' => 'Auction is not available for public'
+            ], 404);
+        }
+
+        // Return Auction Store
         return $auction;
     }
 }

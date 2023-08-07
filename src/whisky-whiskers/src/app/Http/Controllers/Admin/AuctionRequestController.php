@@ -2,6 +2,7 @@
 
 namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin;
 
+use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\Status;
 use App\Constants\Model\StoreType;
 use App\Http\Controllers\Controller;
@@ -27,7 +28,7 @@ class AuctionRequestController extends Controller
         return $query->with([
             'requestedAccount',
             'approvedAccount',
-            'product_info'
+            'productInfo'
         ])->get();
     }
 
@@ -42,6 +43,10 @@ class AuctionRequestController extends Controller
         $form = AuctionRequest::find($request->route('id'));
 
         $form->update(['reply_status' => $request->reply_status]);
+
+        if ($request->reply_status == ReplyStatus::APPROVED) {
+            // Do something, transfer inventory
+        }
 
         return response()->json([
             'message' => 'Updated AuctionRequest successfully',
