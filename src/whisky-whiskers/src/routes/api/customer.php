@@ -2,10 +2,6 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
-<<<<<<< HEAD
-
-=======
->>>>>>> 64037a6afb607ba95589127f53c88cc1064f164b
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuthenticationController;
