@@ -28,7 +28,7 @@ class AuctionRequestController extends Controller
         return $query->with([
             'requestedAccount',
             'approvedAccount',
-            'productInfo'
+            'product',
         ])->get();
     }
 

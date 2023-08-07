@@ -41,8 +41,13 @@ Route::group(
     function () {
         $defaultController = AuctionRequestController::class;
 
-        Route::get('/all', [$defaultController, 'getAllAuctionRequests'])->middleware(['pagination']);
-        Route::put('/{id}/approve', [$defaultController, 'approveAuctionRequest']);
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllAuctionRequests'])->middleware(['pagination']);
+                Route::put('/{id}/approve', [$defaultController, 'approveAuctionRequest']);
+            }
+        );
     }
 );
 
@@ -51,7 +56,14 @@ Route::group(
     function () {
         $defaultController = ConsignmentRequestController::class;
 
-        Route::get('/all', [$defaultController, 'getAllConsignmentRequests'])->middleware(['pagination']);
-        Route::put('/{id}/approve', [$defaultController, 'approveConsignmentRequest']);
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllConsignmentRequests'])->middleware(['pagination']);
+                Route::get('/{id}/details', [$defaultController, 'getConsignmentRequestDetails']);
+
+                Route::put('/{id}/approve', [$defaultController, 'approveConsignmentRequest']);
+            }
+        );
     }
 );

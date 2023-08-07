@@ -33,6 +33,17 @@ class ConsignmentRequestController extends Controller
         return $forms;
     }
 
+    public function getConsignmentRequestDetails(Request $request)
+    {
+        $request = ConsignmentRequest::with([
+            'requestedAccount',
+            'approvedAccount',
+            'items'
+        ])->find($request->route('id'));
+
+        return $request;
+    }
+
     public function approveConsignmentRequest(Request $request)
     {
         $form = ConsignmentRequest::find($request->route('id'));
@@ -47,8 +58,13 @@ class ConsignmentRequestController extends Controller
             if (is_null($formItem)) continue;
             unset($item['_id']);
             $formItem->update($item);
-            if ($formItem->requested_qty <= $item['approved_qty']) $approvedItemCount++;
+            // if ($formItem->requested_qty <= $item['approved_qty']) $approvedItemCount++;
+            if ($item['is_approved'] == true) $approvedItemCount++;
         }
+        $form->update([
+            'approved_items_qty' => $approvedItemCount,
+            'reply_status' => $request->reply_status
+        ]);
 
         return response()->json([
             'message' => 'Approved ConsignmentRequest successfully',

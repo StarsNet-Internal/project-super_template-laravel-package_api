@@ -2,7 +2,10 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 64037a6afb607ba95589127f53c88cc1064f164b
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuthenticationController;
@@ -47,8 +50,13 @@ Route::group(
     function () {
         $defaultController = AuctionRequestController::class;
 
-        Route::post('/', [$defaultController, 'createAuctionRequest']);
-        Route::get('/all', [$defaultController, 'getAllAuctionRequests'])->middleware(['pagination']);
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/', [$defaultController, 'createAuctionRequest']);
+                Route::get('/all', [$defaultController, 'getAllAuctionRequests'])->middleware(['pagination']);
+            }
+        );
     }
 );
 
@@ -57,7 +65,12 @@ Route::group(
     function () {
         $defaultController = AuthenticationController::class;
 
-        Route::post('/migrate', [$defaultController, 'migrateToRegistered']);
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/migrate', [$defaultController, 'migrateToRegistered']);
+            }
+        );
     }
 );
 
@@ -66,8 +79,13 @@ Route::group(
     function () {
         $defaultController = BidController::class;
 
-        Route::post('/', [$defaultController, 'createBid']);
-        Route::get('/all', [$defaultController, 'getAllBids'])->middleware(['pagination']);
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/', [$defaultController, 'createBid']);
+                Route::get('/all', [$defaultController, 'getAllBids'])->middleware(['pagination']);
+            }
+        );
     }
 );
 
@@ -76,8 +94,13 @@ Route::group(
     function () {
         $defaultController = ConsignmentRequestController::class;
 
-        Route::post('/', [$defaultController, 'createConsignmentRequest']);
-        Route::get('/all', [$defaultController, 'getAllConsignmentRequests'])->middleware(['pagination']);
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/', [$defaultController, 'createConsignmentRequest']);
+                Route::get('/all', [$defaultController, 'getAllConsignmentRequests'])->middleware(['pagination']);
+            }
+        );
     }
 );
 
@@ -86,7 +109,12 @@ Route::group(
     function () {
         $defaultController = OrderController::class;
 
-        Route::post('/{order_id}/payment', [$defaultController, 'payPendingOrderByOnlineMethod']);
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/{order_id}/payment', [$defaultController, 'payPendingOrderByOnlineMethod']);
+            }
+        );
     }
 );
 
@@ -96,7 +124,12 @@ Route::group(
     function () {
         $defaultController = ProductController::class;
 
-        Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
-        Route::get('/{product_id}/details', [$defaultController, 'getProductDetails']);
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
+                Route::get('/{product_id}/details', [$defaultController, 'getProductDetails']);
+            }
+        );
     }
 );

@@ -17,7 +17,7 @@ class AuctionRequestController extends Controller
     {
         $account = $this->account();
 
-        $forms = AuctionRequest::where('account_id', $account->_id)->get();
+        $forms = AuctionRequest::where('requested_by_account_id', $account->_id)->get();
         return $forms;
     }
 
