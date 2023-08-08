@@ -2,7 +2,7 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
-
+use StarsNet\Project\HeiFei\App\Http\Controllers\Admin\CashflowController;
 use StarsNet\Project\HeiFei\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\HeiFei\App\Http\Controllers\Admin\OrderController;
 use StarsNet\Project\HeiFei\App\Http\Controllers\Admin\ProductController;
@@ -44,5 +44,15 @@ Route::group(
 
         Route::post('/', [$defaultController, 'createProduct']);
         Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
+        Route::get('/variants/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
+    }
+);
+
+Route::group(
+    ['prefix' => 'cashflow'],
+    function () {
+        $defaultController = CashflowController::class;
+
+        Route::get('/all', [$defaultController, 'getCashFlowDataByDateRange']);
     }
 );

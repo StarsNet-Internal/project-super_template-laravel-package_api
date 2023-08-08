@@ -26,6 +26,7 @@ class OrderController extends Controller
         $productVariantID = $request->product_variant_id;
         $qty = $request->input('qty', 1);
         $newTotalPrice = $request->input('amount_received', 0);
+        $soldType = $request->sold_type;
 
         // Validate
         $account = $this->account();
@@ -57,7 +58,10 @@ class OrderController extends Controller
             'discounts' => $checkoutDetails['discounts'],
             'calculations' => $checkoutDetails['calculations'],
             'amount_received' => $newTotalPrice,
-            'change' => $priceDifference
+            'change' => $priceDifference,
+            'sold_type' => $soldType,
+            'is_mobile' => $variant->is_mobile ?? false,
+            'mobile_sold_qty' => $variant->is_mobile ? $qty : 0
         ];
         $order = $customer->createOrder($orderAttributes, $store);
         $order->update(['created_by_account_id' => $account->_id]);
