@@ -24,8 +24,6 @@ use StarsNet\Project\ShoppingCart\App\Http\Controllers\Customer\ShoppingCartCont
 |--------------------------------------------------------------------------
 */
 
-
-
 Route::group(
     ['prefix' => 'stores'],
     function () {

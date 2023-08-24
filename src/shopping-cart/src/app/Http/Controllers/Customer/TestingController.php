@@ -11,8 +11,6 @@ class TestingController extends Controller
 {
     public function healthCheck(Request $request)
     {
-
-
         return response()->json([
             'message' => 'Healthy'
         ], 200);
