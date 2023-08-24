@@ -1,15 +1,17 @@
 <?php
 
-namespace StarsNet\Project;
+namespace StarsNet\Project\ShoppingCart;
 
 use Illuminate\Support\ServiceProvider;
+
+// Default Imports
 use Illuminate\Support\Facades\Route;
 
 class ProjectServiceProvider extends ServiceProvider
 {
-    protected $namespace = 'StarsNet\Project\App\Http\Controllers';
+    protected $namespace = 'StarsNet\Project\ShoppingCart\App\Http\Controllers';
 
-    protected $routePrefix = 'project';
+    protected $routePrefix = 'service-fee';
 
     /**
      * Register services.
@@ -18,14 +20,8 @@ class ProjectServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // Config
-        // $this->mergeConfigFrom(__DIR__ . '/config/database.php', 'contactus_database');
-
         // Routes
         $this->loadRoutesFrom(__DIR__ . '/routes/api.php');
-
-        // Migrations
-        // $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
     }
 
     protected function loadRoutesFrom($path): void
@@ -40,7 +36,6 @@ class ProjectServiceProvider extends ServiceProvider
         // Define routes to be loaded from
         $getRoutesCallback = function ($router) {
             $this->getAdminRoutes();
-            // $this->getCommandRoutes();
             $this->getCustomerRoutes();
         };
 
@@ -59,27 +54,6 @@ class ProjectServiceProvider extends ServiceProvider
         $routeAttributes = [
             'prefix' => 'admin' . '/' . $this->routePrefix,
             'namespace' => 'Admin'
-        ];
-
-        // Include routes to be loaded from
-        $requireRoutes = function () use ($path) {
-            require $path;
-        };
-
-        // Define routes to be loaded from
-        $routes = Route::group($routeAttributes, $requireRoutes);
-
-        return $routes;
-    }
-
-    private function getCommandRoutes()
-    {
-        $path = __DIR__ . '/routes/api/command.php';
-
-        // Define route attributes
-        $routeAttributes = [
-            'prefix' => 'command' . '/' . $this->routePrefix,
-            'namespace' => 'Command'
         ];
 
         // Include routes to be loaded from
@@ -121,6 +95,5 @@ class ProjectServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        // $this->app->make(FakerController::class);
     }
 }
