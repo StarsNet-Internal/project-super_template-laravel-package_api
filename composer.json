@@ -14,7 +14,9 @@
       "StarsNet\\Project\\CasaModernism\\": "src/casa-modernism/src/",
       "StarsNet\\Project\\Commads\\": "src/commads/src/",
       "StarsNet\\Project\\Course\\": "src/course/src/",
-      "StarsNet\\Project\\WhiskyWhiskers\\": "src/whisky-whiskers/src/"
+      "StarsNet\\Project\\WhiskyWhiskers\\": "src/whisky-whiskers/src/",
+      "StarsNet\\Project\\HeiFei\\": "src/heifei/src/",
+      "StarsNet\\Project\\ShoppingCart\\": "src/shopping-cart/src/"
     }
   },
   "extra": {
@@ -28,7 +30,9 @@
         "StarsNet\\Project\\CasaModernism\\ProjectServiceProvider",
         "StarsNet\\Project\\Commads\\ProjectServiceProvider",
         "StarsNet\\Project\\Course\\ProjectServiceProvider",
-        "StarsNet\\Project\\WhiskyWhiskers\\ProjectServiceProvider"
+        "StarsNet\\Project\\WhiskyWhiskers\\ProjectServiceProvider",
+        "StarsNet\\Project\\HeiFei\\ProjectServiceProvider",
+        "StarsNet\\Project\\ShoppingCart\\ProjectServiceProvider"
       ]
     }
   }
