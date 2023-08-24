@@ -11,13 +11,10 @@ class TestingController extends Controller
 {
     public function healthCheck(Request $request)
     {
-        // Log::info($request->header());
-        // Log::info(auth()->user());
-        // return $request->header();
+
 
         return response()->json([
-            'message' =>
-            $request,
+            'message' => 'Healthy'
         ], 200);
     }
 }

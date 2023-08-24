@@ -3,8 +3,9 @@
 // Default Imports
 use Illuminate\Support\Facades\Route;
 
-use StarsNet\Project\ShoppingCart\App\Http\Controllers\Customer\TestingController;
+use StarsNet\Project\ShoppingCart\App\Http\Controllers\Customer\CheckoutController;
 use StarsNet\Project\ShoppingCart\App\Http\Controllers\Customer\ShoppingCartController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -25,38 +26,16 @@ use StarsNet\Project\ShoppingCart\App\Http\Controllers\Customer\ShoppingCartCont
 
 
 
-Route::get('/checkout', function () {
-    return 'tovi new route';
-});
-
 Route::group(
     ['prefix' => 'stores'],
     function () {
-        $defaultController = ShoppingCartController::class;
-
 
         Route::group(
             ['middleware' => 'auth:api'],
-            function () use ($defaultController) {
-                Route::post('/{store_id}/checkouts', [$defaultController, 'checkout']);
+            function () {
+                Route::post('/{store_id}/checkouts', [CheckoutController::class, 'checkout']);
+                Route::post('/{store_id}/shopping-cart/all', [ShoppingCartController::class, 'getAll']);
             }
         );
-    }
-);
-
-
-
-// STORE
-Route::group(
-    ['prefix' => '/stores/{store_id}/'],
-    function () {
-        // SHOPPING_CART
-        Route::group(['prefix' => 'shopping-cart'], function () {
-            $defaultController = ShoppingCartController::class;
-
-            Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
-                Route::post('/checkout', [$defaultController, 'checkOut']);
-            });
-        });
     }
 );
