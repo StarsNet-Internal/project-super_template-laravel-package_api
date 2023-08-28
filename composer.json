@@ -16,7 +16,8 @@
       "StarsNet\\Project\\Course\\": "src/course/src/",
       "StarsNet\\Project\\WhiskyWhiskers\\": "src/whisky-whiskers/src/",
       "StarsNet\\Project\\HeiFei\\": "src/heifei/src/",
-      "StarsNet\\Project\\ShoppingCart\\": "src/shopping-cart/src/"
+      "StarsNet\\Project\\ShoppingCart\\": "src/shopping-cart/src/",
+      "StarsNet\\Project\\Splitwise\\": "src/splitwise/src/"
     }
   },
   "extra": {
@@ -32,7 +33,8 @@
         "StarsNet\\Project\\Course\\ProjectServiceProvider",
         "StarsNet\\Project\\WhiskyWhiskers\\ProjectServiceProvider",
         "StarsNet\\Project\\HeiFei\\ProjectServiceProvider",
-        "StarsNet\\Project\\ShoppingCart\\ProjectServiceProvider"
+        "StarsNet\\Project\\ShoppingCart\\ProjectServiceProvider",
+        "StarsNet\\Project\\Splitwise\\ProjectServiceProvider"
       ]
     }
   }
