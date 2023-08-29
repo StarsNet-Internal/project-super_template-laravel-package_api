@@ -174,17 +174,17 @@ class CheckoutController extends Controller
             unset($attributes['_id'], $attributes['is_checkout']);
 
             // Update WarehouseInventory(s)
-            $variantID = $attributes['product_variant_id'];
-            $qty = $attributes['qty'];
-            /** @var ProductVariant $variant */
-            $variant = ProductVariant::find($variantID);
-            $this->deductWarehouseInventoriesByStore(
-                $this->store,
-                $variant,
-                $qty,
-                WarehouseInventoryHistoryType::SALES,
-                $customer->getUser()
-            );
+            // $variantID = $attributes['product_variant_id'];
+            // $qty = $attributes['qty'];
+            // /** @var ProductVariant $variant */
+            // $variant = ProductVariant::find($variantID);
+            // $this->deductWarehouseInventoriesByStore(
+            //     $this->store,
+            //     $variant,
+            //     $qty,
+            //     WarehouseInventoryHistoryType::SALES,
+            //     $customer->getUser()
+            // );
 
             $order->createCartItem($attributes);
         }
@@ -196,17 +196,17 @@ class CheckoutController extends Controller
             unset($attributes['_id'], $attributes['is_checkout']);
 
             // Update WarehouseInventory(s)
-            $variantID = $attributes['product_variant_id'];
-            $qty = $attributes['qty'];
-            /** @var ProductVariant $variant */
-            $variant = ProductVariant::find($variantID);
-            $this->deductWarehouseInventoriesByStore(
-                $this->store,
-                $variant,
-                $qty,
-                WarehouseInventoryHistoryType::SALES,
-                $customer->getUser()
-            );
+            // $variantID = $attributes['product_variant_id'];
+            // $qty = $attributes['qty'];
+            // /** @var ProductVariant $variant */
+            // $variant = ProductVariant::find($variantID);
+            // $this->deductWarehouseInventoriesByStore(
+            //     $this->store,
+            //     $variant,
+            //     $qty,
+            //     WarehouseInventoryHistoryType::SALES,
+            //     $customer->getUser()
+            // );
 
             $order->createGiftItem($attributes);
         }

@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\Splitwise\App\Http\Controllers\Customer\TestingController;
+use StarsNet\Project\Splitwise\App\Http\Controllers\Customer\CheckoutController;
 use StarsNet\Project\Splitwise\App\Http\Controllers\Customer\OrderController;
 
 /*
@@ -37,6 +38,23 @@ Route::group(
 | Product related
 |--------------------------------------------------------------------------
 */
+// STORE
+Route::group(
+    ['prefix' => '/stores/{store_id}/'],
+    function () {
+        // CHECKOUT
+        Route::group(
+            ['prefix' => 'checkouts'],
+            function () {
+                $defaultController = CheckoutController::class;
+
+                Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                    Route::post('/', [$defaultController, 'checkOut']);
+                });
+            }
+        );
+    }
+);
 
 // ORDER
 Route::group(
