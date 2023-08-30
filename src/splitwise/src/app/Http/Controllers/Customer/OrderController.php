@@ -22,8 +22,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use App\Http\Controllers\Customer\OrderController as CustomerOrderController;
 
-class OrderController extends Controller
+class OrderController extends CustomerOrderController
 {
     use CheckoutTrait,
         StoreDependentTrait,
