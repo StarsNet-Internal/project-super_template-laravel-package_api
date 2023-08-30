@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use StarsNet\Project\Splitwise\App\Http\Controllers\Customer\TestingController;
 use StarsNet\Project\Splitwise\App\Http\Controllers\Customer\CheckoutController;
 use StarsNet\Project\Splitwise\App\Http\Controllers\Customer\OrderController;
+use StarsNet\Project\Splitwise\App\Http\Controllers\Customer\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,18 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+// PROFILE
+Route::group(
+    ['prefix' => 'profiles'],
+    function () {
+        $defaultController = ProfileController::class;
+
+        Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::get('/membership/statistics', [$defaultController, 'getOrderStatistics']);
+        });
     }
 );
 
