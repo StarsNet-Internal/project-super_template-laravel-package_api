@@ -32,6 +32,11 @@ class OrderController extends CustomerOrderController
 
     protected $model = Order::class;
 
+    private function canCustomerViewOrder(Order $order, Customer $customer)
+    {
+        return $order->customer_id === $customer->_id;
+    }
+
     public function uploadPaymentProofAsCustomer(Request $request)
     {
         // Validate Request
