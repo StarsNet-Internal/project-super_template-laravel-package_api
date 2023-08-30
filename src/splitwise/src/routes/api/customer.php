@@ -76,6 +76,8 @@ Route::group(
         $defaultController = OrderController::class;
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::get('/all', [$defaultController, 'getAll'])->middleware(['pagination']);
+
             Route::put('/{order_id}/upload', [$defaultController, 'uploadPaymentProofAsCustomer']);
         });
     }

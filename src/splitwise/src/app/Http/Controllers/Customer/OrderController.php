@@ -32,6 +32,35 @@ class OrderController extends CustomerOrderController
 
     protected $model = Order::class;
 
+    public function getAll(Request $request)
+    {
+        // Extract attributes from $request
+        $storeID = $request->input('store_id');
+
+        // Get Store
+        /** @var Store $store */
+        $store = $this->getStoreByValue($storeID);
+
+        $customer = $this->customer();
+
+        $orders = Order::with([
+            'store',
+            'checkout'
+        ])->get();
+
+        $orders = array_map(function ($order) {
+            $order['image'] = count($order['checkout']) > 0 ? $order['checkout'][0]['offline']['image'] ?? null : null;
+            unset($order['cart_items'], $order['gift_items'], $order['checkout']);
+            return $order;
+        }, $orders->toArray());
+
+        $orders = array_filter($orders, function ($order) use ($store, $customer) {
+            return $order['store_id'] == $store->_id && $order['customer_id'] == $customer->_id;
+        });
+
+        return $orders;
+    }
+
     private function canCustomerViewOrder(Order $order, Customer $customer)
     {
         return $order->customer_id === $customer->_id;
