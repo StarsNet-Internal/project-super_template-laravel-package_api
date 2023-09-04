@@ -14,15 +14,20 @@ class ProfileController extends Controller
     public function getOrderStatistics()
     {
         // Get authenticated User information
-        $pendingOrders = $this->customer()->orders()->whereCurrentStatus('pending');
-        $unsettledOrders = $this->customer()->orders()->whereCurrentStatuses(['submitted', 'pending', 'processing', 'delivering']);
+        // $pendingOrders = $this->customer()->orders()->whereCurrentStatus('pending');
+        $pendingOrders = $this->customer()->orders()->whereCurrentStatuses(['submitted', 'pending']);
+        $approvedOrders = $this->customer()->orders()->whereCurrentStatus('processing');
+        $rejectedOrders = $this->customer()->orders()->whereCurrentStatus('delivering');
 
-        $totalSpent = $unsettledOrders->get()->sum('calculations.price.total');
-        $pendingOrderCount = $pendingOrders->count();
+        // $pendingOrderCount = $pendingOrders->count();
+        $totalPending = $pendingOrders->get()->sum('calculations.price.total');
+        $totalApproved = $approvedOrders->get()->sum('calculations.price.total');
+        $totalRejected = $rejectedOrders->get()->sum('calculations.price.total');
 
         return [
-            'unsettled_claims' => $this->roundingValue($totalSpent),
-            'pending_approval' => $pendingOrderCount,
+            'pending_claims' => $this->roundingValue($totalPending),
+            'approved_claims' => $this->roundingValue($totalApproved),
+            'rejected_claims' => $this->roundingValue($totalRejected),
         ];
     }
 }
