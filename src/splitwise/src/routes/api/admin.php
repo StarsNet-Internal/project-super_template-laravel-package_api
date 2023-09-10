@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\Splitwise\App\Http\Controllers\Admin\TestingController;
+use StarsNet\Project\Splitwise\App\Http\Controllers\Admin\CustomerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,5 +29,22 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+// CUSTOMER
+Route::group(
+    ['prefix' => 'customers'],
+    function () {
+        $defaultController = CustomerController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/membership/balance', [$defaultController, 'getMembershipPointBalance'])->middleware(['pagination']);
+
+                Route::post('/membership/credit', [$defaultController, 'addCreditToAccount']);
+            }
+        );
     }
 );

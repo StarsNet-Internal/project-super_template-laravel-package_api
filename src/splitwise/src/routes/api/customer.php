@@ -42,6 +42,10 @@ Route::group(
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
             Route::get('/membership/statistics', [$defaultController, 'getOrderStatistics']);
+
+            Route::get('/membership/status', [$defaultController, 'getMembershipStatus']);
+
+            Route::post('/membership/credit', [$defaultController, 'addCreditToAccount']);
         });
     }
 );
