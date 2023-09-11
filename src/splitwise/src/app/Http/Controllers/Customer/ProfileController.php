@@ -74,10 +74,11 @@ class ProfileController extends Controller
     {
         // Extract attributes from $request
         $points = $request->points;
+        $type = $request->type;
 
         $staff = $this->getStaffInGroup($request);
 
-        $this->addOrDeductCredit($staff, $points);
+        $this->addOrDeductCredit($staff, $points, $type);
 
         // Return success message
         return response()->json([

@@ -8,11 +8,11 @@ use Carbon\Carbon;
 
 trait ProjectCustomerTrait
 {
-    private function addOrDeductCredit(Customer $customer, int $points)
+    private function addOrDeductCredit(Customer $customer, int $points, string $type)
     {
         $expiresAt = Carbon::now()->addCenturies(5);
         // if ($points > 0) {
-        return MembershipPoint::createByCustomer($customer, $points, 'OTHERS', $expiresAt);
+        return MembershipPoint::createByCustomer($customer, $points, $type, $expiresAt);
         // } else {
         //     return $customer->deductMembershipPoints(abs($points));
         // }

@@ -57,10 +57,11 @@ class CustomerController extends Controller
     {
         // Extract attributes from $request
         $points = $request->points;
+        $type = $request->type;
 
         $customer = $this->customer();
 
-        $this->addOrDeductCredit($customer, $points);
+        $this->addOrDeductCredit($customer, $points, $type);
 
         // Return success message
         return response()->json([
