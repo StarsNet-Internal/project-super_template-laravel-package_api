@@ -54,11 +54,16 @@ class ProfileController extends Controller
         // Get authenticated User information
         $staff = $this->getStaffInGroup($request);
 
+        $points = $staff->getAllMembershipPointRecords();
+        $totalPointsEarned = $points->sum(function ($point) {
+            return $point->earned > 0 ? $point->earned : 0;
+        });
+
         // Get MembershipPoints
         $data = [
             'membership_status' => 'VIP',
-            'available_points' => $staff->getAvailableMembershipPoints(),
-            'total_points_earned' => $staff->getTotalMembershipPointsEarned(),
+            'available_points' => $staff->getTotalMembershipPointsEarned(),
+            'total_points_earned' => $totalPointsEarned,
         ];
 
         // Return success message

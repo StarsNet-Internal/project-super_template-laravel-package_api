@@ -11,10 +11,10 @@ trait ProjectCustomerTrait
     private function addOrDeductCredit(Customer $customer, int $points)
     {
         $expiresAt = Carbon::now()->addCenturies(5);
-        if ($points > 0) {
-            return MembershipPoint::createByCustomer($customer, $points, 'OTHERS', $expiresAt);
-        } else {
-            return $customer->deductMembershipPoints(abs($points));
-        }
+        // if ($points > 0) {
+        return MembershipPoint::createByCustomer($customer, $points, 'OTHERS', $expiresAt);
+        // } else {
+        //     return $customer->deductMembershipPoints(abs($points));
+        // }
     }
 }
