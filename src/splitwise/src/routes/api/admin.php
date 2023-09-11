@@ -41,6 +41,8 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::put('/delete', [$defaultController, 'deleteCustomers']);
+
                 Route::get('/membership/balance', [$defaultController, 'getMembershipPointBalance'])->middleware(['pagination']);
 
                 Route::post('/membership/credit', [$defaultController, 'addCreditToAccount']);

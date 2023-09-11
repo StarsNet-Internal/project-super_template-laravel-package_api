@@ -34,6 +34,29 @@ class CustomerController extends Controller
 
     protected $model = Customer::class;
 
+    public function deleteCustomers(Request $request)
+    {
+        // Extract attributes from $request
+        $customerIDs = $request->input('ids');
+
+        // Get Customer(s)
+        /** @var Collection $customers */
+        $customers = Customer::find($customerIDs);
+
+        /** @var Customer $customer */
+        foreach ($customers as $customer) {
+            // Get User, then softDeletes
+            $user = $customer->getUser();
+            $user->softDeletes();
+            $user->disable();
+        }
+
+        // Return success message
+        return response()->json([
+            'message' => 'Deleted ' . $customers->count() . ' Customer(s) successfully'
+        ], 200);
+    }
+
     public function getMembershipPointBalance(Request $request)
     {
         // Extract attributes from $request
