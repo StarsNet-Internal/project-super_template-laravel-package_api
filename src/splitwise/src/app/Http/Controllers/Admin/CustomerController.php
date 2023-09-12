@@ -80,7 +80,7 @@ class CustomerController extends Controller
     {
         // Extract attributes from $request
         $points = $request->points;
-        $type = $request->type;
+        $type = $request->input('type', 'OTHERS');
 
         $customer = $this->customer();
 

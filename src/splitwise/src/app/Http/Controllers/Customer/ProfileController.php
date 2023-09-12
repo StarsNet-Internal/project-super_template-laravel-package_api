@@ -74,7 +74,7 @@ class ProfileController extends Controller
     {
         // Extract attributes from $request
         $points = $request->points;
-        $type = $request->type;
+        $type = $request->input('type', 'OTHERS');
 
         $staff = $this->getStaffInGroup($request);
 
