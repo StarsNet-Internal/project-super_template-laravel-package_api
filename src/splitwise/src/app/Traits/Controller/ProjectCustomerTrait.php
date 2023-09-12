@@ -12,7 +12,7 @@ trait ProjectCustomerTrait
     {
         $expiresAt = Carbon::now()->addCenturies(5);
         // if ($points > 0) {
-        return MembershipPoint::createByCustomer($customer, $points, $type, $expiresAt);
+        return MembershipPoint::createByCustomer($customer, $points, $type, $expiresAt, null, $type);
         // } else {
         //     return $customer->deductMembershipPoints(abs($points));
         // }
