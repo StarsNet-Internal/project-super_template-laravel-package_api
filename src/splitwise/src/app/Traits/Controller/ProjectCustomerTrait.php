@@ -22,7 +22,7 @@ trait ProjectCustomerTrait
             'created_by_customer_id' => $customer->_id,
         ];
         $pointAttributes = array_filter($pointAttributes); // Remove all null values
-        $point = self::create($pointAttributes);
+        $point = MembershipPoint::create($pointAttributes);
         $point->associateCustomer($staff);
 
         // Create MembershipPointHistory
