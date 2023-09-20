@@ -78,7 +78,7 @@ class ProfileController extends Controller
 
         $staff = $this->getStaffInGroup($request);
 
-        $this->addOrDeductCredit($staff, $points, $type);
+        $this->addOrDeductCredit($staff, $this->customer(), $points, $type);
 
         // Return success message
         return response()->json([

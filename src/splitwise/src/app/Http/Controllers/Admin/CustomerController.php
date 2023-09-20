@@ -84,7 +84,7 @@ class CustomerController extends Controller
 
         $customer = $this->customer();
 
-        $this->addOrDeductCredit($customer, $points, $type);
+        $this->addOrDeductCredit($customer, $customer, $points, $type);
 
         // Return success message
         return response()->json([
