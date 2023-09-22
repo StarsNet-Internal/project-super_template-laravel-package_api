@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\Splitwise\App\Http\Controllers\Admin\TestingController;
+use StarsNet\Project\Splitwise\App\Http\Controllers\Admin\ShoppingCartController;
 use StarsNet\Project\Splitwise\App\Http\Controllers\Admin\CustomerController;
 
 /*
@@ -29,6 +30,18 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+// SHOPPING_CART
+Route::group(
+    ['prefix' => '/stores/{store_id}/shopping-cart'],
+    function () {
+        $defaultController = ShoppingCartController::class;
+
+        Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::post('/checkout', [$defaultController, 'checkOut']);
+        });
     }
 );
 
