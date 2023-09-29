@@ -1,0 +1,13 @@
+{
+  "name": "starsnet/auction",
+  "minimum-stability": "stable",
+  "description": "External APIs and functionalities for Laravel-based Super E-commerce Project Template",
+  "type": "project",
+  "version": "1.0.0",
+  "require": {},
+  "autoload": {
+    "psr-4": {
+      "StarsNet\\Project\\": "src/"
+    }
+  }
+}

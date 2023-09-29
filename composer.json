@@ -17,7 +17,10 @@
       "StarsNet\\Project\\WhiskyWhiskers\\": "src/whisky-whiskers/src/",
       "StarsNet\\Project\\HeiFei\\": "src/heifei/src/",
       "StarsNet\\Project\\ShoppingCart\\": "src/shopping-cart/src/",
-      "StarsNet\\Project\\ClsPackaging\\": "src/cls-packaging/src/"
+      "StarsNet\\Project\\Splitwise\\": "src/splitwise/src/",
+      "StarsNet\\Project\\ClsPackaging\\": "src/cls-packaging/src/",
+      "StarsNet\\Project\\CateringMan\\": "src/catering-man/src/",
+      "StarsNet\\Project\\DemyArt\\": "src/demy-art/src/"
     }
   },
   "extra": {
@@ -34,7 +37,10 @@
         "StarsNet\\Project\\WhiskyWhiskers\\ProjectServiceProvider",
         "StarsNet\\Project\\HeiFei\\ProjectServiceProvider",
         "StarsNet\\Project\\ShoppingCart\\ProjectServiceProvider",
-        "StarsNet\\Project\\ClsPackaging\\ProjectServiceProvider"
+        "StarsNet\\Project\\Splitwise\\ProjectServiceProvider",
+        "StarsNet\\Project\\ClsPackaging\\ProjectServiceProvider",
+        "StarsNet\\Project\\CateringMan\\ProjectServiceProvider",
+        "StarsNet\\Project\\DemyArt\\ProjectServiceProvider"
       ]
     }
   }
