@@ -20,7 +20,8 @@
       "StarsNet\\Project\\Splitwise\\": "src/splitwise/src/",
       "StarsNet\\Project\\ClsPackaging\\": "src/cls-packaging/src/",
       "StarsNet\\Project\\CateringMan\\": "src/catering-man/src/",
-      "StarsNet\\Project\\DemyArt\\": "src/demy-art/src/"
+      "StarsNet\\Project\\DemyArt\\": "src/demy-art/src/",
+      "StarsNet\\Project\\Easeca\\": "src/easeca/src/"
     }
   },
   "extra": {
@@ -40,7 +41,8 @@
         "StarsNet\\Project\\Splitwise\\ProjectServiceProvider",
         "StarsNet\\Project\\ClsPackaging\\ProjectServiceProvider",
         "StarsNet\\Project\\CateringMan\\ProjectServiceProvider",
-        "StarsNet\\Project\\DemyArt\\ProjectServiceProvider"
+        "StarsNet\\Project\\DemyArt\\ProjectServiceProvider",
+        "StarsNet\\Project\\Easeca\\ProjectServiceProvider"
       ]
     }
   }
