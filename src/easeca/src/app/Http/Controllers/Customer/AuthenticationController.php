@@ -30,15 +30,21 @@ class AuthenticationController extends CustomerAuthenticationController
 
     public function register(Request $request)
     {
-        $response = parent::register($request);
-        $register = json_decode(json_encode($response), true)['original'];
+        // Generate a new customer-identity Account
+        $user = $this->createNewUserAsCustomer($request);
+        $user->setAsCustomerAccount();
 
-        $account = $this->account();
+        // Fire event
+        event(new CustomerRegistration($user, $request));
+
+        $account = $user->account;
         $account->update([
             'store_id' => $request->store_id,
         ]);
 
         // Return success message
-        return response()->json($register);
+        return response()->json([
+            'message' => 'Registered as new Customer successfully',
+        ]);
     }
 }
