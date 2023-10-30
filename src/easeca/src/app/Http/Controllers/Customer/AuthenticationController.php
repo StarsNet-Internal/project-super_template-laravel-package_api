@@ -38,8 +38,17 @@ class AuthenticationController extends CustomerAuthenticationController
         event(new CustomerRegistration($user, $request));
 
         $account = $user->account();
+        $customer = $account->customer();
         $account->update([
             'store_id' => $request->store_id,
+        ]);
+        $customer->update([
+            'delivery_recipient' => [
+                'name' => $request->username,
+                'address' => $request->address,
+                'area_code' => $request->area_phone,
+                'phone' => $request->phone,
+            ]
         ]);
 
         // Return success message
