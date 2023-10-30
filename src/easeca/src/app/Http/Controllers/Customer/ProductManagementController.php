@@ -47,6 +47,7 @@ class ProductManagementController extends CustomerProductManagementController
         } else {
             $this->store = $this->getStoreByValue($request->route('store_id'));
         }
+        Log::info('in package');
         Log::info($this->store);
     }
 }
