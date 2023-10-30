@@ -34,11 +34,19 @@ class AuthenticationController extends CustomerAuthenticationController
         $user = $this->createNewUserAsCustomer($request);
         $user->setAsCustomerAccount();
 
-        // Fire event
-        event(new CustomerRegistration($user, $request));
+        // Update User
+        $this->updateUserViaRegistration($user, $request);
+        $user->generateVerificationCodeByType(
+            VerificationCodeType::ACCOUNT_VERIFICATION,
+            60
+        );
 
-        $account = $user->account();
-        $customer = $account->customer();
+        // Update Account
+        $account = $user->account;
+        $this->updateAccountViaRegistration($account, $request);
+
+        // Package
+        $customer = $account->customer;
         $account->update([
             'store_id' => $request->store_id,
         ]);
