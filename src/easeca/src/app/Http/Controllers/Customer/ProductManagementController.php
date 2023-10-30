@@ -40,12 +40,13 @@ class ProductManagementController extends CustomerProductManagementController
     public function __construct(Request $request)
     {
         $account = $this->account();
-        Log::info($account->store_id);
-        Log::info($account['store_id']);
+        Log::info($account);
 
         if ($account['store_id'] != null) {
+            Log::info('in if');
             $this->store = $this->getStoreByValue($account['store_id']);
         } else {
+            Log::info('in else');
             $this->store = $this->getStoreByValue($request->route('store_id'));
         }
         Log::info('in package');
