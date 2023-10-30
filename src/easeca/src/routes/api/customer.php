@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\DevelopmentController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\AuthenticationController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\OfflineStoreManagementController;
+use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ProductManagementController;
 
 Route::group(
     ['prefix' => '/tests'],
@@ -46,6 +47,25 @@ Route::group(
                 $defaultController = OfflineStoreManagementController::class;
 
                 Route::get('/offline/all', [$defaultController, 'getAllOfflineStores'])->middleware(['pagination']);
+            }
+        );
+
+        // PRODUCT_MANAGEMENT
+        Route::group(
+            ['prefix' => 'product-management'],
+            function () {
+                $defaultController = ProductManagementController::class;
+
+                Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                    Route::get('/categories/all', [$defaultController, 'getAllProductCategories'])->middleware(['pagination']);
+                    Route::get('/categories/all/hierachy', [$defaultController, 'getAllProductCategoryHierarchy'])->middleware(['pagination']);
+                    Route::get('/products/filter', [$defaultController, 'filterProductsByCategories'])->middleware(['pagination']);
+                    Route::get('/products/{product_id}/details', [$defaultController, 'getProductDetails']);
+                    Route::get('/products/{product_id}/reviews', [$defaultController, 'getProductReviews'])->middleware(['pagination']);
+
+                    Route::get('/related-products-urls', [$defaultController, 'getRelatedProductsUrls'])->middleware(['pagination']);
+                    Route::get('/products/ids', [$defaultController, 'getProductsByIDs'])->name('products.ids')->middleware(['pagination']);
+                });
             }
         );
     }
