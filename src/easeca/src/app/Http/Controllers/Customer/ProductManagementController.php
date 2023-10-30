@@ -41,9 +41,10 @@ class ProductManagementController extends CustomerProductManagementController
     {
         $account = $this->account();
         Log::info($account->store_id);
+        Log::info($account['store_id']);
 
-        if ($account->store_id != null) {
-            $this->store = $this->getStoreByValue($account->store_id);
+        if ($account['store_id'] != null) {
+            $this->store = $this->getStoreByValue($account['store_id']);
         } else {
             $this->store = $this->getStoreByValue($request->route('store_id'));
         }
