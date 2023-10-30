@@ -37,7 +37,7 @@ class AuthenticationController extends CustomerAuthenticationController
         // Fire event
         event(new CustomerRegistration($user, $request));
 
-        $account = $user->account;
+        $account = $user->account();
         $account->update([
             'store_id' => $request->store_id,
         ]);
