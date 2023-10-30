@@ -19,7 +19,7 @@ use App\Http\Controllers\Customer\AuthenticationController as CustomerAuthentica
 
 class AuthenticationController extends CustomerAuthenticationController
 {
-    use AuthenticationTrait;
+    use AuthenticationTrait, StoreDependentTrait;
 
     public function getAuthUserInfo()
     {
