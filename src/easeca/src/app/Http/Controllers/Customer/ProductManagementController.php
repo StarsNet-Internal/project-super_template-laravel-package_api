@@ -39,6 +39,6 @@ class ProductManagementController extends CustomerProductManagementController
     public function __construct(Request $request)
     {
         $account = $this->account();
-        $this->store = self::getStoreByValue($account->store_id ? $account->store_id : $request->route('store_id'));
+        $this->store = self::getStoreByValue($account->store_id != null ? $account->store_id : $request->route('store_id'));
     }
 }
