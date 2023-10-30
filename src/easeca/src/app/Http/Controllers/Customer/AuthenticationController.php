@@ -10,7 +10,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\User;
 use App\Models\VerificationCode;
+use App\Models\Store;
 use App\Traits\Controller\AuthenticationTrait;
+use App\Traits\Controller\StoreDependentTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Customer\AuthenticationController as CustomerAuthenticationController;
@@ -23,6 +25,10 @@ class AuthenticationController extends CustomerAuthenticationController
     {
         $response = parent::getAuthUserInfo();
         $data = json_decode(json_encode($response), true)['original'];
+
+        $account = $this->account();
+        $store = $this->getStoreByValue($account->store_id);
+        $data['user']['account']['country'] = $store->remarks;
 
         // Return success message
         return response()->json($data);
@@ -54,7 +60,7 @@ class AuthenticationController extends CustomerAuthenticationController
             'delivery_recipient' => [
                 'name' => $request->username,
                 'address' => $request->address,
-                'area_code' => $request->area_phone,
+                'area_code' => $request->area_code,
                 'phone' => $request->phone,
             ]
         ]);
