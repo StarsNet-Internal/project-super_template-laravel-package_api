@@ -27,8 +27,10 @@ class AuthenticationController extends CustomerAuthenticationController
         $data = json_decode(json_encode($response), true)['original'];
 
         $account = $this->account();
-        $store = $this->getStoreByValue($account->store_id);
-        $data['user']['account']['country'] = $store->remarks;
+        if ($account->store_id != null) {
+            $store = $this->getStoreByValue($account->store_id);
+            $data['user']['account']['country'] = $store->remarks;
+        }
 
         // Return success message
         return response()->json($data);
