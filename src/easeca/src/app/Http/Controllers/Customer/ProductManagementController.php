@@ -33,6 +33,9 @@ class ProductManagementController extends CustomerProductManagementController
 
     use Cacheable;
 
+    /** @var Store $store */
+    protected $store;
+
     public function __construct(Request $request)
     {
         $account = $this->account();
