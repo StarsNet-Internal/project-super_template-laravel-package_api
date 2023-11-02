@@ -2,16 +2,16 @@
 
 use Illuminate\Support\Facades\Route;
 
-use Starsnet\Project\ClsPackaging\App\Http\Controllers\Admin\AddressController;
-use Starsnet\Project\ClsPackaging\App\Http\Controllers\Admin\DevelopmentController;
-use Starsnet\Project\ClsPackaging\App\Http\Controllers\Admin\CustomerController;
-use Starsnet\Project\ClsPackaging\App\Http\Controllers\Admin\OnlineStoreManagementController;
-use Starsnet\Project\ClsPackaging\App\Http\Controllers\Admin\ProductController;
-use Starsnet\Project\ClsPackaging\App\Http\Controllers\Admin\ShipmentController;
-use Starsnet\Project\ClsPackaging\App\Http\Controllers\Admin\WarehouseController;
-use Starsnet\Project\ClsPackaging\App\Http\Controllers\Admin\OrderManagementController;
-use Starsnet\Project\ClsPackaging\App\Http\Controllers\Admin\ShoppingCartController;
-use Starsnet\Project\ClsPackaging\App\Http\Controllers\Admin\QuotationItemController;
+use StarsNet\Project\ClsPackaging\App\Http\Controllers\Admin\AddressController;
+use StarsNet\Project\ClsPackaging\App\Http\Controllers\Admin\DevelopmentController;
+use StarsNet\Project\ClsPackaging\App\Http\Controllers\Admin\CustomerController;
+use StarsNet\Project\ClsPackaging\App\Http\Controllers\Admin\OnlineStoreManagementController;
+use StarsNet\Project\ClsPackaging\App\Http\Controllers\Admin\ProductController;
+use StarsNet\Project\ClsPackaging\App\Http\Controllers\Admin\ShipmentController;
+use StarsNet\Project\ClsPackaging\App\Http\Controllers\Admin\WarehouseController;
+use StarsNet\Project\ClsPackaging\App\Http\Controllers\Admin\OrderManagementController;
+use StarsNet\Project\ClsPackaging\App\Http\Controllers\Admin\ShoppingCartController;
+use StarsNet\Project\ClsPackaging\App\Http\Controllers\Admin\QuotationItemController;
 
 Route::group(
     ['prefix' => '/tests'],
