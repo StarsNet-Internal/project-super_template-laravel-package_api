@@ -3,13 +3,17 @@
 namespace StarsNet\Project\ClsPackaging\App\Models;
 
 // Constants
-use App\Models\ShoppingCartItem;
-use App\Models\Category;
+
 use App\Models\Customer;
+use App\Models\CustomerGroup;
+use App\Models\Order;
+use App\Models\Product;
+use App\Models\ProductVariant;
 
 // Traits
 use App\Traits\Model\ObjectIDTrait;
-use App\Traits\Utils\RoundingTrait;
+use App\Traits\Model\StatusFieldTrait;
+use Carbon\Carbon;
 
 // Laravel classes and MongoDB relationships, default import
 use Illuminate\Support\Collection;
@@ -22,11 +26,10 @@ use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 use Jenssegers\Mongodb\Relations\EmbedsMany;
 use Jenssegers\Mongodb\Relations\EmbedsOne;
 
-class CategoryShoppingCartItem extends Eloquent
+class CustomerGroupOrder extends Eloquent
 {
-    use ObjectIDTrait;
-
-    use RoundingTrait;
+    use ObjectIDTrait,
+        StatusFieldTrait;
 
     /**
      * Define database connection.
@@ -40,17 +43,16 @@ class CategoryShoppingCartItem extends Eloquent
      *
      * @var string
      */
-    protected $collection = 'category_shopping_cart_items';
+    protected $collection = 'customer_group_orders';
 
     protected $attributes = [
         // Relationships
-        'hash' => null,
-        'category_id' => null,
-        'shopping_cart_item_id' => null,
-        'qty' => 0,
+        'customer_group_ids' => [],
+        'order_id' => null,
 
         // Default
-        // 'created_by_customer_id' => null,
+        'type' => null,
+        'created_by_customer_id' => null
 
         // Timestamps
     ];
@@ -75,9 +77,9 @@ class CategoryShoppingCartItem extends Eloquent
     // Scope Begins
     // -----------------------------
 
-    public function scopeByCustomer(Builder $query, Customer $customer): Builder
+    public function scopeByOrder(Builder $query, Order $order): Builder
     {
-        return $query->where('customer_id', $customer->_id);
+        return $query->where('order_id', $order->_id);
     }
 
     // -----------------------------
@@ -88,18 +90,24 @@ class CategoryShoppingCartItem extends Eloquent
     // Relationship Begins
     // -----------------------------
 
-    public function shoppingCartItem(): BelongsTo
+    public function customerGroups(): BelongsToMany
     {
-        return $this->belongsTo(
-            ShoppingCartItem::class
+        return $this->belongsToMany(
+            CustomerGroup::class,
         );
     }
 
-    // TODO category
-    public function category(): BelongsTo
+    public function order(): BelongsTo
     {
         return $this->belongsTo(
-            Category::class
+            Order::class
+        );
+    }
+
+    public function createdByCustomer(): BelongsTo
+    {
+        return $this->belongsTo(
+            Customer::class
         );
     }
 
@@ -116,19 +124,50 @@ class CategoryShoppingCartItem extends Eloquent
     // -----------------------------
 
     // -----------------------------
-    // Action Begins
+    // Actions Begins
     // -----------------------------
 
-    public function associateShoppingCartItem(ShoppingCartItem $item): bool
+    public function associateOrder(Order $order): bool
     {
-        $this->shoppingCartItem()->associate($item);
+        $this->order()->associate($order);
         return $this->save();
     }
 
-    public function associateCategory(Category $category): bool
+    public function dissociateOrder(): bool
     {
-        $this->category()->associate($category);
+        $this->order()->dissociate();
         return $this->save();
+    }
+
+    public function associateCreatedByCustomer(Customer $customer): bool
+    {
+        $this->createdByCustomer()->associate($customer);
+        return $this->save();
+    }
+
+    public function dissociateCreatedByCustomer(): bool
+    {
+        $this->createdByCustomer()->dissociate();
+        return $this->save();
+    }
+
+    public function attachCustomerGroups(Collection $groups): void
+    {
+        $customerGroupIDs = $groups->pluck('_id')->all();
+        $this->customerGroups()->attach($customerGroupIDs);
+        return;
+    }
+
+    public function detachCustomerGroups(Collection $groups): int
+    {
+        $customerGroupIDs = $groups->pluck('_id')->all();
+        return $this->customerGroups()->detach($customerGroupIDs);
+    }
+
+    public function syncCustomerGroups(Collection $groups): array
+    {
+        $customerGroupIDs = $groups->pluck('_id')->all();
+        return $this->customerGroups()->sync($customerGroupIDs);
     }
 
     // -----------------------------
