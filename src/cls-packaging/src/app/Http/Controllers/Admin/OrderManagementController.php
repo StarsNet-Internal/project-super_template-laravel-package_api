@@ -26,7 +26,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 use App\Http\Controllers\Admin\OrderManagementController as AdminOrderManagementController;
-use Starsnet\Project\App\Models\CustomerGroupOrder;
+use StarsNet\Project\App\Models\CustomerGroupOrder;
 
 class OrderManagementController extends AdminOrderManagementController
 {

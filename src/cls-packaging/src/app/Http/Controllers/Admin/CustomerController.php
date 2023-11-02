@@ -7,7 +7,7 @@ use App\Http\Controllers\Admin\WarehouseController as AdminWarehouseController;
 use App\Http\Controllers\Controller;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
-use Starsnet\Project\App\Models\CustomerGroupWarehouse;
+use StarsNet\Project\App\Models\CustomerGroupWarehouse;
 use App\Models\CustomerGroup;
 
 class CustomerController extends AdminWarehouseController

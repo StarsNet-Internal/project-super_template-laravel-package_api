@@ -11,12 +11,12 @@ use App\Models\WarehouseInventory;
 use App\Models\ProductVariant;
 use App\Models\CustomerGroup;
 use Illuminate\Http\Request;
-use Starsnet\Project\App\Models\CustomerGroupWarehouse;
+use StarsNet\Project\App\Models\CustomerGroupWarehouse;
 
 use App\Models\WarehouseInventoryHistory;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use Starsnet\Project\App\Models\CustomerGroupWarehouseInventoryHistory;
+use StarsNet\Project\App\Models\CustomerGroupWarehouseInventoryHistory;
 
 class WarehouseController extends AdminWarehouseController
 {

@@ -10,11 +10,11 @@ use App\Models\ProductVariant;
 use App\Models\CustomerGroup;
 use App\Traits\StarsNet\TypeSenseSearchEngine;
 use Illuminate\Http\Request;
-use Starsnet\Project\App\Models\CustomerGroupProduct;
-use Starsnet\Project\App\Models\CustomerGroupProductCategory;
+use StarsNet\Project\App\Models\CustomerGroupProduct;
+use StarsNet\Project\App\Models\CustomerGroupProductCategory;
 
 use Illuminate\Support\Facades\Validator;
-use Starsnet\Project\App\Constants\Model\ProductType;
+use StarsNet\Project\App\Constants\Model\ProductType;
 
 class QuotationItemController extends AdminProductController
 {
