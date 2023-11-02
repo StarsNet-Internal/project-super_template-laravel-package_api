@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Shipment;
 use App\Models\CustomerGroup;
 use Illuminate\Http\Request;
-use StarsNet\Project\App\Models\CustomerGroupShipment;
+use StarsNet\Project\ClsPackaging\App\Models\CustomerGroupShipment;
 
 class ShipmentController extends AdminShipmentController
 {

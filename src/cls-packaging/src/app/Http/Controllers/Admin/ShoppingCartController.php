@@ -35,8 +35,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 use App\Http\Controllers\Admin\ShoppingCartController as AdminShoppingCartController;
-use StarsNet\Project\App\Models\CustomerGroupOrder;
-use StarsNet\Project\App\Constants\Model\OrderType;
+use StarsNet\Project\ClsPackaging\App\Models\CustomerGroupOrder;
+use StarsNet\Project\ClsPackaging\App\Constants\Model\OrderType;
 
 class ShoppingCartController extends AdminShoppingCartController
 {

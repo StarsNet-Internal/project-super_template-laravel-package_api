@@ -10,9 +10,9 @@ use App\Models\ProductVariant;
 use App\Models\CustomerGroup;
 use App\Traits\StarsNet\TypeSenseSearchEngine;
 use Illuminate\Http\Request;
-use StarsNet\Project\App\Models\CustomerGroupProduct;
-use StarsNet\Project\App\Models\CustomerGroupProductCategory;
-use StarsNet\Project\App\Constants\Model\ProductType;
+use StarsNet\Project\ClsPackaging\App\Models\CustomerGroupProduct;
+use StarsNet\Project\ClsPackaging\App\Models\CustomerGroupProductCategory;
+use StarsNet\Project\ClsPackaging\App\Constants\Model\ProductType;
 
 class ProductController extends AdminProductController
 {

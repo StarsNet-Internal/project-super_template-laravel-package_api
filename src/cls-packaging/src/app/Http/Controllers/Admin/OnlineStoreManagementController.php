@@ -11,8 +11,8 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Store;
 use Illuminate\Http\Request;
-use StarsNet\Project\App\Models\CustomerGroupProduct;
-use StarsNet\Project\App\Models\CustomerGroupProductCategory;
+use StarsNet\Project\ClsPackaging\App\Models\CustomerGroupProduct;
+use StarsNet\Project\ClsPackaging\App\Models\CustomerGroupProductCategory;
 
 class OnlineStoreManagementController extends AdminOnlineStoreManagementController
 {

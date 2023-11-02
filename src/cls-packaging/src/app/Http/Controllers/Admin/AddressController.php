@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Address;
 use App\Models\CustomerGroup;
 use Illuminate\Http\Request;
-use StarsNet\Project\App\Models\CustomerGroupAddress;
+use StarsNet\Project\ClsPackaging\App\Models\CustomerGroupAddress;
 
 class AddressController extends AdminAddressController
 {
