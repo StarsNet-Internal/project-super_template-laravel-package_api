@@ -46,6 +46,10 @@ class ProductController extends AdminProductController
         // Get Product(s)
         $products = parent::getAllProducts($request);
 
+        $products = $products->filter(function ($product) use ($request) {
+            return in_array($product['_id'], $request->include_ids);
+        });
+
         return $products;
     }
 
