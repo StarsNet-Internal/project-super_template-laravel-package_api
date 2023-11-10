@@ -22,7 +22,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Customer\ProductManagementController as CustomerProductManagementController;
-use Illuminate\Support\Facades\Log;
 
 class ProductManagementController extends CustomerProductManagementController
 {
@@ -40,16 +39,11 @@ class ProductManagementController extends CustomerProductManagementController
     public function __construct(Request $request)
     {
         $account = $this->account();
-        Log::info($account);
 
         if ($account['store_id'] != null) {
-            Log::info('in if');
             $this->store = $this->getStoreByValue($account['store_id']);
         } else {
-            Log::info('in else');
             $this->store = $this->getStoreByValue($request->route('store_id'));
         }
-        Log::info('in package');
-        Log::info($this->store);
     }
 }
