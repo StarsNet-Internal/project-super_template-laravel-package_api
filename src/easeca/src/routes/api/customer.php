@@ -8,6 +8,8 @@ use StarsNet\Project\Easeca\App\Http\Controllers\Customer\DevelopmentController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\AuthenticationController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\OfflineStoreManagementController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ProductManagementController;
+use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ShoppingCartController;
+use StarsNet\Project\Easeca\App\Http\Controllers\Customer\CheckoutController;
 
 Route::group(
     ['prefix' => '/tests'],
@@ -65,6 +67,33 @@ Route::group(
 
                     Route::get('/related-products-urls', [$defaultController, 'getRelatedProductsUrls'])->middleware(['pagination']);
                     Route::get('/products/ids', [$defaultController, 'getProductsByIDs'])->name('products.ids')->middleware(['pagination']);
+                });
+            }
+        );
+
+        // SHOPPING_CART
+        Route::group(['prefix' => 'shopping-cart'], function () {
+            $defaultController = ShoppingCartController::class;
+
+            Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                Route::get('/related-products-urls', [$defaultController, 'getRelatedProductsUrls'])->middleware(['pagination']);
+
+                Route::post('/add-to-cart', [$defaultController, 'addToCart']);
+
+                Route::post('/all', [$defaultController, 'getAll']);
+
+                Route::delete('/clear-cart', [$defaultController, 'clearCart']);
+            });
+        });
+
+        // CHECKOUT
+        Route::group(
+            ['prefix' => 'checkouts'],
+            function () {
+                $defaultController = CheckoutController::class;
+
+                Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                    Route::post('/', [$defaultController, 'checkOut']);
                 });
             }
         );
