@@ -54,7 +54,7 @@ class ShoppingCartController extends CustomerShoppingCartController
             $variant = ProductVariant::find($item['product_variant_id']);
             $item['subtotal_point'] = $this->roundingValue($variant->cost);
             return $item;
-        }, $data['cart_items']->toArray());
+        }, $data['cart_items']);
 
         return response()->json($data);
     }
