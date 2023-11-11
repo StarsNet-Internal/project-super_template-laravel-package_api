@@ -66,7 +66,7 @@ Route::group(
                     Route::get('/products/{product_id}/reviews', [$defaultController, 'getProductReviews'])->middleware(['pagination']);
 
                     Route::get('/related-products-urls', [$defaultController, 'getRelatedProductsUrls'])->middleware(['pagination']);
-                    Route::get('/products/ids', [$defaultController, 'getProductsByIDs'])->name('products.ids')->middleware(['pagination']);
+                    Route::get('/products/ids', [$defaultController, 'getProductsByIDs'])->name('easeca.products.ids')->middleware(['pagination']);
                 });
             }
         );
