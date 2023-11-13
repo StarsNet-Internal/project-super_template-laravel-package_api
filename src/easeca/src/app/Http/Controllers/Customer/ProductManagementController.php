@@ -40,6 +40,7 @@ class ProductManagementController extends CustomerProductManagementController
 
     public function __construct(Request $request)
     {
+        dd($request->all());
         $account = $this->account();
 
         if ($account['store_id'] != null) {
