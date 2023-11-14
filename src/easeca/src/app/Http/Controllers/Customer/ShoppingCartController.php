@@ -67,9 +67,9 @@ class ShoppingCartController extends CustomerShoppingCartController
         return response()->json($data);
     }
 
-    public function clearCart(Request $request)
+    public function clearCartByAccount(Request $request)
     {
         $this->getStoreByAccount($request);
-        return parent::clearCart($request);
+        return parent::clearCart();
     }
 }

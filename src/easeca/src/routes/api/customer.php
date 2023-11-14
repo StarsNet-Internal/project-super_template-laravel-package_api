@@ -82,7 +82,7 @@ Route::group(
 
                 Route::post('/all', [$defaultController, 'getAll']);
 
-                Route::delete('/clear-cart', [$defaultController, 'clearCart']);
+                Route::delete('/clear-cart', [$defaultController, 'clearCartByAccount']);
             });
         });
 
