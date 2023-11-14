@@ -35,19 +35,27 @@ class ShoppingCartController extends CustomerShoppingCartController
 
     protected $model = ShoppingCartItem::class;
 
-    // public function __construct(Request $request)
-    // {
-    //     $account = $this->account();
+    public function getStoreByAccount(Request $request)
+    {
+        $account = $this->account();
 
-    //     if ($account['store_id'] != null) {
-    //         $this->store = $this->getStoreByValue($account['store_id']);
-    //     } else {
-    //         $this->store = $this->getStoreByValue($request->route('store_id'));
-    //     }
-    // }
+        if ($account['store_id'] != null) {
+            $this->store = $this->getStoreByValue($account['store_id']);
+        } else {
+            $this->store = $this->getStoreByValue($request->route('store_id'));
+        }
+    }
+
+    public function addToCart(Request $request)
+    {
+        $this->getStoreByAccount($request);
+        return parent::addToCart($request);
+    }
 
     public function getAll(Request $request)
     {
+        $this->getStoreByAccount($request);
+
         $data = json_decode(json_encode(parent::getAll($request)), true)['original'];
 
         $data['cart_items'] = array_map(function ($item) {
@@ -57,5 +65,11 @@ class ShoppingCartController extends CustomerShoppingCartController
         }, $data['cart_items']);
 
         return response()->json($data);
+    }
+
+    public function clearCart(Request $request)
+    {
+        $this->getStoreByAccount($request);
+        return parent::clearCart($request);
     }
 }

@@ -36,7 +36,7 @@ class CheckoutController extends CustomerCheckoutController
 
     protected $store;
 
-    public function __construct(Request $request)
+    public function getStoreByAccount(Request $request)
     {
         $account = $this->account();
 
@@ -45,5 +45,11 @@ class CheckoutController extends CustomerCheckoutController
         } else {
             $this->store = $this->getStoreByValue($request->route('store_id'));
         }
+    }
+
+    public function checkOut(Request $request)
+    {
+        $this->getStoreByAccount($request);
+        return parent::checkOut($request);
     }
 }

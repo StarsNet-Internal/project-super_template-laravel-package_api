@@ -38,19 +38,7 @@ class ProductManagementController extends CustomerProductManagementController
     /** @var Store $store */
     protected $store;
 
-    // public function __construct(Request $request)
-    // {
-    //     dd($request->all());
-    //     $account = $this->account();
-
-    //     if ($account['store_id'] != null) {
-    //         $this->store = $this->getStoreByValue($account['store_id']);
-    //     } else {
-    //         $this->store = $this->getStoreByValue($request->route('store_id'));
-    //     }
-    // }
-
-    public function getAllProductCategories(Request $request)
+    public function getStoreByAccount(Request $request)
     {
         $account = $this->account();
 
@@ -59,9 +47,18 @@ class ProductManagementController extends CustomerProductManagementController
         } else {
             $this->store = $this->getStoreByValue($request->route('store_id'));
         }
+    }
 
-        $categories = parent::getAllProductCategories($request);
-        return $categories;
+    public function getAllProductCategories(Request $request)
+    {
+        $this->getStoreByAccount($request);
+        return parent::getAllProductCategories($request);
+    }
+
+    public function getAllProductCategoryHierarchy(Request $request)
+    {
+        $this->getStoreByAccount($request);
+        return parent::getAllProductCategoryHierarchy($request);
     }
 
     public function filterProductsByCategories(Request $request)
