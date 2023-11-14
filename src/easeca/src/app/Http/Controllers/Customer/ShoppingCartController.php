@@ -35,16 +35,16 @@ class ShoppingCartController extends CustomerShoppingCartController
 
     protected $model = ShoppingCartItem::class;
 
-    public function __construct(Request $request)
-    {
-        $account = $this->account();
+    // public function __construct(Request $request)
+    // {
+    //     $account = $this->account();
 
-        if ($account['store_id'] != null) {
-            $this->store = $this->getStoreByValue($account['store_id']);
-        } else {
-            $this->store = $this->getStoreByValue($request->route('store_id'));
-        }
-    }
+    //     if ($account['store_id'] != null) {
+    //         $this->store = $this->getStoreByValue($account['store_id']);
+    //     } else {
+    //         $this->store = $this->getStoreByValue($request->route('store_id'));
+    //     }
+    // }
 
     public function getAll(Request $request)
     {

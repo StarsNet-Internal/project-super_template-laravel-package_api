@@ -9,7 +9,7 @@ use StarsNet\Project\Easeca\App\Http\Controllers\Customer\AuthenticationControll
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\OfflineStoreManagementController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ShoppingCartController;
-use StarsNet\Project\Easeca\App\Http\Controllers\Customer\CheckoutController;
+use App\Http\Controllers\Customer\CheckoutController;
 
 Route::group(
     ['prefix' => '/tests'],
@@ -58,7 +58,7 @@ Route::group(
             function () {
                 $defaultController = ProductManagementController::class;
 
-                Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                Route::group(['middleware' => ['auth:api', 'easeca_store']], function () use ($defaultController) {
                     Route::get('/categories/all', [$defaultController, 'getAllProductCategories'])->middleware(['pagination']);
                     Route::get('/categories/all/hierachy', [$defaultController, 'getAllProductCategoryHierarchy'])->middleware(['pagination']);
                     Route::get('/products/filter', [$defaultController, 'filterProductsByCategories'])->middleware(['pagination']);
@@ -75,7 +75,7 @@ Route::group(
         Route::group(['prefix' => 'shopping-cart'], function () {
             $defaultController = ShoppingCartController::class;
 
-            Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::group(['middleware' => ['auth:api', 'easeca_store']], function () use ($defaultController) {
                 Route::get('/related-products-urls', [$defaultController, 'getRelatedProductsUrls'])->middleware(['pagination']);
 
                 Route::post('/add-to-cart', [$defaultController, 'addToCart']);
@@ -92,7 +92,7 @@ Route::group(
             function () {
                 $defaultController = CheckoutController::class;
 
-                Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                Route::group(['middleware' => ['auth:api', 'easeca_store']], function () use ($defaultController) {
                     Route::post('/', [$defaultController, 'checkOut']);
                 });
             }

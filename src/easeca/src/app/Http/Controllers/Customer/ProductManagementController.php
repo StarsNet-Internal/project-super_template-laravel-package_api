@@ -38,17 +38,17 @@ class ProductManagementController extends CustomerProductManagementController
     /** @var Store $store */
     protected $store;
 
-    public function __construct(Request $request)
-    {
-        dd($request->all());
-        $account = $this->account();
+    // public function __construct(Request $request)
+    // {
+    //     dd($request->all());
+    //     $account = $this->account();
 
-        if ($account['store_id'] != null) {
-            $this->store = $this->getStoreByValue($account['store_id']);
-        } else {
-            $this->store = $this->getStoreByValue($request->route('store_id'));
-        }
-    }
+    //     if ($account['store_id'] != null) {
+    //         $this->store = $this->getStoreByValue($account['store_id']);
+    //     } else {
+    //         $this->store = $this->getStoreByValue($request->route('store_id'));
+    //     }
+    // }
 
     public function filterProductsByCategories(Request $request)
     {

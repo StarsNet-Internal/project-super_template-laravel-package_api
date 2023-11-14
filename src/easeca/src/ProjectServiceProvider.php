@@ -7,6 +7,8 @@ use Illuminate\Support\ServiceProvider;
 // Default Imports
 use Illuminate\Support\Facades\Route;
 
+use StarsNet\Project\Easeca\App\Http\Middleware\GetStore;
+
 class ProjectServiceProvider extends ServiceProvider
 {
     protected $namespace = 'StarsNet\Project\Easeca\App\Http\Controllers';
@@ -117,5 +119,18 @@ class ProjectServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->registerMiddleware();
+    }
+
+    protected $routeMiddleware = [
+        'easeca_store' => GetStore::class,
+    ];
+
+    protected function registerMiddleware()
+    {
+        $router = $this->app['router'];
+        foreach ($this->routeMiddleware as $key => $middleware) {
+            $router->aliasMiddleware($key, $middleware);
+        }
     }
 }
