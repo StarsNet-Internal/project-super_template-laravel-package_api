@@ -9,7 +9,7 @@ use StarsNet\Project\Easeca\App\Http\Controllers\Customer\AuthenticationControll
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\OfflineStoreManagementController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ShoppingCartController;
-use App\Http\Controllers\Customer\CheckoutController;
+use StarsNet\Project\Easeca\App\Http\Controllers\Customer\CheckoutController;
 
 Route::group(
     ['prefix' => '/tests'],
