@@ -50,8 +50,29 @@ class ProductManagementController extends CustomerProductManagementController
     //     }
     // }
 
+    public function getAllProductCategories(Request $request)
+    {
+        $account = $this->account();
+
+        if ($account['store_id'] != null) {
+            $this->store = $this->getStoreByValue($account['store_id']);
+        } else {
+            $this->store = $this->getStoreByValue($request->route('store_id'));
+        }
+
+        $categories = parent::getAllProductCategories($request);
+        return $categories;
+    }
+
     public function filterProductsByCategories(Request $request)
     {
+        $account = $this->account();
+
+        if ($account['store_id'] != null) {
+            $this->store = $this->getStoreByValue($account['store_id']);
+        } else {
+            $this->store = $this->getStoreByValue($request->route('store_id'));
+        }
         // Extract attributes from $request
         $categoryIDs = $request->input('category_ids', []);
         $keyword = $request->input('keyword');
