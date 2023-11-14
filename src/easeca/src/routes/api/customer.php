@@ -26,6 +26,7 @@ Route::group(
     function () {
         $defaultController = AuthenticationController::class;
 
+        Route::post('/login', [$defaultController, 'login']);
         Route::post('/register', [$defaultController, 'register']);
 
         Route::group(

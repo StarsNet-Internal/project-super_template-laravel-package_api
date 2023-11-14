@@ -21,6 +21,21 @@ class AuthenticationController extends CustomerAuthenticationController
 {
     use AuthenticationTrait, StoreDependentTrait;
 
+    public function login(Request $request)
+    {
+        $response = parent::login($request);
+        $data = json_decode(json_encode($response), true)['original'];
+
+        $account = $this->account();
+        if ($account->store_id != null) {
+            $store = $this->getStoreByValue($account->store_id);
+            $data['user']['account']['country'] = $store->remarks;
+        }
+
+        // Return success message
+        return response()->json($data);
+    }
+
     public function getAuthUserInfo()
     {
         $response = parent::getAuthUserInfo();
