@@ -10,6 +10,7 @@ use StarsNet\Project\Easeca\App\Http\Controllers\Customer\OfflineStoreManagement
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\CheckoutController;
+use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ScheduleController;
 
 Route::group(
     ['prefix' => '/tests'],
@@ -98,6 +99,21 @@ Route::group(
                 Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
                     Route::post('/', [$defaultController, 'checkOut']);
                 });
+            }
+        );
+    }
+);
+
+// SCHEDULE
+Route::group(
+    ['prefix' => 'schedules'],
+    function () {
+        $defaultController = ScheduleController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/', [$defaultController, 'getSchedule']);
             }
         );
     }
