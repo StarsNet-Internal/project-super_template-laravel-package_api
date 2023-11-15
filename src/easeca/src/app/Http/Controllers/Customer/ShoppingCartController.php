@@ -18,6 +18,7 @@ use App\Traits\Controller\WarehouseInventoryTrait;
 use App\Traits\Utils\RoundingTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
 use App\Http\Controllers\Customer\ShoppingCartController as CustomerShoppingCartController;
@@ -63,6 +64,15 @@ class ShoppingCartController extends CustomerShoppingCartController
             $item['subtotal_point'] = $this->roundingValue($variant->cost);
             return $item;
         }, $data['cart_items']);
+
+        try {
+            $url = 'http://192.168.0.252:5000/customer/schedules/cut-off?store_id=' . $this->store->_id;
+            $response = Http::get($url);
+            $hour = json_decode($response->getBody()->getContents(), true);
+            $data['calculations']['currency'] = $hour['hour'];
+        } catch (\Throwable $th) {
+            $data['calculations']['currency'] = '17';
+        }
 
         return response()->json($data);
     }
