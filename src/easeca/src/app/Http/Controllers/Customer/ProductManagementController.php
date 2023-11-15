@@ -63,13 +63,8 @@ class ProductManagementController extends CustomerProductManagementController
 
     public function filterProductsByCategories(Request $request)
     {
-        $account = $this->account();
+        $this->getStoreByAccount($request);
 
-        if ($account['store_id'] != null) {
-            $this->store = $this->getStoreByValue($account['store_id']);
-        } else {
-            $this->store = $this->getStoreByValue($request->route('store_id'));
-        }
         // Extract attributes from $request
         $categoryIDs = $request->input('category_ids', []);
         $keyword = $request->input('keyword');
@@ -135,6 +130,8 @@ class ProductManagementController extends CustomerProductManagementController
 
     public function getRelatedProductsUrls(Request $request)
     {
+        $this->getStoreByAccount($request);
+
         // Extract attributes from $request
         $productID = $request->input('product_id');
         $excludedProductIDs = $request->input('exclude_ids', []);
