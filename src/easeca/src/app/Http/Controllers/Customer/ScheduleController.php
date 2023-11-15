@@ -14,7 +14,8 @@ class ScheduleController extends Controller
             $user = $this->user();
             $url = 'http://192.168.0.252:5000/customer/schedules?user_id=' . $user->id;
             $response = Http::get($url);
-            return $response;
+            $data = json_decode($response->getBody()->getContents(), true);
+            return $data;
         } catch (\Throwable $th) {
             return [];
         }
