@@ -42,7 +42,7 @@ class OnlineStoreManagementController extends AdminOnlineStoreManagementControll
         // Get assigned Product(s)
         $assignedProductIDs = $category->products()->pluck('_id')->all();
         /** @var Collection $products */
-        $products = Product::where('store_id', $this->store->_id)
+        $products = Product::where('store_id', $category->model_type_id)
             ->excludeIDs($assignedProductIDs)
             ->statusesAllowed(Status::$typesForAdmin, $statuses)
             ->get();
