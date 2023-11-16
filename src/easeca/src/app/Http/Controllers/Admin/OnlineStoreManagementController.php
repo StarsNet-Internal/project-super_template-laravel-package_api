@@ -14,7 +14,7 @@ use App\Models\Store;
 use App\Traits\Controller\StoreDependentTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use App\Http\Controllers\Admin\OnlineStoreManagementController as CustomerOnlineStoreManagementController;
+use App\Http\Controllers\Admin\OnlineStoreManagementController as AdminOnlineStoreManagementController;
 
 class OnlineStoreManagementController extends AdminOnlineStoreManagementController
 {
