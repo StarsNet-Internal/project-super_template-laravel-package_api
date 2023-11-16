@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 // Controllers
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\DevelopmentController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\GeneralDeliveryScheduleController;
+use StarsNet\Project\Easeca\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\OnlineStoreManagementController;
 
 Route::group(
@@ -35,6 +36,21 @@ Route::group(
         Route::get('/all', [$defaultController, 'getAllOrderCutOffSchedule']);
         Route::put('/details', [$defaultController, 'updateOrderCutOffSchedule']);
         Route::put('/all', [$defaultController, 'updateOrderCutOffSchedules']);
+    }
+);
+
+// PRODUCT
+Route::group(
+    ['prefix' => 'products'],
+    function () {
+        $defaultController = ProductController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
+            }
+        );
     }
 );
 
