@@ -8,6 +8,7 @@ use StarsNet\Project\Easeca\App\Http\Controllers\Admin\DevelopmentController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\GeneralDeliveryScheduleController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\OnlineStoreManagementController;
+use StarsNet\Project\Easeca\App\Http\Controllers\Admin\CustomerController;
 
 Route::group(
     ['prefix' => '/tests'],
@@ -64,6 +65,24 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/categories/{category_id}/products/unassign', [$defaultController, 'getCategoryUnassignedProducts'])->middleware(['pagination']);
+            }
+        );
+    }
+);
+
+// CUSTOMER
+Route::group(
+    ['prefix' => 'customers'],
+    function () {
+        $defaultController = CustomerController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllCustomers'])->middleware(['pagination']);
+                Route::post('/', [$defaultController, 'createCustomer']);
+
+                Route::get('/{id}/details', [$defaultController, 'getCustomerDetails']);
             }
         );
     }
