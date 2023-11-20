@@ -14,9 +14,9 @@ class ScheduleController extends Controller
             $account = $this->account();
 
             if ($account['store_id'] != null) {
-                $url = 'http://192.168.0.252:8080/customer/schedules?store_id=' . $account->store_id;
+                $url = 'http://192.168.0.252:8081/customer/schedules?store_id=' . $account->store_id;
             } else {
-                $url = 'http://192.168.0.252:8080/customer/schedules';
+                $url = 'http://192.168.0.252:8081/customer/schedules';
             }
             $response = Http::get($url);
             $data = json_decode($response->getBody()->getContents(), true);
