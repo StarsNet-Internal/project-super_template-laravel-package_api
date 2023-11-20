@@ -11,8 +11,13 @@ class ScheduleController extends Controller
     public function getSchedule(Request $request)
     {
         try {
-            $user = $this->user();
-            $url = 'http://192.168.0.252:5000/customer/schedules?user_id=' . $user->id;
+            $account = $this->account();
+
+            if ($account['store_id'] != null) {
+                $url = 'http://192.168.0.252:5000/customer/schedules?store_id=' . $account->store_id;
+            } else {
+                $url = 'http://192.168.0.252:5000/customer/schedules';
+            }
             $response = Http::get($url);
             $data = json_decode($response->getBody()->getContents(), true);
             return $data;
