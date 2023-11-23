@@ -66,7 +66,7 @@ class ShoppingCartController extends CustomerShoppingCartController
         }, $data['cart_items']);
 
         try {
-            $url = 'http://192.168.0.252:5000/customer/schedules/cut-off?store_id=' . $this->store->_id;
+            $url = 'https://timetable.easeca.tinkleex.com/customer/schedules/cut-off?store_id=' . $this->store->_id;
             $response = Http::get($url);
             $hour = json_decode($response->getBody()->getContents(), true);
             $data['calculations']['currency'] = $hour['hour'];
