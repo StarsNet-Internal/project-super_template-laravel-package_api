@@ -43,13 +43,11 @@ class StaffManagementController extends Controller
     public function getOrdersByAllStores(Request $request)
     {
         // Extract attributes from $request
-        $accountId = $request->route('id');
+        $accountIds = $request->input('account_ids', []);
         $start = Carbon::create($request->start_datetime);
         $end = Carbon::create($request->end_datetime);
 
-        $productIds = Product::when(!is_null($accountId), function ($query) use ($accountId) {
-            $query->where('created_by_account_id', $accountId);
-        })
+        $productIds = Product::whereIn('created_by_account_id', $accountIds)
             ->pluck('_id')
             ->all();
         $productVariantIds = ProductVariant::whereIn('product_id', $productIds)
@@ -59,38 +57,22 @@ class StaffManagementController extends Controller
         // Get Order(s)
         $orders = Order::whereIn('cart_items.product_variant_id', $productVariantIds)
             ->whereBetween('created_at', [$start, $end])
+            ->where('is_paid', true)
             ->get();
 
-        foreach ($orders as $order) {
-            $filteredCartItems = $order->cart_items->filter(function ($cartItem) use ($productVariantIds) {
-                return in_array($cartItem['product_variant_id'], $productVariantIds);
-            });
-
-            $order['cart_items'] = $filteredCartItems->toArray();
-        }
-
         $orders = array_map(function ($order) {
-            $order['calculations']['price']['subtotal'] = $this->roundingValue($this->getSubtotalPrice(collect($order['cart_items'])));
-            return $order;
+            $orders['cart_items'] = array_map(function ($cartItem) {
+                $product = Product::find($cartItem['product_id']);
+                $cartItem['account_id'] = $product['created_by_account_id'] ?
+                    $product['created_by_account_id']
+                    : null;
+
+                return $cartItem;
+            }, $order['cart_items']);
+
+            return $orders;
         }, $orders->toArray());
 
-        $mainStoreOrders = array_values(array_filter($orders, function ($order) {
-            return $order['store']['type'] == StoreType::MAIN;
-        }));
-        $miniStoreOrders = array_values(array_filter($orders, function ($order) {
-            return $order['store']['type'] == StoreType::MINI;
-        }));
-        $offlineStoreOrders = array_values(array_filter($orders, function ($order) {
-            return $order['store']['type'] == StoreType::OFFLINE;
-        }));
-
-        $data = [
-            'main' => $mainStoreOrders,
-            'mini' => $miniStoreOrders,
-            'offline' => $offlineStoreOrders,
-        ];
-
-        // Return data
-        return response()->json($data, 200);
+        return $orders;
     }
 }
