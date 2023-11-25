@@ -51,7 +51,7 @@ Route::group(
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
             Route::put('/tenants/{account_id}/details', [$defaultController, 'updateTenantDetails']);
 
-            Route::get('/orders/all', [$defaultController, 'getOrdersByAllStores']);
+            Route::get('/orders/all', [$defaultController, 'getOrdersByAllStores'])->middleware(['pagination']);
         });
     }
 );
