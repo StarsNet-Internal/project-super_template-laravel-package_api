@@ -36,6 +36,8 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/user', [$defaultController, 'getAuthUserInfo']);
+
+                Route::get('/verification-code', [$defaultController, 'getVerificationCode']);
             }
         );
     }

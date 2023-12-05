@@ -209,4 +209,16 @@ class AuthenticationController extends CustomerAuthenticationController
                 ], 401);
         }
     }
+
+    public function getVerificationCode(Request $request)
+    {
+        $this->generatePhoneVerificationCodeByType(
+            $this->user(),
+            VerificationCodeType::ACCOUNT_VERIFICATION,
+            60
+        );
+        return response()->json([
+            'message' => 'Generated new VerificationCode successfully',
+        ]);
+    }
 }
