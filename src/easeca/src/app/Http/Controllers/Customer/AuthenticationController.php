@@ -51,7 +51,7 @@ class AuthenticationController extends CustomerAuthenticationController
         }
 
         // Return success message
-        return response()->json($data);
+        return response()->json($data, $response->getStatusCode());
     }
 
     public function getAuthUserInfo()
@@ -66,7 +66,7 @@ class AuthenticationController extends CustomerAuthenticationController
         }
 
         // Return success message
-        return response()->json($data);
+        return response()->json($data, $response->getStatusCode());
     }
 
     public function register(Request $request)
