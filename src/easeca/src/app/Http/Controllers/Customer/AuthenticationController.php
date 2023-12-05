@@ -89,8 +89,10 @@ class AuthenticationController extends CustomerAuthenticationController
 
         // Package
         $customer = $account->customer;
+        $store = $this->getStoreByValue($request->store_id);
         $account->update([
             'store_id' => $request->store_id,
+            'is_approved' => $store->is_system === true ? true : false,
         ]);
         $customer->update([
             'delivery_recipient' => [

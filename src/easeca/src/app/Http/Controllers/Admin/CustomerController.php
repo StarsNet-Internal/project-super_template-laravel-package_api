@@ -111,8 +111,10 @@ class CustomerController extends Controller
         if ($account instanceof Account) {
             $this->updateAccountViaRegistration($account, $request);
         }
+        $store = $this->getStoreByValue($request->store_id);
         $account->update([
             'store_id' => $request->store_id,
+            'is_approved' => $store->is_system === true ? true : false,
         ]);
 
         // Return success message
