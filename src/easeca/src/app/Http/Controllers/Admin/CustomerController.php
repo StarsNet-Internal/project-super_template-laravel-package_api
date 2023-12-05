@@ -135,7 +135,9 @@ class CustomerController extends Controller
         // Update account(s)
         /** @var Account $account */
         foreach ($accounts as $account) {
-            $account->is_approved = true;
+            $account->update([
+                'is_approved' => true,
+            ]);
         }
 
         // Return success message
