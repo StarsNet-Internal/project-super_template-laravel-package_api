@@ -140,7 +140,7 @@ class CustomerController extends Controller
 
         // Return success message
         return response()->json([
-            'message' => 'Approved ' . $users->count() . ' Account(s) successfully'
+            'message' => 'Approved ' . $accounts->count() . ' Account(s) successfully'
         ], 200);
     }
 }
