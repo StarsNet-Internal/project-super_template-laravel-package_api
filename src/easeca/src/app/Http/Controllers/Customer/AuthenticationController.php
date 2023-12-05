@@ -47,7 +47,8 @@ class AuthenticationController extends CustomerAuthenticationController
         $account = $this->account();
         if ($account->store_id != null) {
             $store = $this->getStoreByValue($account->store_id);
-            $data['user']['account']['country'] = $store->remarks;
+            $data['user']['account']['country'] =
+                $store->is_system === true ? 'default-main-store' : $store->remarks;
         }
 
         // Return success message
@@ -62,7 +63,8 @@ class AuthenticationController extends CustomerAuthenticationController
         $account = $this->account();
         if ($account->store_id != null) {
             $store = $this->getStoreByValue($account->store_id);
-            $data['user']['account']['country'] = $store->remarks;
+            $data['user']['account']['country'] =
+                $store->is_system === true ? 'default-main-store' : $store->remarks;
         }
 
         // Return success message
