@@ -83,6 +83,8 @@ Route::group(
                 Route::post('/', [$defaultController, 'createCustomer']);
 
                 Route::get('/{id}/details', [$defaultController, 'getCustomerDetails']);
+
+                Route::put('/approve', [$defaultController, 'approveCustomerAccounts']);
             }
         );
     }
