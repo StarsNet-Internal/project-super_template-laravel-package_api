@@ -49,6 +49,7 @@ class CustomerController extends Controller
             $customer['area_code'] = $customer['account']['area_code'];
             $customer['phone'] = $customer['account']['phone'];
             $customer['store_id'] = $customer['account']['store_id'] ?? null;
+            $customer['is_approved'] = $customer['account']['is_approved'] ?? null;
 
             unset($customer['account']);
             return $customer;
@@ -76,6 +77,7 @@ class CustomerController extends Controller
         $customer['area_code'] = $customer['account']['area_code'];
         $customer['phone'] = $customer['account']['phone'];
         $customer['store_id'] = $customer['account']['store_id'] ?? null;
+        $customer['is_approved'] = $customer['account']['is_approved'] ?? null;
         unset($customer['account']);
 
         // Return Customer
