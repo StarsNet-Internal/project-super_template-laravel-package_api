@@ -42,8 +42,7 @@ class OrderManagementController extends Controller
                 return $query->whereCurrentStatuses($statuses);
             })
             ->with(['productReviews'])
-            ->get()
-            ->makeHidden(['cart_items', 'gift_items']);
+            ->get();
 
         return $orders;
     }
