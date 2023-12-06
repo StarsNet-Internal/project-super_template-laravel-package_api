@@ -8,6 +8,7 @@ use StarsNet\Project\Easeca\App\Http\Controllers\Admin\DevelopmentController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\GeneralDeliveryScheduleController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\OnlineStoreManagementController;
+use StarsNet\Project\Easeca\App\Http\Controllers\Admin\OfflineStoreManagementController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\CustomerController;
 
 Route::group(
@@ -65,6 +66,21 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/categories/{category_id}/products/unassign', [$defaultController, 'getCategoryUnassignedProducts'])->middleware(['pagination']);
+            }
+        );
+    }
+);
+
+// OFFLINE_STORE
+Route::group(
+    ['prefix' => '/stores'],
+    function () {
+        $defaultController = OfflineStoreManagementController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::put('/delete', [$defaultController, 'deleteStores']);
             }
         );
     }
