@@ -9,6 +9,7 @@ use StarsNet\Project\Easeca\App\Http\Controllers\Admin\GeneralDeliveryScheduleCo
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\OnlineStoreManagementController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\OfflineStoreManagementController;
+use StarsNet\Project\Easeca\App\Http\Controllers\Admin\OrderManagementController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\CustomerController;
 
 Route::group(
@@ -81,6 +82,21 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::put('/delete', [$defaultController, 'deleteStores']);
+            }
+        );
+    }
+);
+
+// ORDER
+Route::group(
+    ['prefix' => 'orders'],
+    function () {
+        $defaultController = OrderManagementController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllOrdersByStore'])->middleware(['pagination']);
             }
         );
     }
