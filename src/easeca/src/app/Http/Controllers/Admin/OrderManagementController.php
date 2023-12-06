@@ -34,7 +34,13 @@ class OrderManagementController extends Controller
 
     public function getAllOrdersByStore(Request $request)
     {
+        // Extract attributes from $request
+        $statuses = (array) $request->input('current_status', []);
+
         $orders = Order::whereIn('store_id', $request->store_id)
+            ->when($statuses, function ($query, $statuses) {
+                return $query->whereCurrentStatuses($statuses);
+            })
             ->with(['productReviews'])
             ->get()
             ->makeHidden(['cart_items', 'gift_items']);
