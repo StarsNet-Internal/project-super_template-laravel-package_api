@@ -128,21 +128,21 @@ class CustomerController extends Controller
     public function approveCustomerAccounts(Request $request)
     {
         // Extract attributes from $request
-        $accountIDs = $request->input('ids', []);
+        $customerIDs = $request->input('ids', []);
 
-        $accounts = Account::find($accountIDs);
+        $customers = Customer::find($customerIDs);
 
-        // Update account(s)
-        /** @var Account $account */
-        foreach ($accounts as $account) {
-            $account->update([
+        // Update customer(s)
+        /** @var Customer $customer */
+        foreach ($customers as $customer) {
+            $customer->account->update([
                 'is_approved' => true,
             ]);
         }
 
         // Return success message
         return response()->json([
-            'message' => 'Approved ' . $accounts->count() . ' Account(s) successfully'
+            'message' => 'Approved ' . $customers->count() . ' Account(s) successfully'
         ], 200);
     }
 }
