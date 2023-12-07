@@ -71,7 +71,7 @@ class AuthenticationController extends CustomerAuthenticationController
                 return $token != $tokenToRemoved;
             });
             $account->update([
-                'fcm_tokens' => $tokens
+                'fcm_tokens' => array_values($tokens)
             ]);
         }
 
