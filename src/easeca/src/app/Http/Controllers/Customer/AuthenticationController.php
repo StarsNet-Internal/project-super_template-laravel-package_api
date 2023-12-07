@@ -50,6 +50,11 @@ class AuthenticationController extends CustomerAuthenticationController
             $data['user']['account']['country'] =
                 $store->is_system === true ? 'default-main-store' : $store->remarks;
         }
+        $tokens = $account->fcm_tokens;
+        array_push($tokens, $request->fcm_token);
+        $account->update([
+            'fcm_tokens' => $tokens
+        ]);
 
         // Return success message
         return response()->json($data, $response->getStatusCode());
