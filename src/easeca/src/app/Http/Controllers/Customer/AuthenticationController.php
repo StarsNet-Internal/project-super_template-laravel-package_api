@@ -50,11 +50,13 @@ class AuthenticationController extends CustomerAuthenticationController
             $data['user']['account']['country'] =
                 $store->is_system === true ? 'default-main-store' : $store->remarks;
         }
-        $tokens = $account->fcm_tokens ?? [];
-        array_push($tokens, $request->fcm_token);
-        $account->update([
-            'fcm_tokens' => $tokens
-        ]);
+        if (isset($request->fcm_token) && $request->fcm_token != '') {
+            $tokens = $account->fcm_tokens ?? [];
+            array_push($tokens, $request->fcm_token);
+            $account->update([
+                'fcm_tokens' => $tokens
+            ]);
+        }
 
         // Return success message
         return response()->json($data, $response->getStatusCode());
@@ -62,14 +64,16 @@ class AuthenticationController extends CustomerAuthenticationController
 
     public function logoutMobileDevice(Request $request)
     {
-        $tokenToRemoved = $request->fcm_token;
-        $account = $this->account();
-        $tokens = array_filter($account->fcm_tokens, function ($token) use ($tokenToRemoved) {
-            return $token != $tokenToRemoved;
-        });
-        $account->update([
-            'fcm_tokens' => $tokens
-        ]);
+        if (isset($request->fcm_token) && $request->fcm_token != '') {
+            $tokenToRemoved = $request->fcm_token;
+            $account = $this->account();
+            $tokens = array_filter($account->fcm_tokens, function ($token) use ($tokenToRemoved) {
+                return $token != $tokenToRemoved;
+            });
+            $account->update([
+                'fcm_tokens' => $tokens
+            ]);
+        }
 
         $response = parent::logout();
         $data = json_decode(json_encode($response), true)['original'];
