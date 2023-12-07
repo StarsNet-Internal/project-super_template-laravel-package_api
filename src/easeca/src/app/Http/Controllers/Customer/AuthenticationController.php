@@ -50,7 +50,7 @@ class AuthenticationController extends CustomerAuthenticationController
             $data['user']['account']['country'] =
                 $store->is_system === true ? 'default-main-store' : $store->remarks;
         }
-        $tokens = $account->fcm_tokens;
+        $tokens = $account->fcm_tokens ?? [];
         array_push($tokens, $request->fcm_token);
         $account->update([
             'fcm_tokens' => $tokens
@@ -71,7 +71,7 @@ class AuthenticationController extends CustomerAuthenticationController
             'fcm_tokens' => $tokens
         ]);
 
-        $response = parent::logout($request);
+        $response = parent::logout();
         $data = json_decode(json_encode($response), true)['original'];
 
         // Return success message
