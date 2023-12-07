@@ -35,7 +35,7 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
-                Route::get('/logout', [$defaultController, 'logout']);
+                Route::get('/logout', [$defaultController, 'logoutMobileDevice']);
 
                 Route::get('/user', [$defaultController, 'getAuthUserInfo']);
 

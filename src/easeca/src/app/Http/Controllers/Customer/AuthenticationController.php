@@ -60,7 +60,7 @@ class AuthenticationController extends CustomerAuthenticationController
         return response()->json($data, $response->getStatusCode());
     }
 
-    public function logout(Request $request)
+    public function logoutMobileDevice(Request $request)
     {
         $tokenToRemoved = $request->fcm_token;
         $account = $this->account();
