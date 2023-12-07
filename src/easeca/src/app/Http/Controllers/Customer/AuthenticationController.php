@@ -60,6 +60,24 @@ class AuthenticationController extends CustomerAuthenticationController
         return response()->json($data, $response->getStatusCode());
     }
 
+    public function logout(Request $request)
+    {
+        $tokenToRemoved = $request->fcm_token;
+        $account = $this->account();
+        $tokens = array_filter($account->fcm_tokens, function ($token) use ($tokenToRemoved) {
+            return $token != $tokenToRemoved;
+        });
+        $account->update([
+            'fcm_tokens' => $tokens
+        ]);
+
+        $response = parent::logout($request);
+        $data = json_decode(json_encode($response), true)['original'];
+
+        // Return success message
+        return response()->json($data, $response->getStatusCode());
+    }
+
     public function getAuthUserInfo()
     {
         $response = parent::getAuthUserInfo();

@@ -35,6 +35,8 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::get('/logout', [$defaultController, 'logout']);
+
                 Route::get('/user', [$defaultController, 'getAuthUserInfo']);
 
                 Route::get('/verification-code', [$defaultController, 'getVerificationCode']);
