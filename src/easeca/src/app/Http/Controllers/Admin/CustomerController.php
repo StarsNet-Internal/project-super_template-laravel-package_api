@@ -103,6 +103,7 @@ class CustomerController extends Controller
 
         // Generate a new customer-identity Account
         $user = $this->createNewUserAsCustomer($request);
+        $user->setAsCustomerAccount();
 
         // Update User
         $this->updateUserViaRegistration($user, $request);
