@@ -40,9 +40,22 @@ class OrderManagementController extends Controller
         $orders = Order::whereIn('store_id', $request->store_id)
             ->when($statuses, function ($query, $statuses) {
                 return $query->whereCurrentStatuses($statuses);
-            })
-            ->with(['productReviews'])
-            ->get();
+            })->with([
+                'productReviews' => function ($query) {
+                    $query->select('order_id', 'comment');
+                }
+            ])->get();
+
+        $orders->each(function ($order) {
+            $order->productReviews->each(function ($productReview) {
+                $productReview->makeHidden([
+                    'user',
+                    'product_title',
+                    'product_variant_title',
+                    'image'
+                ]);
+            });
+        });
 
         return $orders;
     }
