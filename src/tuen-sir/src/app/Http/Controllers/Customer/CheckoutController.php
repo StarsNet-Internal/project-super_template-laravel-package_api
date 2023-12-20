@@ -26,6 +26,7 @@ use Illuminate\Validation\Rule;
 
 use App\Http\Controllers\Customer\CheckoutController as CustomerCheckoutController;
 use StarsNet\Project\TuenSir\App\Models\CustomStoreQuote;
+use StarsNet\Project\TuenSir\App\Models\CustomOrderImage;
 
 class CheckoutController extends CustomerCheckoutController
 {
@@ -40,18 +41,22 @@ class CheckoutController extends CustomerCheckoutController
 
     public function checkOutQuote(Request $request)
     {
-        $quoteOrderId = $request->quote_order_id;
+        $images = $request->images;
 
-        $res = json_decode(json_encode($this->checkOut($request)), true)['original'];
+        $response = json_decode(json_encode($this->checkOut($request)), true)['original'];
 
-        if (!is_null($quoteOrderId)) {
-            $quote = CustomStoreQuote::where('quote_order_id', $quoteOrderId)->first();
-            $quote->update([
-                'purchase_order_id' => $res['order_id']
+        if (!is_null($response['order_id'])) {
+            $image = CustomOrderImage::create([
+                'images' => $images,
+                'order_id' => $response['order_id'],
             ]);
+            // $quote = CustomStoreQuote::where('quote_order_id', $quoteOrderId)->first();
+            // $quote->update([
+            //     'purchase_order_id' => $res['order_id']
+            // ]);
         }
 
-        return $res;
+        return response()->json($response, $response->getStatusCode());
     }
 
     public function onlinePaymentCallback(Request $request)
