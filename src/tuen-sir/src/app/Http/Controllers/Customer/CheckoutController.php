@@ -23,7 +23,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Log;
 
 use App\Http\Controllers\Customer\CheckoutController as CustomerCheckoutController;
 use StarsNet\Project\TuenSir\App\Models\CustomStoreQuote;
@@ -48,7 +47,6 @@ class CheckoutController extends CustomerCheckoutController
 
         $order = json_decode(json_encode($response), true)['original'];
 
-        Log::info($order);
         if (isset($order['order_id']) && !is_null($images)) {
             CustomOrderImage::create([
                 'images' => $images,
