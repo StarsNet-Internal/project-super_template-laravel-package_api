@@ -43,12 +43,14 @@ class CheckoutController extends CustomerCheckoutController
     {
         $images = $request->images;
 
-        $response = json_decode(json_encode($this->checkOut($request)), true)['original'];
+        $response = $this->checkOut($request);
 
-        if (!is_null($response['order_id'])) {
-            $image = CustomOrderImage::create([
+        $order = json_decode(json_encode($response), true)['original'];
+
+        if (!is_null($order['order_id'])) {
+            CustomOrderImage::create([
                 'images' => $images,
-                'order_id' => $response['order_id'],
+                'order_id' => $order['order_id'],
             ]);
             // $quote = CustomStoreQuote::where('quote_order_id', $quoteOrderId)->first();
             // $quote->update([
@@ -56,7 +58,7 @@ class CheckoutController extends CustomerCheckoutController
             // ]);
         }
 
-        return response()->json($response, $response->getStatusCode());
+        return response()->json($order, $response->getStatusCode());
     }
 
     public function onlinePaymentCallback(Request $request)
