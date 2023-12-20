@@ -47,7 +47,7 @@ class CheckoutController extends CustomerCheckoutController
 
         $order = json_decode(json_encode($response), true)['original'];
 
-        if (!is_null($order['order_id'])) {
+        if ($order['order_id'] && !is_null($images)) {
             CustomOrderImage::create([
                 'images' => $images,
                 'order_id' => $order['order_id'],
