@@ -21,7 +21,8 @@
       "StarsNet\\Project\\ClsPackaging\\": "src/cls-packaging/src/",
       "StarsNet\\Project\\CateringMan\\": "src/catering-man/src/",
       "StarsNet\\Project\\DemyArt\\": "src/demy-art/src/",
-      "StarsNet\\Project\\Easeca\\": "src/easeca/src/"
+      "StarsNet\\Project\\Easeca\\": "src/easeca/src/",
+      "StarsNet\\Project\\EnjoyFace\\": "src/enjoy-face/src/"
     }
   },
   "extra": {
@@ -42,7 +43,8 @@
         "StarsNet\\Project\\ClsPackaging\\ProjectServiceProvider",
         "StarsNet\\Project\\CateringMan\\ProjectServiceProvider",
         "StarsNet\\Project\\DemyArt\\ProjectServiceProvider",
-        "StarsNet\\Project\\Easeca\\ProjectServiceProvider"
+        "StarsNet\\Project\\Easeca\\ProjectServiceProvider",
+        "StarsNet\\Project\\EnjoyFace\\ProjectServiceProvider"
       ]
     }
   }
