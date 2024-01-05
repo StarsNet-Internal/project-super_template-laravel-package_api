@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\ProductVariant;
 use App\Traits\Controller\StoreDependentTrait;
 
 use Illuminate\Support\Collection;
@@ -53,6 +54,17 @@ class OrderManagementController extends Controller
                 return $query->whereCurrentStatuses($statuses);
             })
             ->get();
+
+        $orders = array_map(function ($order) {
+            $cartItems = $order['cart_items'];
+            foreach ($cartItems as $itemIndex => $item) {
+                $productVariantId = $item['product_variant_id'];
+                $variant = ProductVariant::find($productVariantId);
+
+                $order['cart_items'][$itemIndex]['variant'] = $variant;
+            }
+            return $order;
+        }, $orders->toArray());
 
         // Return Order(s)
         return $orders;
