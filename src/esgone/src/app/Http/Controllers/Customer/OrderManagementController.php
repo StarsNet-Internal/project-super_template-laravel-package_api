@@ -12,7 +12,9 @@ use App\Traits\Controller\StoreDependentTrait;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 
-class OrderManagementController extends Controller
+use App\Http\Controllers\Customer\OrderController as CustomerOrderController;
+
+class OrderManagementController extends CustomerOrderController
 {
     use StoreDependentTrait;
 
