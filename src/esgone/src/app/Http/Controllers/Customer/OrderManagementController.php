@@ -12,9 +12,7 @@ use App\Traits\Controller\StoreDependentTrait;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 
-use App\Http\Controllers\Customer\OrderController as CustomerOrderController;
-
-class OrderManagementController extends CustomerOrderController
+class OrderManagementController extends Controller
 {
     use StoreDependentTrait;
 
@@ -101,7 +99,7 @@ class OrderManagementController extends CustomerOrderController
         $order = Order::find($validatedData['order_id']);
 
         // Validate Customer
-        if (!$this->canCustomerViewOrder($order, $this->customer())) {
+        if ($order->customer_id !== $this->customer()->_id) {
             return response()->json([
                 'message' => 'Order does not belong to this Customer'
             ], 401);
