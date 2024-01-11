@@ -206,7 +206,7 @@ class ProductManagementController extends CustomerProductManagementController
 
         $urls = [];
         foreach ($productIDsSet as $IDsSet) {
-            $urls[] = str_replace('https', 'http', route('products.ids', [
+            $urls[] = str_replace('https', 'http', route('esgone.products.ids', [
                 'store_id' => $this->store->_id,
                 'ids' => $IDsSet->all()
             ]));
