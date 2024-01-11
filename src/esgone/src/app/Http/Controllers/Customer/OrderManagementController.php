@@ -105,6 +105,11 @@ class OrderManagementController extends Controller
             ], 401);
         }
 
+        // Get Checkout
+        /** @var Checkout $order->checkout */
+        $order->checkout = $order->checkout()->latest()->first();
+
+        $order = $order->toArray();
         $cartItems = $order['cart_items'];
         foreach ($cartItems as $itemIndex => $item) {
             $productVariantId = $item['product_variant_id'];
@@ -112,10 +117,6 @@ class OrderManagementController extends Controller
 
             $order['cart_items'][$itemIndex]['variant'] = $variant;
         }
-
-        // Get Checkout
-        /** @var Checkout $order->checkout */
-        $order->checkout = $order->checkout()->latest()->first();
 
         // Return data
         return response()->json($order);
