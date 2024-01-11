@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 use StarsNet\Project\Esgone\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\Esgone\App\Http\Controllers\Admin\AuthenticationController;
+use StarsNet\Project\Esgone\App\Http\Controllers\Admin\CustomerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,6 +45,24 @@ Route::group(
                 Route::get('/user', [$defaultController, 'getAuthUserInfo']);
 
                 Route::get('/verification-code', [$defaultController, 'getVerificationCode']);
+            }
+        );
+    }
+);
+
+// CUSTOMER
+Route::group(
+    ['prefix' => 'customers'],
+    function () {
+        $defaultController = CustomerController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/', [$defaultController, 'createCustomer']);
+
+                Route::get('/{id}/details', [$defaultController, 'getCustomerDetails']);
+                Route::put('/{id}/details', [$defaultController, 'updateCustomerDetails']);
             }
         );
     }
