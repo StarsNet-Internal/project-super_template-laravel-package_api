@@ -5,6 +5,7 @@ namespace StarsNet\Project\Esgone\App\Http\Controllers\Customer;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Customer\ShoppingCartController as CustomerShoppingCartController;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 
 class ShoppingCartController extends CustomerShoppingCartController
