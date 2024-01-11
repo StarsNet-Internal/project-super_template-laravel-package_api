@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use StarsNet\Project\Esgone\App\Http\Controllers\Customer\TestingController;
 use StarsNet\Project\Esgone\App\Http\Controllers\Customer\CustomerController;
 use StarsNet\Project\Esgone\App\Http\Controllers\Customer\OrderManagementController;
+use StarsNet\Project\Esgone\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\Esgone\App\Http\Controllers\Customer\ShoppingCartController;
 
 
@@ -38,6 +39,31 @@ Route::group(
     }
 );
 
+// STORE
+Route::group(
+    ['prefix' => '/stores/{store_id}/'],
+    function () {
+
+        // PRODUCT_MANAGEMENT
+        Route::group(
+            ['prefix' => 'product-management'],
+            function () {
+                $defaultController = ProductManagementController::class;
+
+                Route::get('/products/filter', [$defaultController, 'filterProductsByCategories'])->middleware(['pagination']);
+            }
+        );
+
+        // SHOPPING_CART
+        Route::group(['prefix' => 'shopping-cart'], function () {
+            $defaultController = ShoppingCartController::class;
+
+            Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                Route::post('/all', [$defaultController, 'getAll']);
+            });
+        });
+    }
+);
 
 Route::group(
     ['prefix' => 'orders'],
@@ -50,17 +76,5 @@ Route::group(
                 Route::get('/all', [$defaultController, 'getAllOrdersByStore'])->middleware(['pagination']);
             }
         );
-    }
-);
-
-// SHOPPING_CART
-Route::group(
-    ['prefix' => '/stores/{store_id}/shopping-cart'],
-    function () {
-        $defaultController = ShoppingCartController::class;
-
-        Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
-            Route::post('/all', [$defaultController, 'getAll']);
-        });
     }
 );
