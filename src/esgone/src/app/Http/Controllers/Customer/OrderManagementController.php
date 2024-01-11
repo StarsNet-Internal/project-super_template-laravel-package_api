@@ -48,8 +48,12 @@ class OrderManagementController extends Controller
         if (count($stores) == 0) return new Collection();
         $stores = collect($stores);
 
+        // Get authenticated User information
+        $customer = $this->customer();
+
         // Get Order(s)
         $orders = Order::byStores($stores)
+            ->byCustomer($customer)
             ->when($statuses, function ($query, $statuses) {
                 return $query->whereCurrentStatuses($statuses);
             })
@@ -68,5 +72,52 @@ class OrderManagementController extends Controller
 
         // Return Order(s)
         return $orders;
+    }
+
+    public function getOrderDetailsAsCustomer(Request $request)
+    {
+        // Validate Request
+        $validatableData = [
+            'order_id' => $request->route('order_id')
+        ];
+
+        $validator = Validator::make($validatableData, [
+            'order_id' => [
+                'required',
+                'exists:App\Models\Order,_id'
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        $validatedData = $validator->validated();
+
+        // Get Order
+        /** @var Order $order */
+        $order = Order::find($validatedData['order_id']);
+
+        // Validate Customer
+        if (!$this->canCustomerViewOrder($order, $this->customer())) {
+            return response()->json([
+                'message' => 'Order does not belong to this Customer'
+            ], 401);
+        }
+
+        $cartItems = $order['cart_items'];
+        foreach ($cartItems as $itemIndex => $item) {
+            $productVariantId = $item['product_variant_id'];
+            $variant = ProductVariant::find($productVariantId);
+
+            $order['cart_items'][$itemIndex]['variant'] = $variant;
+        }
+
+        // Get Checkout
+        /** @var Checkout $order->checkout */
+        $order->checkout = $order->checkout()->latest()->first();
+
+        // Return data
+        return response()->json($order);
     }
 }
