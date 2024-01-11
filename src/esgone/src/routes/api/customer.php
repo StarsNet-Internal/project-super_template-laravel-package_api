@@ -51,6 +51,9 @@ Route::group(
                 $defaultController = ProductManagementController::class;
 
                 Route::get('/products/filter', [$defaultController, 'filterProductsByCategories'])->middleware(['pagination']);
+
+                Route::get('/related-products-urls', [$defaultController, 'getRelatedProductsUrls'])->middleware(['pagination']);
+                Route::get('/products/ids', [$defaultController, 'getProductsByIDs'])->name('esgone.products.ids')->middleware(['pagination']);
             }
         );
 
