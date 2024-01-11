@@ -62,6 +62,8 @@ Route::group(
             $defaultController = ShoppingCartController::class;
 
             Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                Route::get('/related-products-urls', [$defaultController, 'getRelatedProductsUrls'])->middleware(['pagination']);
+
                 Route::post('/all', [$defaultController, 'getAll']);
             });
         });
