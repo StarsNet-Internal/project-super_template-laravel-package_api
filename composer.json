@@ -22,7 +22,8 @@
       "StarsNet\\Project\\CateringMan\\": "src/catering-man/src/",
       "StarsNet\\Project\\DemyArt\\": "src/demy-art/src/",
       "StarsNet\\Project\\Easeca\\": "src/easeca/src/",
-      "StarsNet\\Project\\EnjoyFace\\": "src/enjoy-face/src/"
+      "StarsNet\\Project\\EnjoyFace\\": "src/enjoy-face/src/",
+      "StarsNet\\Project\\Esgone\\": "src/esgone/src/"
     }
   },
   "extra": {
@@ -44,7 +45,8 @@
         "StarsNet\\Project\\CateringMan\\ProjectServiceProvider",
         "StarsNet\\Project\\DemyArt\\ProjectServiceProvider",
         "StarsNet\\Project\\Easeca\\ProjectServiceProvider",
-        "StarsNet\\Project\\EnjoyFace\\ProjectServiceProvider"
+        "StarsNet\\Project\\EnjoyFace\\ProjectServiceProvider",
+        "StarsNet\\Project\\Esgone\\ProjectServiceProvider"
       ]
     }
   }
