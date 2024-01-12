@@ -48,7 +48,6 @@ class AuthenticationController extends CustomerAuthenticationController
         // Update User
         $this->updateUserViaRegistration($user, $request);
         $user->generateVerificationCodeByType(
-            $user,
             VerificationCodeType::ACCOUNT_VERIFICATION,
             60
         );
