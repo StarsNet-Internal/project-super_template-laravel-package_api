@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\Esgone\App\Http\Controllers\Customer\TestingController;
+use StarsNet\Project\Esgone\App\Http\Controllers\Customer\AuthenticationController;
 use StarsNet\Project\Esgone\App\Http\Controllers\Customer\CustomerController;
 use StarsNet\Project\Esgone\App\Http\Controllers\Customer\OrderManagementController;
 use StarsNet\Project\Esgone\App\Http\Controllers\Customer\ProductManagementController;
