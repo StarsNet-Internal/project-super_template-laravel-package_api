@@ -30,6 +30,16 @@ Route::group(
     }
 );
 
+// AUTH
+Route::group(
+    ['prefix' => 'auth'],
+    function () {
+        $defaultController = AuthenticationController::class;
+
+        Route::post('/register', [$defaultController, 'register']);
+    }
+);
+
 Route::group(
     ['prefix' => 'customers'],
     function () {
