@@ -32,6 +32,34 @@ class CustomerController extends Controller
 
     protected $model = Customer::class;
 
+    public function getAllCustomers(Request $request)
+    {
+        // Define keys for append
+        $appendKeys = [
+            'user',
+            'country',
+            'gender',
+            'last_logged_in_at',
+            'email',
+            'area_code',
+            'phone'
+        ];
+
+        // Get Customer(s)
+        /** @var Collection $customers */
+        $customers = Customer::whereIsDeleted(false)
+            ->whereHas('account', function ($query) {
+                $query->whereHas('user', function ($query2) {
+                    $query2->where('type', '!=', LoginType::TEMP)->where('is_staff', false);
+                });
+            })
+            ->get()
+            ->append($appendKeys);
+
+        // Return Customer(s)
+        return $customers;
+    }
+
     public function getCustomerDetails(Request $request)
     {
         // Extract attributes from $request
