@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use StarsNet\Project\Esgone\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\Esgone\App\Http\Controllers\Admin\AuthenticationController;
 use StarsNet\Project\Esgone\App\Http\Controllers\Admin\CustomerController;
+use StarsNet\Project\Esgone\App\Http\Controllers\Admin\CustomerGroupController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +65,22 @@ Route::group(
 
                 Route::get('/{id}/details', [$defaultController, 'getCustomerDetails']);
                 Route::put('/{id}/details', [$defaultController, 'updateCustomerDetails']);
+            }
+        );
+    }
+);
+
+// CUSTOMER_GROUP
+Route::group(
+    ['prefix' => 'customer-groups'],
+    function () {
+        $defaultController = CustomerGroupController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/{id}/customers/assign', [$defaultController, 'getCustomerGroupAssignedCustomers'])->middleware(['pagination']);
+                Route::get('/{id}/customers/unassign', [$defaultController, 'getCustomerGroupUnassignedCustomers'])->middleware(['pagination']);
             }
         );
     }
