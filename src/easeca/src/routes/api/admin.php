@@ -52,6 +52,8 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
+
+                Route::post('/copy', [$defaultController, 'copyProducts']);
             }
         );
     }

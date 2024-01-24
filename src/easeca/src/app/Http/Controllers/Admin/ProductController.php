@@ -99,4 +99,77 @@ class ProductController extends AdminProductController
 
         return $products;
     }
+
+    public function copyProducts(Request $request)
+    {
+        $productIds = $request->input('product_ids', []);
+        $storeIds = $request->input('store_ids', []);
+
+        foreach ($productIds as $productId) {
+            foreach ($storeIds as $storeId) {
+                $originalProduct = Product::find($productId);
+                $variants = $originalProduct->variants()->get();
+                foreach ($variants as $variant) {
+                    $variant->appendTotalWarehouseInventoryAttributes();
+                    $variant->appendLatestDiscount();
+                }
+                $originalProduct->variants = $variants;
+
+                $originalVariants = $originalProduct->variants->toArray();
+                $originalProduct = $originalProduct->toArray();
+
+                $clonedProduct = Product::create();
+                $clonedVariant = $clonedProduct->createVariant([
+                    'status' => Status::DRAFT,
+                ]);
+
+                unset($originalProduct['category_ids']);
+                unset($originalProduct['variants']);
+                $productAttributes = [];
+                foreach ($originalProduct as $key => $value) {
+                    $productAttributes[$key] = $value;
+                }
+                $clonedProduct->update($productAttributes);
+
+                foreach ($originalVariants as $input) {
+                    // Extract attributes
+                    $variantAttributes = [];
+                    foreach ($input as $key => $value) {
+                        $variantAttributes[$key] = $value;
+                    }
+                    $variantAttributes['product_id'] = $clonedProduct->_id;
+
+                    $clonedVariant->update($variantAttributes);
+
+                    // Validate if updating ProductVariantDiscount is required
+                    if (!array_key_exists('discount', $input)) continue;
+                    $discountInput = $input['discount'];
+                    if (is_null($discountInput)) continue;
+
+                    // Extract attributes
+                    $discountAttributes = [];
+                    foreach ($discountInput as $key => $value) {
+                        $discountAttributes[$key] = $value;
+                    }
+
+                    $discount = $clonedVariant->createDiscount($discountAttributes);
+                }
+
+                $clonedProduct->update([
+                    'store_id' => $storeId,
+                    'cloned_from_product_id' => $productId,
+                ]);
+
+                $store = Store::find($storeId);
+                $category = $store->productCategories()
+                    ->where('slug', 'all-products')
+                    ->first();
+                $category->attachProducts(collect([$clonedProduct]));
+            }
+        }
+
+        return response()->json([
+            'message' => 'Copied Products successfully'
+        ], 200);
+    }
 }
