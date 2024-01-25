@@ -36,7 +36,7 @@ class ProjectServiceProvider extends ServiceProvider
         // Define routes to be loaded from
         $getRoutesCallback = function ($router) {
             $this->getAdminRoutes();
-            $this->getCommandRoutes();
+            // $this->getCommandRoutes();
             $this->getCustomerRoutes();
         };
 
