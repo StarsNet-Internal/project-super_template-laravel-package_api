@@ -51,7 +51,7 @@ class ProductController extends AdminProductController
             'wishlistItems',
             'warehouseInventories'
         ])->get([
-            '_id', 'title', 'images', 'status', 'updated_at', 'created_at', 'store_id'
+            '_id', 'title', 'images', 'status', 'updated_at', 'created_at', 'store_id', 'cloned_from_product_id'
         ]);
 
         foreach ($products as $key => $product) {
