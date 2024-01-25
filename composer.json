@@ -23,7 +23,8 @@
       "StarsNet\\Project\\DemyArt\\": "src/demy-art/src/",
       "StarsNet\\Project\\Easeca\\": "src/easeca/src/",
       "StarsNet\\Project\\EnjoyFace\\": "src/enjoy-face/src/",
-      "StarsNet\\Project\\Esgone\\": "src/esgone/src/"
+      "StarsNet\\Project\\Esgone\\": "src/esgone/src/",
+      "StarsNet\\Project\\Ops\\": "src/ops/src/"
     }
   },
   "extra": {
@@ -46,7 +47,8 @@
         "StarsNet\\Project\\DemyArt\\ProjectServiceProvider",
         "StarsNet\\Project\\Easeca\\ProjectServiceProvider",
         "StarsNet\\Project\\EnjoyFace\\ProjectServiceProvider",
-        "StarsNet\\Project\\Esgone\\ProjectServiceProvider"
+        "StarsNet\\Project\\Esgone\\ProjectServiceProvider",
+        "StarsNet\\Project\\Ops\\ProjectServiceProvider"
       ]
     }
   }
