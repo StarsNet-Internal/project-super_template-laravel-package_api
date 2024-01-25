@@ -11,6 +11,7 @@ use StarsNet\Project\Ops\App\Models\TemplateComponent;
 
 // Traits
 use App\Traits\Model\ObjectIDTrait;
+use App\Traits\Model\StatusFieldTrait;
 
 // Laravel classes and MongoDB relationships, default import
 use Illuminate\Support\Collection;
@@ -25,7 +26,7 @@ use Jenssegers\Mongodb\Relations\EmbedsOne;
 
 class DashboardTemplate extends Eloquent
 {
-    use ObjectIDTrait;
+    use ObjectIDTrait, StatusFieldTrait;
 
     /**
      * Define database connection.
