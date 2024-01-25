@@ -18,7 +18,7 @@ Route::group(
 
 // TEMPLATE
 Route::group(
-    ['prefix' => 'addresses'],
+    ['prefix' => 'templates'],
     function () {
         $defaultController = TemplateController::class;
 
