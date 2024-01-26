@@ -46,7 +46,9 @@ class CustomerController extends Controller
             $customer['company_name'] = $customer['account']['company_name'] ?? null;
             // Tree
             $customer['website'] = $customer['account']['website'] ?? null;
-            $customer['short_description'] = $customer['account']['short_description'] ?? null;
+            $customer['short_description'] = isset($customer['account']['short_description']) ?
+                $customer['account']['short_description']
+                : ['en' => null, 'zh' => null, 'cn' => null];
             $customer['member_level'] = reset($memberLevel)['slug'];
             $customer['industries'] = array_map(function ($industry) {
                 return [
