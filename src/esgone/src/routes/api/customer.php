@@ -47,6 +47,7 @@ Route::group(
         $defaultController = CustomerController::class;
 
         Route::get('/all', [$defaultController, 'getAllCustomers'])->middleware(['pagination']);
+        Route::get('/groups/all', [$defaultController, 'getAllCustomerGroups'])->middleware(['pagination']);
     }
 );
 

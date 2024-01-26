@@ -78,6 +78,8 @@ class CustomerController extends Controller
         $customer['area_code'] = $customer['account']['area_code'];
         $customer['phone'] = $customer['account']['phone'];
         $customer['company_name'] = $customer['account']['company_name'] ?? null;
+        $customer['website'] = $customer['account']['website'] ?? null;
+        $customer['short_description'] = $customer['account']['short_description'] ?? null;
         unset($customer['account']);
 
         // Return Customer
@@ -190,6 +192,8 @@ class CustomerController extends Controller
             'gender' => $request->gender,
             'country' => $request->country,
             'company_name' => $request->company_name,
+            'website' => $request->website,
+            'short_description' => $request->short_description,
         ];
         $attributes = array_filter($attributes);
         $account->update($attributes);
