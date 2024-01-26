@@ -79,7 +79,9 @@ class CustomerController extends Controller
         $customer['phone'] = $customer['account']['phone'];
         $customer['company_name'] = $customer['account']['company_name'] ?? null;
         $customer['website'] = $customer['account']['website'] ?? null;
-        $customer['short_description'] = $customer['account']['short_description'] ?? null;
+        $customer['short_description'] = isset($customer['account']['short_description']) ?
+            $customer['account']['short_description']
+            : ['en' => null, 'zh' => null, 'cn' => null];
         unset($customer['account']);
 
         // Return Customer
