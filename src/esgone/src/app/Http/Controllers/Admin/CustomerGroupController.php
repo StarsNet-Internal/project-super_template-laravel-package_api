@@ -41,10 +41,17 @@ class CustomerGroupController extends Controller
             ->whereIsDeleted(false)
             ->with([
                 'account',
+                'groups' => function ($group) {
+                    $group->where('is_system', false);
+                },
             ])
             ->get();
 
         $customers = array_map(function ($customer) {
+            $memberLevel = array_filter($customer['groups'], function ($group) {
+                return $group['slug'] !== null;
+            });
+
             $customer['user'] = [
                 'username' => $customer['account']['username'],
                 'avatar' => $customer['account']['avatar'],
@@ -54,6 +61,7 @@ class CustomerGroupController extends Controller
             $customer['email'] = $customer['account']['email'];
             $customer['area_code'] = $customer['account']['area_code'];
             $customer['phone'] = $customer['account']['phone'];
+            $customer['member_level'] = reset($memberLevel) ? reset($memberLevel)['slug'] : null;
 
             unset($customer['account']);
             return $customer;
@@ -90,10 +98,17 @@ class CustomerGroupController extends Controller
             ->whereIsDeleted(false)
             ->with([
                 'account',
+                'groups' => function ($group) {
+                    $group->where('is_system', false);
+                },
             ])
             ->get();
 
         $customers = array_map(function ($customer) {
+            $memberLevel = array_filter($customer['groups'], function ($group) {
+                return $group['slug'] !== null;
+            });
+
             $customer['user'] = [
                 'username' => $customer['account']['username'],
                 'avatar' => $customer['account']['avatar'],
@@ -103,6 +118,7 @@ class CustomerGroupController extends Controller
             $customer['email'] = $customer['account']['email'];
             $customer['area_code'] = $customer['account']['area_code'];
             $customer['phone'] = $customer['account']['phone'];
+            $customer['member_level'] = reset($memberLevel) ? reset($memberLevel)['slug'] : null;
 
             unset($customer['account']);
             return $customer;
