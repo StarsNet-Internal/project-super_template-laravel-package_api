@@ -7,6 +7,7 @@ use App\Http\Controllers\Customer\ShoppingCartController as CustomerShoppingCart
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
+use Carbon\Carbon;
 
 class ShoppingCartController extends CustomerShoppingCartController
 {
@@ -62,6 +63,8 @@ class ShoppingCartController extends CustomerShoppingCartController
         // Extract attributes from $request
         $excludedProductIDs = $request->input('exclude_ids', []);
         $itemsPerPage = $request->items_per_page;
+        $type = $request->input('type', 'open');
+        $currentDateTime = Carbon::now();
 
         // Get authenticated User information
         $customer = $this->customer();
@@ -90,6 +93,17 @@ class ShoppingCartController extends CustomerShoppingCartController
         if (!is_null($systemCategory)) {
             // Get Product(s)
             $recommendedProducts = $systemCategory->products()
+                ->when($type !== 'all', function ($query) use ($type, $currentDateTime) {
+                    if ($type === 'open') {
+                        return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                            $query2->where('long_description.en', '>', $currentDateTime->toIso8601String());
+                        });
+                    } elseif ($type === 'closed') {
+                        return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                            $query2->where('long_description.en', '<', $currentDateTime->toIso8601String());
+                        });
+                    }
+                })
                 ->statusActive()
                 ->excludeIDs($excludedProductIDs)
                 ->get();
@@ -119,6 +133,17 @@ class ShoppingCartController extends CustomerShoppingCartController
             $relatedProducts = Product::whereHas('categories', function ($query) use ($relatedCategoryIDs) {
                 $query->whereIn('_id', $relatedCategoryIDs);
             })
+                ->when($type !== 'all', function ($query) use ($type, $currentDateTime) {
+                    if ($type === 'open') {
+                        return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                            $query2->where('long_description.en', '>', $currentDateTime->toIso8601String());
+                        });
+                    } elseif ($type === 'closed') {
+                        return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                            $query2->where('long_description.en', '<', $currentDateTime->toIso8601String());
+                        });
+                    }
+                })
                 ->statusActive()
                 ->excludeIDs($excludedProductIDs)
                 ->get();
@@ -150,6 +175,17 @@ class ShoppingCartController extends CustomerShoppingCartController
             $otherProducts = Product::whereHas('categories', function ($query) use ($otherCategoryIDs) {
                 $query->whereIn('_id', $otherCategoryIDs);
             })
+                ->when($type !== 'all', function ($query) use ($type, $currentDateTime) {
+                    if ($type === 'open') {
+                        return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                            $query2->where('long_description.en', '>', $currentDateTime->toIso8601String());
+                        });
+                    } elseif ($type === 'closed') {
+                        return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                            $query2->where('long_description.en', '<', $currentDateTime->toIso8601String());
+                        });
+                    }
+                })
                 ->statusActive()
                 ->excludeIDs($excludedProductIDs)
                 ->get();

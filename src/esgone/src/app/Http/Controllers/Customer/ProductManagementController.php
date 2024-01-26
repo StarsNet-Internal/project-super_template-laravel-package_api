@@ -22,6 +22,7 @@ use StarsNet\Project\Esgone\App\Traits\Controller\ProjectProductTrait;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 use App\Http\Controllers\Customer\ProductManagementController as CustomerProductManagementController;
 
@@ -43,7 +44,8 @@ class ProductManagementController extends CustomerProductManagementController
         $keyword = $request->input('keyword');
         if ($keyword === "") $keyword = null;
         $slug = $request->input('slug', 'by-keyword-relevance');
-
+        $type = $request->input('type', 'open');
+        $currentDateTime = Carbon::now();
 
         // Get sorting attributes via slugs
         if (!is_null($slug)) {
@@ -74,6 +76,17 @@ class ProductManagementController extends CustomerProductManagementController
         $productIDs = Product::whereHas('categories', function ($query) use ($categoryIDs) {
             $query->whereIn('_id', $categoryIDs);
         })
+            ->when($type !== 'all', function ($query) use ($type, $currentDateTime) {
+                if ($type === 'open') {
+                    return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                        $query2->where('long_description.en', '>', $currentDateTime->toIso8601String());
+                    });
+                } elseif ($type === 'closed') {
+                    return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                        $query2->where('long_description.en', '<', $currentDateTime->toIso8601String());
+                    });
+                }
+            })
             ->statusActive()
             ->when(!$keyword, function ($query) {
                 $query->limit(250);
@@ -107,6 +120,8 @@ class ProductManagementController extends CustomerProductManagementController
         $productID = $request->input('product_id');
         $excludedProductIDs = $request->input('exclude_ids', []);
         $itemsPerPage = $request->input('items_per_page');
+        $type = $request->input('type', 'open');
+        $currentDateTime = Carbon::now();
 
         // Append to excluded Product
         $excludedProductIDs[] = $productID;
@@ -123,6 +138,17 @@ class ProductManagementController extends CustomerProductManagementController
         if (!is_null($systemCategory)) {
             // Get Product(s)
             $recommendedProducts = $systemCategory->products()
+                ->when($type !== 'all', function ($query) use ($type, $currentDateTime) {
+                    if ($type === 'open') {
+                        return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                            $query2->where('long_description.en', '>', $currentDateTime->toIso8601String());
+                        });
+                    } elseif ($type === 'closed') {
+                        return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                            $query2->where('long_description.en', '<', $currentDateTime->toIso8601String());
+                        });
+                    }
+                })
                 ->statusActive()
                 ->excludeIDs($excludedProductIDs)
                 ->get();
@@ -154,6 +180,17 @@ class ProductManagementController extends CustomerProductManagementController
             $relatedProducts = Product::whereHas('categories', function ($query) use ($relatedCategoryIDs) {
                 $query->whereIn('_id', $relatedCategoryIDs);
             })
+                ->when($type !== 'all', function ($query) use ($type, $currentDateTime) {
+                    if ($type === 'open') {
+                        return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                            $query2->where('long_description.en', '>', $currentDateTime->toIso8601String());
+                        });
+                    } elseif ($type === 'closed') {
+                        return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                            $query2->where('long_description.en', '<', $currentDateTime->toIso8601String());
+                        });
+                    }
+                })
                 ->statusActive()
                 ->excludeIDs($excludedProductIDs)
                 ->get();
@@ -185,6 +222,17 @@ class ProductManagementController extends CustomerProductManagementController
             $otherProducts = Product::whereHas('categories', function ($query) use ($otherCategoryIDs) {
                 $query->whereIn('_id', $otherCategoryIDs);
             })
+                ->when($type !== 'all', function ($query) use ($type, $currentDateTime) {
+                    if ($type === 'open') {
+                        return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                            $query2->where('long_description.en', '>', $currentDateTime->toIso8601String());
+                        });
+                    } elseif ($type === 'closed') {
+                        return $query->whereHas('variants', function ($query2) use ($currentDateTime) {
+                            $query2->where('long_description.en', '<', $currentDateTime->toIso8601String());
+                        });
+                    }
+                })
                 ->statusActive()
                 ->excludeIDs($excludedProductIDs)
                 ->get();
