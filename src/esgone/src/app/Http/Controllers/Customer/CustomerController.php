@@ -14,16 +14,17 @@ class CustomerController extends Controller
     {
         // Get Customer(s)
         /** @var Collection $customers */
-        $customers = Customer::whereHas('account', function ($query) {
-            $query->whereHas('user', function ($query2) {
-                $query2->where('type', '!=', LoginType::TEMP)->where('is_staff', false);
-            });
-        })->with([
-            'account',
-            'groups' => function ($group) {
-                $group->where('is_system', false);
-            },
-        ])
+        $customers = Customer::whereIsDeleted(false)
+            ->whereHas('account', function ($query) {
+                $query->whereHas('user', function ($query2) {
+                    $query2->where('type', '!=', LoginType::TEMP)->where('is_staff', false);
+                });
+            })->with([
+                'account',
+                'groups' => function ($group) {
+                    $group->where('is_system', false);
+                },
+            ])
             ->get();
 
         $customers = array_map(function ($customer) {
@@ -49,7 +50,7 @@ class CustomerController extends Controller
             $customer['short_description'] = isset($customer['account']['short_description']) ?
                 $customer['account']['short_description']
                 : ['en' => null, 'zh' => null, 'cn' => null];
-            $customer['member_level'] = reset($memberLevel)['slug'];
+            $customer['member_level'] = reset($memberLevel) ? reset($memberLevel)['slug'] : 'green-members';
             $customer['industries'] = array_map(function ($industry) {
                 return [
                     '_id' => $industry['_id'],
