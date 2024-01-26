@@ -34,17 +34,6 @@ class CustomerController extends Controller
 
     public function getAllCustomers(Request $request)
     {
-        // Define keys for append
-        $appendKeys = [
-            'user',
-            'country',
-            'gender',
-            'last_logged_in_at',
-            'email',
-            'area_code',
-            'phone'
-        ];
-
         // Get Customer(s)
         /** @var Collection $customers */
         $customers = Customer::whereIsDeleted(false)
@@ -52,9 +41,34 @@ class CustomerController extends Controller
                 $query->whereHas('user', function ($query2) {
                     $query2->where('type', '!=', LoginType::TEMP)->where('is_staff', false);
                 });
-            })
-            ->get()
-            ->append($appendKeys);
+            })->with([
+                'account',
+                'groups' => function ($group) {
+                    $group->where('is_system', false);
+                },
+            ])
+            ->get();
+
+        $customers = array_map(function ($customer) {
+            $memberLevel = array_filter($customer['groups'], function ($group) {
+                return $group['slug'] !== null;
+            });
+
+            $customer['user'] = [
+                'username' => $customer['account']['username'],
+                'avatar' => $customer['account']['avatar'],
+            ];
+            $customer['country'] = $customer['account']['country'];
+            $customer['gender'] = $customer['account']['gender'];
+            $customer['email'] = $customer['account']['email'];
+            $customer['area_code'] = $customer['account']['area_code'];
+            $customer['phone'] = $customer['account']['phone'];
+            // Tree
+            $customer['member_level'] = reset($memberLevel) ? reset($memberLevel)['slug'] : null;
+
+            unset($customer['account'], $customer['groups']);
+            return $customer;
+        }, $customers->toArray());
 
         // Return Customer(s)
         return $customers;
