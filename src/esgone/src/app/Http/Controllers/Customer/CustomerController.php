@@ -4,6 +4,7 @@ namespace StarsNet\Project\Esgone\App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 
+use App\Constants\Model\LoginType;
 use App\Models\Customer;
 use App\Models\CustomerGroup;
 
@@ -62,7 +63,7 @@ class CustomerController extends Controller
         return $customers;
     }
 
-    public function getAllCustomerGroups(Request $request)
+    public function getAllCustomerGroups()
     {
         $groups = CustomerGroup::whereItemType('Customer')
             ->statusActive()
