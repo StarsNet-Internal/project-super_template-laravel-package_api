@@ -38,6 +38,7 @@ class CustomerGroupController extends Controller
                     $query2->where('is_staff', false);
                 });
             })
+            ->whereIsDeleted(false)
             ->with([
                 'account',
             ])
@@ -86,6 +87,7 @@ class CustomerGroupController extends Controller
                     $query2->where('is_staff', false);
                 });
             })
+            ->whereIsDeleted(false)
             ->with([
                 'account',
             ])
