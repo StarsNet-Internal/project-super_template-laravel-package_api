@@ -108,7 +108,7 @@ class CustomerController extends Controller
                 $groups[$groupKey]['customers'][$customerKey]['short_description'] = isset($groups[$groupKey]['customers'][$customerKey]['account']['short_description']) ?
                     $groups[$groupKey]['customers'][$customerKey]['account']['short_description']
                     : ['en' => null, 'zh' => null, 'cn' => null];
-                $groups[$groupKey]['customers'][$customerKey]['member_level'] = reset($memberLevel) ? reset($memberLevel)['slug'] : 'green-members';
+                $groups[$groupKey]['customers'][$customerKey]['member_level'] = reset($memberLevel);
                 $groups[$groupKey]['customers'][$customerKey]['industries'] = array_map(function ($industry) {
                     return [
                         '_id' => $industry['_id'],
