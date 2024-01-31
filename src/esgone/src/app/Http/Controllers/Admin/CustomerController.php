@@ -96,7 +96,7 @@ class CustomerController extends Controller
         // $customer['short_description'] = isset($customer['account']['short_description']) ?
         //     $customer['account']['short_description']
         //     : ['en' => null, 'zh' => null, 'cn' => null];
-        // unset($customer['account']);
+        unset($customer['account']['user']);
 
         // Return Customer
         return response()->json($customer, 200);
