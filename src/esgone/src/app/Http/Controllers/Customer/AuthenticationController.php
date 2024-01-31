@@ -62,7 +62,7 @@ class AuthenticationController extends CustomerAuthenticationController
         $categoryIds = $request->input('category_ids', []);
 
         $categories = [];
-        $greenMember = CustomerGroup::slug('green-members')->first();
+        $greenMember = CustomerGroup::where('slug', 'green-members')->first();
         $categories[] = $greenMember->_id;
         foreach ($categoryIds as $id) {
             $category = CustomerGroup::find($id);
