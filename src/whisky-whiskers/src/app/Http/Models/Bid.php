@@ -7,6 +7,7 @@ use App\Constants\CollectionName;
 use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\Status;
 use App\Models\Account;
+use App\Models\Customer;
 // Traits
 use App\Traits\Model\ObjectIDTrait;
 use App\Traits\Model\StatusFieldTrait;
@@ -46,12 +47,14 @@ class Bid extends Eloquent
 
     protected $attributes = [
         // Relationships
-        'account_id' => null,
+        'auction_lot_id' => null,
+        'customer_id' => null,
         'store_id' => null,
         'product_id' => null,
+        'product_variant_id' => null,
 
         // Default
-        'bid_price' => 0,
+        'bid' => 0,
 
         // Timestamps
     ];
@@ -76,10 +79,10 @@ class Bid extends Eloquent
     // Relationship Begins
     // -----------------------------
 
-    public function account(): BelongsTo
+    public function customer(): BelongsTo
     {
         return $this->belongsTo(
-            Account::class,
+            Customer::class,
         );
     }
 
@@ -94,6 +97,20 @@ class Bid extends Eloquent
     {
         return $this->belongsTo(
             Product::class,
+        );
+    }
+
+    public function productVariant(): BelongsTo
+    {
+        return $this->belongsTo(
+            ProductVariant::class,
+        );
+    }
+
+    public function auctionLot(): BelongsTo
+    {
+        return $this->belongsTo(
+            AuctionLot::class,
         );
     }
 
@@ -113,9 +130,15 @@ class Bid extends Eloquent
     // Action Begins
     // -----------------------------
 
-    public function associateAccount(Account $account): bool
+    public function associateStore(Store $store): bool
     {
-        $this->account()->associate($account);
+        $this->store()->associate($store);
+        return $this->save();
+    }
+
+    public function associateCustomer(Customer $customer): bool
+    {
+        $this->customer()->associate($customer);
         return $this->save();
     }
 
@@ -125,9 +148,15 @@ class Bid extends Eloquent
         return $this->save();
     }
 
-    public function associateStore(Store $store): bool
+    public function associateProductVariant(ProductVariant $variant): bool
     {
-        $this->store()->associate($store);
+        $this->productVariant()->associate($variant);
+        return $this->save();
+    }
+
+    public function associateAuctionLot(AuctionLot $lot): bool
+    {
+        $this->auctionLot()->associate($lot);
         return $this->save();
     }
 

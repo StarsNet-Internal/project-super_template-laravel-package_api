@@ -3,12 +3,15 @@
 // Default Imports
 use Illuminate\Support\Facades\Route;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionController;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionLotController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuthenticationController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\BidController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ConsignmentRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\OrderController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ProductController;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ProductManagementController;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\WishlistController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\TestingController;
 
 /*
@@ -57,6 +60,20 @@ Route::group(
 );
 
 Route::group(
+    ['prefix' => 'auction-lots'],
+    function () {
+        $defaultController = AuctionController::class;
+
+        Route::get('/owned/all', [$defaultController, 'getAllOwnedAuctionLots']);
+        Route::get('/participated/all', [$defaultController, 'getAllParticipatedAuctionLots']);
+        Route::get('/{auction_lot_id}/bids', [$defaultController, 'getBiddingHistory']);
+        Route::post('/{auction_lot_id}/bids', [$defaultController, 'createBid']);
+        Route::get('/{auction_lot_id}/details', [$defaultController, 'getAuctionLotDetails']);
+    }
+);
+
+
+Route::group(
     ['prefix' => 'auth'],
     function () {
         $defaultController = AuthenticationController::class;
@@ -95,6 +112,7 @@ Route::group(
             function () use ($defaultController) {
                 Route::post('/', [$defaultController, 'createConsignmentRequest']);
                 Route::get('/all', [$defaultController, 'getAllConsignmentRequests'])->middleware(['pagination']);
+                Route::get('/{consignment_request_id}/details', [$defaultController, 'getConsignmentRequestDetails']);
             }
         );
     }
@@ -123,8 +141,39 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
-                Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
+                Route::get('/all', [$defaultController, 'getAllOwnedProducts'])->middleware(['pagination']);
                 Route::get('/{product_id}/details', [$defaultController, 'getProductDetails']);
+            }
+        );
+    }
+);
+
+// STORE
+Route::group(
+    ['prefix' => '/stores/{store_id}/'],
+    function () {
+
+        // PRODUCT_MANAGEMENT
+        Route::group(
+            ['prefix' => 'product-management'],
+            function () {
+                $defaultController = ProductManagementController::class;
+
+                Route::get('/products/filter', [$defaultController, 'filterAuctionProductsByCategories'])->middleware(['pagination']);
+                Route::get('/related-products-urls', [$defaultController, 'getRelatedProductsUrls'])->middleware(['pagination']);
+                Route::get('/products/ids', [$defaultController, 'getProductsByIDs'])->name('products.ids')->middleware(['pagination']);
+            }
+        );
+
+        // WISHLIST
+        Route::group(
+            ['prefix' => 'wishlist'],
+            function () {
+                $defaultController = WishlistController::class;
+
+                Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                    Route::get('/all', [$defaultController, 'getAll'])->middleware(['pagination']);
+                });
             }
         );
     }

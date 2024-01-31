@@ -1,11 +1,8 @@
 <?php
 
-namespace StarsNet\Project\WhiskyWhiskers\App\Models;
+namespace StarsNet\Project\HeiFei\App\Models;
 
 // Constants
-use App\Constants\CollectionName;
-use App\Constants\Model\ReplyStatus;
-use App\Constants\Model\Status;
 
 // Traits
 use App\Traits\Model\ObjectIDTrait;
@@ -22,7 +19,7 @@ use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 use Jenssegers\Mongodb\Relations\EmbedsMany;
 use Jenssegers\Mongodb\Relations\EmbedsOne;
 
-class ConsignmentRequestItem extends Eloquent
+class DailyCashflow extends Eloquent
 {
     use ObjectIDTrait;
 
@@ -33,18 +30,22 @@ class ConsignmentRequestItem extends Eloquent
      */
     protected $connection = 'mongodb';
 
+    /**
+     * The database collection used by the model.
+     *
+     * @var string
+     */
+    protected $collection = 'daily_cashflows';
+
     protected $attributes = [
         // Relationships
 
         // Default
-        'title' => null,
-        'description' => null,
-        'images' => [],
-
-        'is_approved' => false,
-        'evaluated_price' => 0,
-        'evaluated_currency' => 'HKD',
-        'remarks' => null
+        'beginning_cash' => null,
+        'petty_cash' => 0,
+        'ending_cash' => null,
+        'beginning_phone_count' => null,
+        'ending_phone_count' => null,
 
         // Timestamps
     ];
@@ -66,6 +67,19 @@ class ConsignmentRequestItem extends Eloquent
     protected $hidden = [];
 
     // -----------------------------
+    // Scope Begins
+    // -----------------------------
+
+    // public function scopeWhereGoogleEventID(Builder $query, string $id): Builder
+    // {
+    //     return $query->where('google_event_id', $id);
+    // }
+
+    // -----------------------------
+    // Scope Ends
+    // -----------------------------
+
+    // -----------------------------
     // Relationship Begins
     // -----------------------------
 
@@ -82,8 +96,14 @@ class ConsignmentRequestItem extends Eloquent
     // -----------------------------
 
     // -----------------------------
-    // Action Begins
+    // Actions Begins
     // -----------------------------
+
+    // public function setGoogleEventID(string $id)
+    // {
+    //     $this->google_event_id = $id;
+    //     return $this->save();
+    // }
 
     // -----------------------------
     // Action Ends

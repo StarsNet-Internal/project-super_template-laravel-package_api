@@ -3,7 +3,6 @@
 namespace StarsNet\Project\WhiskyWhiskers\App\Models;
 
 // Constants
-use App\Constants\CollectionName;
 use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\Status;
 
@@ -22,9 +21,16 @@ use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 use Jenssegers\Mongodb\Relations\EmbedsMany;
 use Jenssegers\Mongodb\Relations\EmbedsOne;
 
-class ConsignmentRequestItem extends Eloquent
+use App\Models\Account;
+use App\Models\Customer;
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\Store;
+
+class ProductStorageRecord extends Eloquent
 {
-    use ObjectIDTrait;
+    use ObjectIDTrait,
+        StatusFieldTrait;
 
     /**
      * Define database connection.
@@ -33,23 +39,34 @@ class ConsignmentRequestItem extends Eloquent
      */
     protected $connection = 'mongodb';
 
+    /**
+     * The database collection used by the model.
+     *
+     * @var string
+     */
+    protected $collection = 'product_storage_record';
+
     protected $attributes = [
         // Relationships
+        'customer_id' => null,
+        'product_id' => null,
 
         // Default
-        'title' => null,
-        'description' => null,
-        'images' => [],
+        'start_datetime' => null,
+        'end_datetime' => null,
+        'total_rental_fee' => null,
+        'remarks' => null,
 
-        'is_approved' => false,
-        'evaluated_price' => 0,
-        'evaluated_currency' => 'HKD',
-        'remarks' => null
+        // Booleans
+        'is_paid' => false,
 
         // Timestamps
+        'deleted_at' => null
     ];
 
-    protected $dates = [];
+    protected $dates = [
+        'deleted_at'
+    ];
 
     protected $casts = [];
 
@@ -69,6 +86,20 @@ class ConsignmentRequestItem extends Eloquent
     // Relationship Begins
     // -----------------------------
 
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(
+            Customer::class,
+        );
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(
+            Product::class,
+        );
+    }
+
     // -----------------------------
     // Relationship Ends
     // -----------------------------
@@ -77,6 +108,18 @@ class ConsignmentRequestItem extends Eloquent
     // Accessor Begins
     // -----------------------------
 
+    public function getProductInfoAttribute(): array
+    {
+        $account = $this->requestedAccount()->first();
+
+        return [
+            'user_id' => optional($account)->user->id,
+            'account_id' => optional($account)->_id,
+            'username' => optional($account)->username,
+            'avatar' => optional($account)->avatar
+        ];
+    }
+
     // -----------------------------
     // Accessor Ends
     // -----------------------------
@@ -84,6 +127,18 @@ class ConsignmentRequestItem extends Eloquent
     // -----------------------------
     // Action Begins
     // -----------------------------
+
+    public function associateCustomer(Customer $customer): bool
+    {
+        $this->customer()->associate($customer);
+        return $this->save();
+    }
+
+    public function associateProduct(Product $product): bool
+    {
+        $this->product()->associate($product);
+        return $this->save();
+    }
 
     // -----------------------------
     // Action Ends

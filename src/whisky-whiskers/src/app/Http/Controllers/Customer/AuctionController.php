@@ -5,10 +5,8 @@ namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer;
 use App\Constants\Model\Status;
 use App\Constants\Model\StoreType;
 use App\Http\Controllers\Controller;
-use App\Models\Product;
 use App\Models\Store;
 use Illuminate\Http\Request;
-use StarsNet\Project\WhiskyWhiskers\App\Models\ConsignmentRequest;
 
 class AuctionController extends Controller
 {

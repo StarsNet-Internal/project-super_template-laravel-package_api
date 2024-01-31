@@ -26,7 +26,7 @@ class AuctionRequestController extends Controller
         }
 
         return $query->with([
-            'requestedAccount',
+            'requestedCustomer',
             'approvedAccount',
             'product',
         ])->get();
@@ -45,7 +45,8 @@ class AuctionRequestController extends Controller
         $form->update(['reply_status' => $request->reply_status]);
 
         if ($request->reply_status == ReplyStatus::APPROVED) {
-            // Do something, transfer inventory
+            // Do something, transfer inventory, when structure is firmed
+            // Probably do not need to do anything, we will use Python Scheduler/Listener
         }
 
         return response()->json([

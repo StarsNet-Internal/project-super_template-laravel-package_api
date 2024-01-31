@@ -5,17 +5,30 @@ namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use StarsNet\Project\WhiskyWhiskers\App\Models\ConsignmentRequest;
+use StarsNet\Project\WhiskyWhiskers\App\Models\PassedAuctionRecord;
 
 class ProductController extends Controller
 {
-    public function getAllProducts(Request $request)
+    public function getAllOwnedProducts(Request $request)
     {
-        $account = $this->account();
+        $customer = $this->customer();
 
         $products = Product::statusActive()
-            ->where('account_id', $account->id)
+            ->where('owned_by_customer_id', $customer->_id)
             ->get();
+
+        foreach ($products as $product) {
+            $product->product_variant_id = optional($product->variants()->latest()->first())->_id;
+
+            $passedAuctionCount = PassedAuctionRecord::where(
+                'customer_id',
+                $customer->_id
+            )->where(
+                'product_id',
+                $product->_id
+            )->count();
+            $product->passed_auction_count = $passedAuctionCount;
+        }
 
         return $products;
     }
@@ -42,35 +55,4 @@ class ProductController extends Controller
 
         return response()->json($product, 200);
     }
-
-    // public function updateProductDetails(Request $request)
-    // {
-    //     // Extract attributes from $request
-    //     $productId = $request->product_id;
-
-    //     // get Product
-    //     $product = Product::find($productId);
-
-    //     if (is_null($product)) {
-    //         return response()->json([
-    //             'message' => 'Product not found'
-    //         ], 404);
-    //     }
-
-    //     if (!$product->isStatusActive()) {
-    //         return response()->json([
-    //             'message' => 'Product is not available for public'
-    //         ], 404);
-    //     }
-
-    //     $account = $this->account();
-
-    //     if ($product->account_id != $account->_id) {
-    //         return response()->json([
-    //             'message' => 'Product does not belong to this account'
-    //         ], 404);
-    //     }
-
-    //     return response()->json($product, 200);
-    // }
 }
