@@ -8,6 +8,7 @@ use App\Events\Customer\Authentication\CustomerLogin;
 use App\Events\Customer\Authentication\CustomerRegistration;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Models\CustomerGroup;
 use App\Models\User;
 use App\Models\VerificationCode;
 use App\Models\Store;
@@ -55,6 +56,28 @@ class AuthenticationController extends CustomerAuthenticationController
         // Update Account
         $account = $user->account;
         $this->updateAccountViaRegistration($account, $request);
+
+        // Package
+        $customer = $account->customer;
+        $categoryIds = $request->input('category_ids', []);
+
+        $categories = [];
+        $greenMember = CustomerGroup::slug('green-members')->first();
+        $categories[] = $greenMember->_id;
+        foreach ($categoryIds as $id) {
+            $category = CustomerGroup::find($id);
+
+            if (is_null($category)) {
+                return response()->json([
+                    'message' => 'CustomerGroup not found'
+                ], 404);
+            }
+            $categories[] = $category;
+        }
+        $customer->attachGroups(collect($categories));
+        $account->update($request->except([
+            'type', 'username', 'email', 'area_code', 'phone', 'password', 'category_ids'
+        ]));
 
         // Return success message
         return response()->json([
