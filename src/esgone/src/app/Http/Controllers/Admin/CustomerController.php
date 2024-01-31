@@ -91,12 +91,12 @@ class CustomerController extends Controller
         $customer['email'] = $customer['account']['email'];
         $customer['area_code'] = $customer['account']['area_code'];
         $customer['phone'] = $customer['account']['phone'];
-        $customer['company_name'] = $customer['account']['company_name'] ?? null;
-        $customer['website'] = $customer['account']['website'] ?? null;
-        $customer['short_description'] = isset($customer['account']['short_description']) ?
-            $customer['account']['short_description']
-            : ['en' => null, 'zh' => null, 'cn' => null];
-        unset($customer['account']);
+        // $customer['company_name'] = $customer['account']['company_name'] ?? null;
+        // $customer['website'] = $customer['account']['website'] ?? null;
+        // $customer['short_description'] = isset($customer['account']['short_description']) ?
+        //     $customer['account']['short_description']
+        //     : ['en' => null, 'zh' => null, 'cn' => null];
+        // unset($customer['account']);
 
         // Return Customer
         return response()->json($customer, 200);
@@ -207,12 +207,10 @@ class CustomerController extends Controller
             'avatar' => $request->avatar,
             'gender' => $request->gender,
             'country' => $request->country,
-            'company_name' => $request->company_name,
-            'website' => $request->website,
-            'short_description' => $request->short_description,
         ];
         $attributes = array_filter($attributes);
         $account->update($attributes);
+        $account->update($request->account);
 
         // Update User
         switch ($user->type) {
