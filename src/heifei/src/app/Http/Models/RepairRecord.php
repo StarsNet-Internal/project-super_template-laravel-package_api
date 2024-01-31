@@ -1,13 +1,13 @@
 <?php
 
-namespace StarsNet\Project\WhiskyWhiskers\App\Models;
+namespace StarsNet\Project\HeiFei\App\Models;
 
 // Constants
-use App\Constants\CollectionName;
-use App\Constants\Model\ReplyStatus;
-use App\Constants\Model\Status;
 
 // Traits
+
+use App\Models\Category;
+use App\Models\ProductVariant;
 use App\Traits\Model\ObjectIDTrait;
 use App\Traits\Model\StatusFieldTrait;
 
@@ -22,7 +22,7 @@ use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 use Jenssegers\Mongodb\Relations\EmbedsMany;
 use Jenssegers\Mongodb\Relations\EmbedsOne;
 
-class ConsignmentRequestItem extends Eloquent
+class RepairRecord extends Eloquent
 {
     use ObjectIDTrait;
 
@@ -33,18 +33,19 @@ class ConsignmentRequestItem extends Eloquent
      */
     protected $connection = 'mongodb';
 
+    /**
+     * The database collection used by the model.
+     *
+     * @var string
+     */
+    protected $collection = 'daily_cashflows';
+
     protected $attributes = [
         // Relationships
+        'category_id' => null,
+        'product_variant_id' => null,
 
         // Default
-        'title' => null,
-        'description' => null,
-        'images' => [],
-
-        'is_approved' => false,
-        'evaluated_price' => 0,
-        'evaluated_currency' => 'HKD',
-        'remarks' => null
 
         // Timestamps
     ];
@@ -66,8 +67,30 @@ class ConsignmentRequestItem extends Eloquent
     protected $hidden = [];
 
     // -----------------------------
+    // Scope Begins
+    // -----------------------------
+
+    // -----------------------------
+    // Scope Ends
+    // -----------------------------
+
+    // -----------------------------
     // Relationship Begins
     // -----------------------------
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(
+            Category::class,
+        );
+    }
+
+    public function productVariant(): BelongsTo
+    {
+        return $this->belongsTo(
+            ProductVariant::class,
+        );
+    }
 
     // -----------------------------
     // Relationship Ends
@@ -82,7 +105,7 @@ class ConsignmentRequestItem extends Eloquent
     // -----------------------------
 
     // -----------------------------
-    // Action Begins
+    // Actions Begins
     // -----------------------------
 
     // -----------------------------

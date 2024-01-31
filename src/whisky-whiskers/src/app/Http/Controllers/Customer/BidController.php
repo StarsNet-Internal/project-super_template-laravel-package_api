@@ -24,6 +24,7 @@ class BidController extends Controller
     public function createBid(Request $request)
     {
         // Extract attributes from $request
+        $auctionLotId = $request->auction_lot_id;
         $storeId = $request->store_id;
         $productId = $request->product_id;
 

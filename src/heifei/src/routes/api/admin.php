@@ -2,10 +2,9 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
-use StarsNet\Project\HeiFei\App\Http\Controllers\Admin\CashflowController;
+use StarsNet\Project\HeiFei\App\Http\Controllers\Admin\CategoryController;
+use StarsNet\Project\HeiFei\App\Http\Controllers\Admin\DailyCashflowController;
 use StarsNet\Project\HeiFei\App\Http\Controllers\Admin\TestingController;
-use StarsNet\Project\HeiFei\App\Http\Controllers\Admin\OrderController;
-use StarsNet\Project\HeiFei\App\Http\Controllers\Admin\ProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,32 +26,44 @@ Route::group(
     }
 );
 
-Route::group(
-    ['prefix' => 'orders'],
-    function () {
-        $defaultController = OrderController::class;
+// Route::group(
+//     ['prefix' => 'orders'],
+//     function () {
+//         $defaultController = OrderController::class;
 
-        Route::post('/', [$defaultController, 'createOrder']);
-        Route::get('/all', [$defaultController, 'getAllOrders'])->middleware(['pagination']);
-    }
-);
+//         Route::post('/', [$defaultController, 'createOrder']);
+//         Route::get('/all', [$defaultController, 'getAllOrders'])->middleware(['pagination']);
+//     }
+// );
 
-Route::group(
-    ['prefix' => 'products'],
-    function () {
-        $defaultController = ProductController::class;
+// Route::group(
+//     ['prefix' => 'products'],
+//     function () {
+//         $defaultController = ProductController::class;
 
-        Route::post('/', [$defaultController, 'createProduct']);
-        Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
-        Route::get('/variants/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
-    }
-);
+//         Route::post('/', [$defaultController, 'createProduct']);
+//         Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
+//         Route::get('/variants/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
+//     }
+// );
 
 Route::group(
     ['prefix' => 'cashflow'],
     function () {
-        $defaultController = CashflowController::class;
+        $defaultController = DailyCashflowController::class;
 
-        Route::get('/all', [$defaultController, 'getCashFlowDataByDateRange']);
+        Route::post('/', [$defaultController, 'createDailyCashflow']);
+        Route::get('/latest', [$defaultController, 'getLatestDailyCashFlow']);
+        Route::get('/is_created', [$defaultController, 'checkIfCashflowCreatedToday']);
+    }
+);
+
+Route::group(
+    ['prefix' => '/stores/{store_id}/'],
+    function () {
+        $defaultController = CategoryController::class;
+
+        Route::get('/categories/all', [$defaultController, 'getAllProductCategories'])->middleware(['pagination']);
+        Route::get('/categories/{category_id}/details', [$defaultController, 'getCategoryDetails']);
     }
 );

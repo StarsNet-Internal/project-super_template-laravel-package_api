@@ -27,7 +27,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
 
-class AuctionRequest extends Eloquent
+class AuctionLot extends Eloquent
 {
     use ObjectIDTrait,
         StatusFieldTrait;
@@ -44,26 +44,29 @@ class AuctionRequest extends Eloquent
      *
      * @var string
      */
-    protected $collection = 'auction_requests';
+    protected $collection = 'auction_lots';
 
     protected $attributes = [
         // Relationships
-        'requested_by_customer_id' => null,
-        'approved_by_account_id' => null,
+        'auction_request_id' => null,
+        'owned_by_account_id' => null,
         'product_id' => null,
         'product_variant_id' => null,
         'store_id' => null,
+        'latest_bid_customer_id' => null,
+        'winning_bid_customer_id' => null,
 
         // Default
-        'starting_bid' => 0,
+        'starting_price' => 0,
         'reserve_price' => 0,
+        'current_bid' => 0,
 
         'status' => Status::ACTIVE,
         'reply_status' => ReplyStatus::PENDING,
         'remarks' => null,
 
         // Booleans
-        'is_in_auction' => false,
+        'is_disabled' => false,
 
         // Timestamps
         'deleted_at' => null
@@ -91,19 +94,18 @@ class AuctionRequest extends Eloquent
     // Relationship Begins
     // -----------------------------
 
-    public function requestedCustomer(): BelongsTo
+    public function auctionRequest(): BelongsTo
     {
         return $this->belongsTo(
-            Customer::class,
-            'requested_by_customer_id'
+            AuctionRequest::class,
         );
     }
 
-    public function approvedAccount(): BelongsTo
+    public function ownedAccount(): BelongsTo
     {
         return $this->belongsTo(
             Account::class,
-            'approved_by_account_id'
+            'owned_by_account_id'
         );
     }
 
@@ -128,6 +130,36 @@ class AuctionRequest extends Eloquent
         );
     }
 
+    public function latestBidCustomer(): BelongsTo
+    {
+        return $this->belongsTo(
+            Customer::class,
+            'latest_bid_customer_id'
+        );
+    }
+
+    public function winningBidCustomer(): BelongsTo
+    {
+        return $this->belongsTo(
+            Account::class,
+            'winning_bid_customer_id'
+        );
+    }
+
+    public function bids(): HasMany
+    {
+        return $this->hasMany(
+            Bid::class
+        );
+    }
+
+    public function passedAuctionRecords(): HasMany
+    {
+        return $this->hasMany(
+            PassedAuctionRecord::class
+        );
+    }
+
     // -----------------------------
     // Relationship Ends
     // -----------------------------
@@ -135,42 +167,6 @@ class AuctionRequest extends Eloquent
     // -----------------------------
     // Accessor Begins
     // -----------------------------
-
-    public function getProductInfoAttribute(): array
-    {
-        $account = $this->requestedAccount()->first();
-
-        return [
-            'user_id' => optional($account)->user->id,
-            'account_id' => optional($account)->_id,
-            'username' => optional($account)->username,
-            'avatar' => optional($account)->avatar
-        ];
-    }
-
-    public function getRequestedAccountAttribute(): array
-    {
-        $account = $this->requestedAccount()->first();
-
-        return [
-            'user_id' => optional($account)->user->id,
-            'account_id' => optional($account)->_id,
-            'username' => optional($account)->username,
-            'avatar' => optional($account)->avatar
-        ];
-    }
-
-    public function getApprovedAccountAttribute(): array
-    {
-        $account = $this->approvedAccount()->first();
-
-        return [
-            'user_id' => optional($account)->user->id,
-            'account_id' => optional($account)->_id,
-            'username' => optional($account)->username,
-            'avatar' => optional($account)->avatar
-        ];
-    }
 
     // -----------------------------
     // Accessor Ends
@@ -180,9 +176,9 @@ class AuctionRequest extends Eloquent
     // Action Begins
     // -----------------------------
 
-    public function associateRequestedCustomer(Customer $customer): bool
+    public function associateRequestedAccount(Account $account): bool
     {
-        $this->requestedCustomer()->associate($customer);
+        $this->requestedAccount()->associate($account);
         return $this->save();
     }
 

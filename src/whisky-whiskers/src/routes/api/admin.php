@@ -2,7 +2,7 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
-use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\AuctionController;
+// use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\AuctionController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\AuctionRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\ConsignmentRequestController;
@@ -27,14 +27,14 @@ Route::group(
     }
 );
 
-Route::group(
-    ['prefix' => 'auction-stores'],
-    function () {
-        $defaultController = AuctionController::class;
+// Route::group(
+//     ['prefix' => 'stores'],
+//     function () {
+//         $defaultController = AuctionController::class;
 
-        Route::post('/', [$defaultController, 'createAuctionStore']);
-    }
-);
+//         Route::post('/', [$defaultController, 'createAuctionStore']);
+//     }
+// );
 
 Route::group(
     ['prefix' => 'auction-requests'],
