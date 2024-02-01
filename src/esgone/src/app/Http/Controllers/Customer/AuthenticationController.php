@@ -76,7 +76,7 @@ class AuthenticationController extends CustomerAuthenticationController
         }
         $customer->attachGroups(collect($categories));
         $account->update($request->except([
-            'type', 'username', 'email', 'area_code', 'phone', 'password', 'category_ids'
+            'type', 'username', 'email', 'password', 'category_ids'
         ]));
 
         // Return success message
