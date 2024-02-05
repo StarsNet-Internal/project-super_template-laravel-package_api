@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\Store;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
 use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionRequest;
 use StarsNet\Project\WhiskyWhiskers\App\Models\ConsignmentRequest;
 
@@ -44,14 +45,26 @@ class AuctionRequestController extends Controller
 
         $form->update(['reply_status' => $request->reply_status]);
 
+        $auctionLotId = null;
         if ($request->reply_status == ReplyStatus::APPROVED) {
-            // Do something, transfer inventory, when structure is firmed
-            // Probably do not need to do anything, we will use Python Scheduler/Listener
+            $auctionLotFields = [
+                'auction_request_id' => $form->_id,
+                'owned_by_customer_id' => $form->requested_by_customer_id,
+                'product_id' => $form->product_id,
+                'product_variant_id' => $form->product_variant_id,
+                'store_id' => $form->store_id,
+                'starting_price' => $form->starting_bid ?? 0,
+                'reserve_price' => $form->reserve_price ?? 0,
+            ];
+
+            $auctionLot = AuctionLot::create($auctionLotFields);
+            $auctionLotId = $auctionLot->_id;
         }
 
         return response()->json([
             'message' => 'Updated AuctionRequest successfully',
-            '_id' => $form->_id
+            '_id' => $form->_id,
+            'auction_lot_id' => $auctionLotId
         ], 200);
     }
 }

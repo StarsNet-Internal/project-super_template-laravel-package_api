@@ -23,7 +23,13 @@ class ConsignmentRequestController extends Controller
     {
         // Create ConsignmentRequest
         $form = new ConsignmentRequest();
-        $form->associateRequestedAccount($this->account());
+
+        $account = $this->account();
+        if (!is_null($account)) {
+            $form->associateRequestedAccount($account);
+        }
+
+        $form->update($request->except('items'));
 
         // Create ConsignmentRequestItem(s)
         $requestItemsCount = 0;

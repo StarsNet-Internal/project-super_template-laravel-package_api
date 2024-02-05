@@ -62,13 +62,19 @@ Route::group(
 Route::group(
     ['prefix' => 'auction-lots'],
     function () {
-        $defaultController = AuctionController::class;
+        $defaultController = AuctionLotController::class;
 
-        Route::get('/owned/all', [$defaultController, 'getAllOwnedAuctionLots']);
-        Route::get('/participated/all', [$defaultController, 'getAllParticipatedAuctionLots']);
-        Route::get('/{auction_lot_id}/bids', [$defaultController, 'getBiddingHistory']);
-        Route::post('/{auction_lot_id}/bids', [$defaultController, 'createBid']);
         Route::get('/{auction_lot_id}/details', [$defaultController, 'getAuctionLotDetails']);
+        Route::get('/{auction_lot_id}/bids', [$defaultController, 'getBiddingHistory'])->middleware(['pagination']);
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/owned/all', [$defaultController, 'getAllOwnedAuctionLots'])->middleware(['pagination']);
+                Route::get('/participated/all', [$defaultController, 'getAllParticipatedAuctionLots'])->middleware(['pagination']);
+                Route::post('/{auction_lot_id}/bids', [$defaultController, 'createBid']);
+            }
+        );
     }
 );
 

@@ -49,7 +49,7 @@ class AuctionLot extends Eloquent
     protected $attributes = [
         // Relationships
         'auction_request_id' => null,
-        'owned_by_account_id' => null,
+        'owned_by_customer_id' => null,
         'product_id' => null,
         'product_variant_id' => null,
         'store_id' => null,
@@ -101,11 +101,11 @@ class AuctionLot extends Eloquent
         );
     }
 
-    public function ownedAccount(): BelongsTo
+    public function ownedCustomer(): BelongsTo
     {
         return $this->belongsTo(
-            Account::class,
-            'owned_by_account_id'
+            Customer::class,
+            'owned_by_customer_id'
         );
     }
 
@@ -175,40 +175,6 @@ class AuctionLot extends Eloquent
     // -----------------------------
     // Action Begins
     // -----------------------------
-
-    public function associateRequestedAccount(Account $account): bool
-    {
-        $this->requestedAccount()->associate($account);
-        return $this->save();
-    }
-
-    public function associateApprovedAccount(Account $account): bool
-    {
-        $this->approvedAccount()->associate($account);
-        return $this->save();
-    }
-
-    public function associateStore(Store $store): bool
-    {
-        $this->store()->associate($store);
-        return $this->save();
-    }
-
-    public function updateReplyStatus(string $status): bool
-    {
-        $this->reply_status = $status;
-        return $this->save();
-    }
-
-    public function getProduct(): Product
-    {
-        return $this->product()->first();
-    }
-
-    public function getProductVariant(): ProductVariant
-    {
-        return $this->productVariant()->first();
-    }
 
     // -----------------------------
     // Action Ends

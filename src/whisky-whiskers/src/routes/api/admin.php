@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\AuctionRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\ConsignmentRequestController;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\CustomerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,8 +62,23 @@ Route::group(
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getAllConsignmentRequests'])->middleware(['pagination']);
                 Route::get('/{id}/details', [$defaultController, 'getConsignmentRequestDetails']);
-
                 Route::put('/{id}/approve', [$defaultController, 'approveConsignmentRequest']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'customers'],
+    function () {
+        $defaultController = CustomerController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/{customer_id}/products/all', [$defaultController, 'getAllOwnedProducts'])->middleware(['pagination']);
+                Route::get('/{customer_id}/auction-lots/all', [$defaultController, 'getAllOwnedAuctionLots'])->middleware(['pagination']);
+                Route::get('/{customer_id}/bids/all', [$defaultController, 'getAllBids'])->middleware(['pagination']);
             }
         );
     }

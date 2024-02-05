@@ -48,6 +48,11 @@ class ConsignmentRequest extends Eloquent
         'approved_by_account_id' => null,
 
         // Default
+        'requester_name' => null,
+        'email' => null,
+        'area_code' => null,
+        'phone' => null,
+        'shipping_address' => null,
         'items' => [],
         'requested_items_qty' => 0,
         'approved_items_qty' => 0,
