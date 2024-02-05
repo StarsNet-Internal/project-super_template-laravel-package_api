@@ -158,4 +158,22 @@ class CustomerController extends Controller
             'message' => 'Approved ' . $customers->count() . ' Account(s) successfully'
         ], 200);
     }
+
+    public function updateAssignedStore(Request $request)
+    {
+        // Extract attributes from $request
+        $customerID = $request->route('id');
+        $storeID = $request->store_id;
+
+        $customer = Customer::find($customerID);
+        $account = $customer->account;
+        $account->update([
+            'store_id' => $storeID,
+        ]);
+
+        // Return success message
+        return response()->json([
+            'message' => 'Assigned to New Merchant successfully'
+        ], 200);
+    }
 }
