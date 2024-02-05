@@ -166,8 +166,8 @@ Route::group(
                 $defaultController = ProductManagementController::class;
 
                 Route::get('/products/filter', [$defaultController, 'filterAuctionProductsByCategories'])->middleware(['pagination']);
-                Route::get('/related-products-urls', [$defaultController, 'getRelatedProductsUrls'])->middleware(['pagination']);
-                Route::get('/products/ids', [$defaultController, 'getProductsByIDs'])->name('products.ids')->middleware(['pagination']);
+                Route::get('/related-products-urls', [$defaultController, 'getRelatedAuctionProductsUrls'])->middleware(['pagination']);
+                Route::get('/products/ids', [$defaultController, 'getAuctionProductsByIDs'])->name('whiskywhiskers.products.ids')->middleware(['pagination']);
             }
         );
 
@@ -175,10 +175,10 @@ Route::group(
         Route::group(
             ['prefix' => 'wishlist'],
             function () {
-                $defaultController = WishlistController::class;
+                $defaultController = ProductManagementController::class;
 
                 Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
-                    Route::get('/all', [$defaultController, 'getAll'])->middleware(['pagination']);
+                    Route::get('/all', [$defaultController, 'getAllWishlistAuctionLots'])->middleware(['pagination']);
                 });
             }
         );
