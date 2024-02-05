@@ -119,6 +119,7 @@ Route::group(
                 Route::get('/{id}/details', [$defaultController, 'getCustomerDetails']);
 
                 Route::put('/approve', [$defaultController, 'approveCustomerAccounts']);
+                Route::put('/{id}/store', [$defaultController, 'updateAssignedStore']);
             }
         );
     }
