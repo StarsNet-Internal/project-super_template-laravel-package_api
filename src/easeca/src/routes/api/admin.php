@@ -114,6 +114,7 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getAllCustomers'])->middleware(['pagination']);
+                Route::put('/delete', [$defaultController, 'deleteCustomers']);
                 Route::post('/', [$defaultController, 'createCustomer']);
 
                 Route::get('/{id}/details', [$defaultController, 'getCustomerDetails']);

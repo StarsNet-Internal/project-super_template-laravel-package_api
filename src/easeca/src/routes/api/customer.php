@@ -40,6 +40,8 @@ Route::group(
                 Route::get('/user', [$defaultController, 'getAuthUserInfo']);
 
                 Route::get('/verification-code', [$defaultController, 'getVerificationCode']);
+
+                Route::put('/delete', [$defaultController, 'deleteAccount']);
             }
         );
     }

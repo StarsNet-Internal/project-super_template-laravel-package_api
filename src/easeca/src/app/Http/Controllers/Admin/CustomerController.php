@@ -24,11 +24,13 @@ use App\Models\User;
 // Traits
 use App\Traits\Controller\AuthenticationTrait;
 use App\Traits\Controller\StoreDependentTrait;
+use StarsNet\Project\Easeca\App\Traits\Controller\ProjectAuthenticationTrait;
 
 class CustomerController extends Controller
 {
     use AuthenticationTrait,
-        StoreDependentTrait;
+        StoreDependentTrait,
+        ProjectAuthenticationTrait;
 
     protected $model = Customer::class;
 
@@ -82,6 +84,29 @@ class CustomerController extends Controller
 
         // Return Customer
         return response()->json($customer, 200);
+    }
+
+    public function deleteCustomers(Request $request)
+    {
+        // Extract attributes from $request
+        $customerIDs = $request->input('ids');
+
+        // Get Customer(s)
+        /** @var Collection $customers */
+        $customers = Customer::find($customerIDs);
+
+        /** @var Customer $customer */
+        foreach ($customers as $customer) {
+            // Get User, then softDeletes
+            $user = $customer->getUser();
+            $user->softDeletes();
+            $this->updateLoginIdOnDelete($user);
+        }
+
+        // Return success message
+        return response()->json([
+            'message' => 'Deleted ' . $customers->count() . ' Customer(s) successfully'
+        ], 200);
     }
 
     public function createCustomer(Request $request)
