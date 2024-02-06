@@ -113,10 +113,11 @@ Route::group(
     function () {
         $defaultController = ConsignmentRequestController::class;
 
+        Route::post('/', [$defaultController, 'createConsignmentRequest']);
+
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
-                Route::post('/', [$defaultController, 'createConsignmentRequest']);
                 Route::get('/all', [$defaultController, 'getAllConsignmentRequests'])->middleware(['pagination']);
                 Route::get('/{consignment_request_id}/details', [$defaultController, 'getConsignmentRequestDetails']);
             }

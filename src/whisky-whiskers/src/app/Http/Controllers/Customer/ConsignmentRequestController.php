@@ -5,6 +5,7 @@ namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use StarsNet\Project\WhiskyWhiskers\App\Models\ConsignmentRequest;
+use Illuminate\Support\Facades\Auth;
 
 class ConsignmentRequestController extends Controller
 {
@@ -22,14 +23,14 @@ class ConsignmentRequestController extends Controller
     public function createConsignmentRequest(Request $request)
     {
         // Create ConsignmentRequest
-        $form = new ConsignmentRequest();
+        $form = ConsignmentRequest::create($request->except('items'));
 
-        $account = $this->account();
-        if (!is_null($account)) {
-            $form->associateRequestedAccount($account);
+        if (Auth::check()) {
+            $account = $this->account();
+            if (!is_null($account)) {
+                $form->associateRequestedAccount($account);
+            }
         }
-
-        $form->update($request->except('items'));
 
         // Create ConsignmentRequestItem(s)
         $requestItemsCount = 0;
