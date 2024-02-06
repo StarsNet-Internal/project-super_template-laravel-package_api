@@ -25,13 +25,6 @@ class ConsignmentRequestController extends Controller
         // Create ConsignmentRequest
         $form = ConsignmentRequest::create($request->except('items'));
 
-        if (Auth::check()) {
-            $account = $this->account();
-            if (!is_null($account)) {
-                $form->associateRequestedAccount($account);
-            }
-        }
-
         // Create ConsignmentRequestItem(s)
         $requestItemsCount = 0;
         foreach ($request->items as $item) {
