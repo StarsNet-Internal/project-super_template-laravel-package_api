@@ -10,6 +10,7 @@ use StarsNet\Project\Easeca\App\Http\Controllers\Customer\OfflineStoreManagement
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\CheckoutController;
+use StarsNet\Project\Easeca\App\Http\Controllers\Customer\OrderController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Customer\ScheduleController;
 
 Route::group(
@@ -40,6 +41,8 @@ Route::group(
                 Route::get('/user', [$defaultController, 'getAuthUserInfo']);
 
                 Route::get('/verification-code', [$defaultController, 'getVerificationCode']);
+
+                Route::put('/delete', [$defaultController, 'deleteAccount']);
             }
         );
     }
@@ -105,6 +108,18 @@ Route::group(
                 });
             }
         );
+    }
+);
+
+// ORDER
+Route::group(
+    ['prefix' => 'orders'],
+    function () {
+        $defaultController = OrderController::class;
+
+        Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::get('/all/offline', [$defaultController, 'getAllOfflineOrders'])->middleware(['pagination']);
+        });
     }
 );
 

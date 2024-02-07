@@ -13,13 +13,14 @@ use App\Models\VerificationCode;
 use App\Models\Store;
 use App\Traits\Controller\AuthenticationTrait;
 use App\Traits\Controller\StoreDependentTrait;
+use StarsNet\Project\Easeca\App\Traits\Controller\ProjectAuthenticationTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Customer\AuthenticationController as CustomerAuthenticationController;
 
 class AuthenticationController extends CustomerAuthenticationController
 {
-    use AuthenticationTrait, StoreDependentTrait;
+    use AuthenticationTrait, StoreDependentTrait, ProjectAuthenticationTrait;
 
     public function generatePhoneVerificationCodeByType(User $user, string $type, int $minutesAllowed = 60): VerificationCode
     {
@@ -247,5 +248,30 @@ class AuthenticationController extends CustomerAuthenticationController
         return response()->json([
             'message' => 'Generated new VerificationCode successfully',
         ]);
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        // Get User, then validate
+        $user = $this->user();
+
+        if (is_null($user) || $user->isDeleted()) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        // Delete User
+        $user->softDeletes();
+
+        $this->updateLoginIdOnDelete($user);
+
+        // Logout
+        $user->token()->revoke();
+
+        // Return success message
+        return response()->json([
+            'message' => 'Account scheduled to be deleted successfully'
+        ], 200);
     }
 }
