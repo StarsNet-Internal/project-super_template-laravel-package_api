@@ -15,36 +15,49 @@ class BidController extends Controller
 {
     public function getAllBids(Request $request)
     {
-        $account = $this->account();
+        $customer = $this->customer();
 
-        $bids = Bid::where('account_id', $account->id)->get();
+        $bids = Bid::where('customer_id', $customer->id)
+            ->with([
+                'store' => function ($query) {
+                    $query->select('title', 'images');
+                },
+                'product' => function ($query) {
+                    $query->select('title', 'images');
+                },
+                'auctionLot' => function ($query) {
+                    $query->select('starting_price', 'current_bid');
+                }
+            ])
+            ->get();
+
         return $bids;
     }
 
-    public function createBid(Request $request)
-    {
-        // Extract attributes from $request
-        $auctionLotId = $request->auction_lot_id;
-        $storeId = $request->store_id;
-        $productId = $request->product_id;
+    // public function createBid(Request $request)
+    // {
+    //     // Extract attributes from $request
+    //     $auctionLotId = $request->auction_lot_id;
+    //     $storeId = $request->store_id;
+    //     $productId = $request->product_id;
 
-        // Validate
-        $account = $this->account();
+    //     // Validate
+    //     $account = $this->account();
 
-        // Get Models
-        $store = Store::find($storeId);
-        $product = Product::find($productId);
+    //     // Get Models
+    //     $store = Store::find($storeId);
+    //     $product = Product::find($productId);
 
-        // Create Bid, attach relationship
-        $bid = new Bid();
-        $bid->associateAccount($account);
-        if (!is_null($store)) $bid->associateStore($store);
-        if (!is_null($product)) $bid->associateProduct($product);
+    //     // Create Bid, attach relationship
+    //     $bid = new Bid();
+    //     $bid->associateAccount($account);
+    //     if (!is_null($store)) $bid->associateStore($store);
+    //     if (!is_null($product)) $bid->associateProduct($product);
 
-        // Return success message
-        return response()->json([
-            'message' => 'Created New Bid successfully',
-            '_id' => $bid->_id
-        ], 200);
-    }
+    //     // Return success message
+    //     return response()->json([
+    //         'message' => 'Created New Bid successfully',
+    //         '_id' => $bid->_id
+    //     ], 200);
+    // }
 }

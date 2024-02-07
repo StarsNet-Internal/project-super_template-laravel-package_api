@@ -54,6 +54,7 @@ class AuctionRequestController extends Controller
                 'product_variant_id' => $form->product_variant_id,
                 'store_id' => $form->store_id,
                 'starting_price' => $form->starting_bid ?? 0,
+                'current_bid' => $form->starting_bid ?? 0,
                 'reserve_price' => $form->reserve_price ?? 0,
             ];
 
