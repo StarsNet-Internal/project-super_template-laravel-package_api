@@ -66,7 +66,7 @@ class CustomerController extends Controller
             // Tree
             $customer['member_level'] = reset($memberLevel) ? reset($memberLevel)['slug'] : null;
 
-            unset($customer['account'], $customer['groups']);
+            unset($customer['groups']);
             return $customer;
         }, $customers->toArray());
 
