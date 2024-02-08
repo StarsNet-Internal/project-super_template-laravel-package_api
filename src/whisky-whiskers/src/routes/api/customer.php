@@ -101,7 +101,7 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
-                Route::post('/', [$defaultController, 'createBid']);
+                // Route::post('/', [$defaultController, 'createBid']);
                 Route::get('/all', [$defaultController, 'getAllBids'])->middleware(['pagination']);
             }
         );

@@ -583,6 +583,18 @@ class ProductManagementController extends Controller
                         'then' => true,
                         'else' => false
                     ],
+                ],
+                'auction_lot_id' => [
+                    '$cond' => [
+                        'if' => [
+                            '$gt' => [
+                                ['$size' => '$auction_lots'],
+                                0
+                            ]
+                        ],
+                        'then' => ['$first' => '$auction_lots._id'],
+                        'else' => null
+                    ],
                 ]
             ];
 
