@@ -45,7 +45,7 @@ class ProductController extends AdminProductController
                     'discounts' => function ($discount) {
                         $discount->applicableForCustomer()->select('product_variant_id', 'type', 'value', 'start_datetime', 'end_datetime');
                     },
-                ])->statusActive()->select('product_id', 'price', 'point');
+                ])->statusActive()->select('product_id', 'price', 'point', 'sku');
             },
             'reviews',
             'wishlistItems',
@@ -93,6 +93,7 @@ class ProductController extends AdminProductController
             $product['review_count'] = $collectedReviews->count() ?? 0;
             $product['inventory_count'] = collect($product->warehouseInventories)->sum('qty') ?? 0;
             $product['wishlist_item_count'] = collect($product->wishlistItems)->count() ?? 0;
+            $product['sku'] = $collectedVariants->toArray()[0]['sku'];
 
             unset($product['variants'], $product['reviews'], $product['warehouseInventories'], $product['wishlistItems']);
         }
