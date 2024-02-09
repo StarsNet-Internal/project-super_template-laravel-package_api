@@ -185,6 +185,7 @@ class CheckoutController extends CustomerCheckoutController
             $qty = $attributes['qty'];
             /** @var ProductVariant $variant */
             $variant = ProductVariant::find($variantID);
+            $attributes['sku'] = $variant->sku;
             $this->deductWarehouseInventoriesByStore(
                 $this->store,
                 $variant,
