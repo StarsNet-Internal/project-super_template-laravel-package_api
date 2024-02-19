@@ -45,7 +45,7 @@ class ProductController extends AdminProductController
                     'discounts' => function ($discount) {
                         $discount->applicableForCustomer()->select('product_variant_id', 'type', 'value', 'start_datetime', 'end_datetime');
                     },
-                ])->statusActive()->select('product_id', 'price', 'point', 'sku');
+                ])->select('product_id', 'price', 'point', 'sku');
             },
             'reviews',
             'wishlistItems',
