@@ -2,7 +2,6 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
-
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\TestingController;
 
 /*

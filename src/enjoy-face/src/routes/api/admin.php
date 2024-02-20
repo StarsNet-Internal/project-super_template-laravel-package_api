@@ -2,10 +2,8 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
-use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\CashflowController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\TestingController;
-use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\OrderController;
-use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\ProductController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\OfflineStoreManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,32 +25,18 @@ Route::group(
     }
 );
 
+// OFFLINE_STORE
 Route::group(
-    ['prefix' => 'orders'],
+    ['prefix' => '/stores'],
     function () {
-        $defaultController = OrderController::class;
+        $defaultController = OfflineStoreManagementController::class;
 
-        Route::post('/', [$defaultController, 'createOrder']);
-        Route::get('/all', [$defaultController, 'getAllOrders'])->middleware(['pagination']);
-    }
-);
-
-Route::group(
-    ['prefix' => 'products'],
-    function () {
-        $defaultController = ProductController::class;
-
-        Route::post('/', [$defaultController, 'createProduct']);
-        Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
-        Route::get('/variants/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
-    }
-);
-
-Route::group(
-    ['prefix' => 'cashflow'],
-    function () {
-        $defaultController = CashflowController::class;
-
-        Route::get('/all', [$defaultController, 'getCashFlowDataByDateRange']);
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/categories/all', [$defaultController, 'getAllStoreCategories'])->middleware(['pagination']);
+                Route::post('/categories', [$defaultController, 'createStoreCategory']);
+            }
+        );
     }
 );
