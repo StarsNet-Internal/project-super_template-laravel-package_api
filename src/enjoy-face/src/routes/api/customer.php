@@ -30,11 +30,11 @@ Route::group(
     ['prefix' => '/stores'],
     function () {
         $defaultController = OfflineStoreManagementController::class;
+        Route::get('/categories/all', [$defaultController, 'getAllStoreCategories']);
 
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
-                Route::get('/categories/all', [$defaultController, 'getAllStoreCategories'])->middleware(['pagination']);
             }
         );
     }
