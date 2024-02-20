@@ -13,6 +13,7 @@ use App\Traits\StarsNet\TypeSenseSearchEngine;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
 
 class ProductManagementController extends Controller
 {
@@ -51,26 +52,35 @@ class ProductManagementController extends Controller
         }
 
         // Get all ProductCategory(s)
-        if (count($categoryIDs) === 0) {
-            $categoryIDs = $this->store
-                ->productCategories()
+        // if (count($categoryIDs) === 0) {
+        //     $categoryIDs = $this->store
+        //         ->productCategories()
+        //         ->statusActive()
+        //         ->get()
+        //         ->pluck('_id')
+        //         ->all();
+        // }
+
+        // Get Product(s) from selected ProductCategory(s)
+        $productIDs = AuctionLot::where('store_id', $this->store->id)
+            ->statusActive()
+            ->get()
+            ->pluck('product_id')
+            ->all();
+
+        if (count($categoryIDs) > 0) {
+            $productIDs = Product::objectIDs($productIDs)
+                ->whereHas('categories', function ($query) use ($categoryIDs) {
+                    $query->whereIn('_id', $categoryIDs);
+                })
                 ->statusActive()
+                ->when(!$keyword, function ($query) {
+                    $query->limit(250);
+                })
                 ->get()
                 ->pluck('_id')
                 ->all();
         }
-
-        // Get Product(s) from selected ProductCategory(s)
-        $productIDs = Product::whereHas('categories', function ($query) use ($categoryIDs) {
-            $query->whereIn('_id', $categoryIDs);
-        })
-            ->statusActive()
-            ->when(!$keyword, function ($query) {
-                $query->limit(250);
-            })
-            ->get()
-            ->pluck('_id')
-            ->all();
 
         // Get matching keywords from Typesense
         if (!is_null($keyword)) {
@@ -102,28 +112,28 @@ class ProductManagementController extends Controller
         $excludedProductIDs[] = $productID;
 
         // Initialize a Product collector
-        $products = [];
+        // $products = [];
 
         /*
         *   Stage 1:
         *   Get Product(s) from System ProductCategory, recommended-products
         */
-        $systemCategory = ProductCategory::slug('recommended-products')->first();
+        // $systemCategory = ProductCategory::slug('recommended-products')->first();
 
-        if (!is_null($systemCategory)) {
-            // Get Product(s)
-            $recommendedProducts = $systemCategory->products()
-                ->statusActive()
-                ->excludeIDs($excludedProductIDs)
-                ->get();
+        // if (!is_null($systemCategory)) {
+        //     // Get Product(s)
+        //     $recommendedProducts = $systemCategory->products()
+        //         ->statusActive()
+        //         ->excludeIDs($excludedProductIDs)
+        //         ->get();
 
-            // Randomize ordering
-            $recommendedProducts = $recommendedProducts->shuffle(); // randomize ordering
+        //     // Randomize ordering
+        //     $recommendedProducts = $recommendedProducts->shuffle(); // randomize ordering
 
-            // Collect data
-            $products = array_merge($products, $recommendedProducts->all()); // collect Product(s)
-            $excludedProductIDs = array_merge($excludedProductIDs, $recommendedProducts->pluck('_id')->all()); // collect _id
-        }
+        //     // Collect data
+        //     $products = array_merge($products, $recommendedProducts->all()); // collect Product(s)
+        //     $excludedProductIDs = array_merge($excludedProductIDs, $recommendedProducts->pluck('_id')->all()); // collect _id
+        // }
 
         /*
         *   Stage 2:
@@ -131,66 +141,76 @@ class ProductManagementController extends Controller
         */
         $product = Product::find($productID);
 
-        if (!is_null($product)) {
-            // Get related ProductCategory(s) by Product and within Store
-            $relatedCategories = $product->categories()
-                ->storeID($this->store)
-                ->statusActive()
-                ->get();
+        $productIDs = AuctionLot::where(
+            'store_id',
+            $this->store->id
+        )
+            ->where('product_id', '!=', $productID)
+            ->statusActive()
+            ->get()
+            ->pluck('product_id')
+            ->all();
 
-            $relatedCategoryIDs = $relatedCategories->pluck('_id')->all();
+        // if (!is_null($product)) {
+        //     // Get related ProductCategory(s) by Product and within Store
+        //     $relatedCategories = $product->categories()
+        //         ->storeID($this->store)
+        //         ->statusActive()
+        //         ->get();
 
-            // Get Product(s)
-            $relatedProducts = Product::whereHas('categories', function ($query) use ($relatedCategoryIDs) {
-                $query->whereIn('_id', $relatedCategoryIDs);
-            })
-                ->statusActive()
-                ->excludeIDs($excludedProductIDs)
-                ->get();
+        //     $relatedCategoryIDs = $relatedCategories->pluck('_id')->all();
 
-            // Randomize ordering
-            $relatedProducts = $relatedProducts->shuffle(); // randomize ordering
+        //     // Get Product(s)
+        //     $relatedProducts = Product::whereHas('categories', function ($query) use ($relatedCategoryIDs) {
+        //         $query->whereIn('_id', $relatedCategoryIDs);
+        //     })
+        //         ->statusActive()
+        //         ->excludeIDs($excludedProductIDs)
+        //         ->get();
 
-            // Collect data
-            $products = array_merge($products, $relatedProducts->all()); // collect Product(s)
-            $excludedProductIDs = array_merge($excludedProductIDs, $relatedProducts->pluck('_id')->all()); // collect _id
-        }
+        //     // Randomize ordering
+        //     $relatedProducts = $relatedProducts->shuffle(); // randomize ordering
+
+        //     // Collect data
+        //     $products = array_merge($products, $relatedProducts->all()); // collect Product(s)
+        //     $excludedProductIDs = array_merge($excludedProductIDs, $relatedProducts->pluck('_id')->all()); // collect _id
+        // }
 
         /*
         *   Stage 3:
         *   Get Product(s) assigned to this Store's active ProductCategory(s)
         */
         // Get remaining ProductCategory(s) by Store
-        if (!isset($relatedCategoryIDs)) $relatedCategoryIDs = [];
-        $otherCategories = $this->store
-            ->productCategories()
-            ->statusActive()
-            ->excludeIDs($relatedCategoryIDs)
-            ->get();
+        // if (!isset($relatedCategoryIDs)) $relatedCategoryIDs = [];
+        // $otherCategories = $this->store
+        //     ->productCategories()
+        //     ->statusActive()
+        //     ->excludeIDs($relatedCategoryIDs)
+        //     ->get();
 
-        if ($otherCategories->count() > 0) {
-            $otherCategoryIDs = $otherCategories->pluck('_id')->all();
+        // if ($otherCategories->count() > 0) {
+        //     $otherCategoryIDs = $otherCategories->pluck('_id')->all();
 
-            // Get Product(s)
-            $otherProducts = Product::whereHas('categories', function ($query) use ($otherCategoryIDs) {
-                $query->whereIn('_id', $otherCategoryIDs);
-            })
-                ->statusActive()
-                ->excludeIDs($excludedProductIDs)
-                ->get();
+        //     // Get Product(s)
+        //     $otherProducts = Product::whereHas('categories', function ($query) use ($otherCategoryIDs) {
+        //         $query->whereIn('_id', $otherCategoryIDs);
+        //     })
+        //         ->statusActive()
+        //         ->excludeIDs($excludedProductIDs)
+        //         ->get();
 
-            // Randomize ordering
-            $otherProducts = $otherProducts->shuffle();
+        //     // Randomize ordering
+        //     $otherProducts = $otherProducts->shuffle();
 
-            // Collect data
-            $products = array_merge($products, $otherProducts->all());
-        }
+        //     // Collect data
+        //     $products = array_merge($products, $otherProducts->all());
+        // }
 
         /*
         *   Stage 4:
         *   Generate URLs
         */
-        $productIDsSet = collect($products)->pluck('_id')
+        $productIDsSet = collect($productIDs)
             ->chunk($itemsPerPage)
             ->all();
 
@@ -269,7 +289,10 @@ class ProductManagementController extends Controller
             ->get();
 
         // Get Products
-        $productIDs = $wishlistItems->pluck('_id')->all();
+        $productIDs = $wishlistItems->pluck('product_id')->all();
+        if (count($productIDs) == 0) {
+            return new Collection();
+        }
         $products = $this->getProductsInfoByAggregation($productIDs);
 
         // Return data
@@ -572,7 +595,7 @@ class ProductManagementController extends Controller
                         'else' => 0
                     ],
                 ],
-                'is_reserved_price_met' => [
+                'is_reserve_price_met' => [
                     '$cond' => [
                         'if' => [
                             '$gte' => [
@@ -632,7 +655,7 @@ class ProductManagementController extends Controller
                 'global_discounts',
                 'reviews',
                 'inventories',
-                'wishlist_items',
+                // 'wishlist_items',
                 'auction_lots'
             ];
             $aggregate[]['$project'] = array_merge(...array_map(function ($item) {

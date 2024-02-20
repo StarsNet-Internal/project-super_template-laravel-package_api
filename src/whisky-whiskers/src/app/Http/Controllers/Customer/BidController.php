@@ -20,7 +20,7 @@ class BidController extends Controller
         $bids = Bid::where('customer_id', $customer->id)
             ->with([
                 'store' => function ($query) {
-                    $query->select('title', 'images');
+                    $query->select('title', 'images', 'start_datetime', 'end_datetime');
                 },
                 'product' => function ($query) {
                     $query->select('title', 'images');
