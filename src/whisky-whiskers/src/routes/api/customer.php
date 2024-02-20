@@ -64,12 +64,12 @@ Route::group(
     function () {
         $defaultController = AuctionLotController::class;
 
-        Route::get('/{auction_lot_id}/details', [$defaultController, 'getAuctionLotDetails']);
         Route::get('/{auction_lot_id}/bids', [$defaultController, 'getBiddingHistory'])->middleware(['pagination']);
 
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::get('/{auction_lot_id}/details', [$defaultController, 'getAuctionLotDetails']);
                 Route::get('/owned/all', [$defaultController, 'getAllOwnedAuctionLots'])->middleware(['pagination']);
                 Route::get('/participated/all', [$defaultController, 'getAllParticipatedAuctionLots'])->middleware(['pagination']);
                 Route::post('/{auction_lot_id}/bids', [$defaultController, 'createBid']);
@@ -166,7 +166,9 @@ Route::group(
             function () {
                 $defaultController = ProductManagementController::class;
 
-                Route::get('/products/filter', [$defaultController, 'filterAuctionProductsByCategories'])->middleware(['pagination']);
+                Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                    Route::get('/products/filter', [$defaultController, 'filterAuctionProductsByCategories'])->middleware(['pagination']);
+                });
                 Route::get('/related-products-urls', [$defaultController, 'getRelatedAuctionProductsUrls'])->middleware(['pagination']);
                 Route::get('/products/ids', [$defaultController, 'getAuctionProductsByIDs'])->name('whiskywhiskers.products.ids')->middleware(['pagination']);
             }

@@ -6,9 +6,14 @@ use App\Constants\Model\Status;
 use App\Constants\Model\StoreType;
 use App\Http\Controllers\Controller;
 use App\Models\Store;
+use App\Models\WishlistItem;
 use Illuminate\Http\Request;
 use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
 use StarsNet\Project\WhiskyWhiskers\App\Models\Bid;
+
+// Validator
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class AuctionLotController extends Controller
 {
@@ -24,6 +29,17 @@ class AuctionLotController extends Controller
             'latestBidCustomer',
             'winningBidCustomer'
         ])->find($auctionLotId);
+
+        $auctionLot->is_reserve_price_met = $auctionLot->current_bid >= $auctionLot->reserve_price;
+        $auctionLot->setHidden(['reserve_price']);
+
+        // Get isLiked 
+        $customer = $this->customer();
+        $auctionLot->is_liked = WishlistItem::where([
+            'customer_id' => $customer->_id,
+            'store_id' => $auctionLot->store_id,
+            'product_id' => $auctionLot->product_id,
+        ])->exists();
 
         if (!in_array($auctionLot->status, [Status::ACTIVE, Status::ARCHIVED])) {
             return response()->json([
@@ -65,7 +81,12 @@ class AuctionLotController extends Controller
                 'store',
                 'latestBidCustomer',
                 'winningBidCustomer'
-            ])->get();
+            ])
+            ->get();
+
+        foreach ($auctionLots as $lot) {
+            $lot->bid_count = $lot->bids()->count();
+        }
 
         return $auctionLots;
     }
@@ -104,6 +125,12 @@ class AuctionLotController extends Controller
         $auctionLotId = $request->route('auction_lot_id');
         $requestedBid = $request->bid;
 
+        // Validate Request
+        $validator = Validator::make(
+            $request->all(),
+            ['bid' => 'numeric']
+        );
+
         // Get Auction Store(s)
         $auctionLot = AuctionLot::find($auctionLotId);
 
@@ -117,7 +144,12 @@ class AuctionLotController extends Controller
         $customer = $this->customer();
 
         // Get latest bid
-        $bids = $auctionLot->bids()->latest()->get();
+        $latestBid = optional($auctionLot->bids()->latest()->first())->bid ?? $auctionLot->current_bid;
+        if (floatval($requestedBid) <= floatval($latestBid)) {
+            return response()->json([
+                'message' => 'The requested bid cannot be lower than current highest bid'
+            ], 404);
+        }
 
         // Create Bid
         $bid = Bid::create([
