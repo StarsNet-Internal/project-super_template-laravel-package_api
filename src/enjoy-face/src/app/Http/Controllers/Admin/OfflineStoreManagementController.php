@@ -48,4 +48,62 @@ class OfflineStoreManagementController extends AdminOfflineStoreManagementContro
         // Return StoreCategory(s)
         return $categories;
     }
+
+    public function assignStoresToCategory(Request $request)
+    {
+        // Extract attributes from $request
+        $categoryID = $request->route('category_id');
+        $storeIDs = $request->input('ids', []);
+
+        // Get StoreCategory, then validate
+        /** @var StoreCategory $category */
+        $category = StoreCategory::find($categoryID);
+
+        if (is_null($category)) {
+            return response()->json([
+                'message' => 'StoreCategory not found'
+            ], 404);
+        }
+
+        // Get Store(s)
+        /** @var Collection $stores */
+        $stores = Store::find($storeIDs);
+
+        // Update relationships
+        $category->attachStores(collect($stores));
+
+        // Return success message
+        return response()->json([
+            'message' => 'Assigned ' . $stores->count() . ' Store(s) successfully'
+        ], 200);
+    }
+
+    public function unassignStoresFromCategory(Request $request)
+    {
+        // Extract attributes from $request
+        $categoryID = $request->route('category_id');
+        $storeIDs = $request->input('ids', []);
+
+        // Get StoreCategory, then validate
+        /** @var StoreCategory $category */
+        $category = StoreCategory::find($categoryID);
+
+        if (is_null($category)) {
+            return response()->json([
+                'message' => 'StoreCategory not found'
+            ], 404);
+        }
+
+        // Get Store(s)
+        /** @var Collection $stores */
+        $stores = Store::find($storeIDs);
+
+        // Update relationships
+        $category->detachStores(collect($stores));
+
+        // Return success message
+        return response()->json([
+            'message' => 'Unassigned ' . $stores->count() . ' Store(s) successfully'
+        ], 200);
+    }
 }

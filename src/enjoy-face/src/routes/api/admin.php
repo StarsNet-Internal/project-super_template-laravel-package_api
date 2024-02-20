@@ -36,6 +36,9 @@ Route::group(
             function () use ($defaultController) {
                 Route::get('/categories/all', [$defaultController, 'getAllStoreCategories'])->middleware(['pagination']);
                 Route::post('/categories', [$defaultController, 'createStoreCategory']);
+
+                Route::put('/categories/{category_id}/stores/assign', [$defaultController, 'assignStoresToCategory']);
+                Route::put('/categories/{category_id}/stores/unassign', [$defaultController, 'unassignStoresFromCategory']);
             }
         );
     }
