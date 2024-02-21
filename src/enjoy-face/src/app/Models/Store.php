@@ -31,12 +31,6 @@ use Jenssegers\Mongodb\Relations\EmbedsOne;
 
 class Store extends BaseStore
 {
-    use ObjectIDTrait,
-        Excludable,
-        StatusFieldTrait,
-        Systemizable,
-        Sluggable;
-
     /**
      * Define database connection.
      *
