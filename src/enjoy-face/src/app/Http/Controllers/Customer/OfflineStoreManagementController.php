@@ -261,9 +261,17 @@ class OfflineStoreManagementController extends Controller
         return $products;
     }
 
-    public function getStoreReviews(Request $request)
+    public function getReviews(Request $request)
     {
-        $reviews = ProductReview::where('store_id', $request->route('store_id'))
+        $storeId = $request->input('store_id');
+        $userId = $request->input('user_id');
+
+        $reviews = ProductReview::when(isset($storeId), function ($query) use ($storeId) {
+            $query->where('store_id', $storeId);
+        })
+            ->when(isset($userId), function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            })
             ->where('reply_status', 'APPROVED')
             ->get();
 
