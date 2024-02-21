@@ -17,6 +17,7 @@ use App\Models\ProductReview;
 use App\Models\User;
 use StarsNet\Project\EnjoyFace\App\Models\Store;
 use StarsNet\Project\EnjoyFace\App\Models\StoreCategory;
+use App\Traits\Controller\AuthenticationTrait;
 use App\Traits\Controller\Cacheable;
 use App\Traits\Controller\ProductTrait;
 use App\Traits\Controller\Sortable;
