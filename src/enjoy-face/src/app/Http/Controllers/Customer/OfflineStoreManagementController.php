@@ -12,13 +12,80 @@ use App\Models\CustomerGroup;
 use App\Models\DiscountTemplate;
 use App\Models\Product;
 use App\Models\ProductCategory;
-use App\Models\Store;
 use App\Models\Warehouse;
+use App\Models\ProductReview;
+use App\Models\User;
+use StarsNet\Project\EnjoyFace\App\Models\Store;
 use StarsNet\Project\EnjoyFace\App\Models\StoreCategory;
+use App\Traits\Controller\Cacheable;
+use App\Traits\Controller\ProductTrait;
+use App\Traits\Controller\Sortable;
+use App\Traits\Controller\StoreDependentTrait;
+use App\Traits\Controller\WishlistItemTrait;
+use App\Traits\StarsNet\TypeSenseSearchEngine;
+use StarsNet\Project\EnjoyFace\App\Traits\Controller\ProjectProductTrait;
 use Illuminate\Http\Request;
 
 class OfflineStoreManagementController extends Controller
 {
+    use AuthenticationTrait,
+        ProductTrait,
+        Sortable,
+        WishlistItemTrait,
+        StoreDependentTrait,
+        ProjectProductTrait;
+
+    use Cacheable;
+
+    public function vincentyGreatCircleDistance(
+        $latitudeFrom,
+        $longitudeFrom,
+        $latitudeTo,
+        $longitudeTo,
+        $earthRadius = 6371
+    ) {
+        // convert from degrees to radians
+        $latFrom = deg2rad($latitudeFrom);
+        $lonFrom = deg2rad($longitudeFrom);
+        $latTo = deg2rad($latitudeTo);
+        $lonTo = deg2rad($longitudeTo);
+
+        $lonDelta = $lonTo - $lonFrom;
+        $a = pow(cos($latTo) * sin($lonDelta), 2) +
+            pow(cos($latFrom) * sin($latTo) - sin($latFrom) * cos($latTo) * cos($lonDelta), 2);
+        $b = sin($latFrom) * sin($latTo) + cos($latFrom) * cos($latTo) * cos($lonDelta);
+
+        $angle = atan2(sqrt($a), $b);
+        return $angle * $earthRadius;
+    }
+
+    public function appendStoreAttributes($store, $reviews, $wishlistItems, $latitude, $longitude)
+    {
+        $storeReviews = $reviews->filter(function ($review) use ($store) {
+            return $review['store_id'] === $store['_id'];
+        });
+
+        $store['rating'] = $storeReviews->avg('rating') ?? 0;
+        $store['review_count'] = $storeReviews->count() ?? 0;
+
+        $store['distance'] = round($this->vincentyGreatCircleDistance(
+            $latitude,
+            $longitude,
+            $store['location']['latitude'],
+            $store['location']['longitude']
+        ), 1);
+
+        $mtr = array_filter($store['categories']->toArray(), function ($category) {
+            return $category['store_category_type'] === 'MTR';
+        });
+        $store['mtr'] = reset($mtr);
+
+        $store['is_orderable'] = $store['quota'] > count($store['orders']);
+        $store['is_liked'] = array_search($store['_id'], $wishlistItems) !== false ? true : false;
+
+        unset($store['category_ids'], $store['opening_hours'], $store['quota'], $store['categories'], $store['orders']);
+    }
+
     public function getAllStoreCategories(Request $request)
     {
         // Get StoreCategory(s)
@@ -26,16 +93,179 @@ class OfflineStoreManagementController extends Controller
         $districts = StoreCategory::whereItemType('Store')
             ->where('store_category_type', 'DISTRICT')
             ->statusActive()
-            ->get();
+            ->orderByDesc('created_at')
+            ->get(['_id', 'title']);
         $ratings = StoreCategory::whereItemType('Store')
             ->where('store_category_type', 'RATING')
             ->statusActive()
-            ->get();
+            ->orderByDesc('created_at')
+            ->get(['_id', 'title']);
 
         // Return StoreCategory(s)
         return [
-            'districts' => $districts,
-            'ratings' => $ratings,
+            [
+                'title' => [
+                    'en' => 'District',
+                    'zh' => '地區',
+                    'cn' => '地区',
+                ],
+                'type' => 'checkbox',
+                'children' => $districts,
+            ],
+            [
+                'title' => [
+                    'en' => 'Rating',
+                    'zh' => '評分',
+                    'cn' => '评分',
+                ],
+                'type' => 'radio',
+                'children' => $ratings,
+            ],
         ];
+    }
+
+    public function filterStoresByCategories(Request $request)
+    {
+        // Extract attributes from $request
+        $categoryIds = $request->input('category_ids', []);
+        $districtIds = $request->input('district_ids', []);
+        $ratingIds = $request->input('rating_ids', []);
+        $keyword = $request->input('keyword');
+        if ($keyword === "") $keyword = null;
+        $slug = $request->input('slug', 'distance-from-near-to-far');
+        $latitude = $request->input('latitude', '22.3193');
+        $longitude = $request->input('longitude', '114.1694');
+        $userId = $request->input('user_id');
+        if ($userId === "") $userId = null;
+
+        // Get sorting attributes via slugs
+        if (!is_null($slug)) {
+            $sortingValue = $this->getProductSortingAttributesBySlug('product-sorting', $slug);
+            switch ($sortingValue['type']) {
+                case 'KEY':
+                    $request['sort_by'] = $sortingValue['key'];
+                    $request['sort_order'] = $sortingValue['ordering'];
+                    break;
+                case 'KEYWORD':
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // Get Store(s) from selected StoreCategory(s)
+        $storeIdsByStoreCategories = Store::whereType(StoreType::OFFLINE)
+            ->when(count($districtIds), function ($query) use ($districtIds) {
+                $query->whereIn('category_ids', $districtIds);
+            })
+            ->when(count($ratingIds), function ($query) use ($ratingIds) {
+                $query->whereIn('category_ids', $ratingIds);
+            })
+            ->when(!$keyword, function ($query) {
+                $query->limit(250);
+            })
+            ->get()
+            ->unique('_id')
+            ->pluck('_id')
+            ->all();
+
+        // Get Store(s) from selected ProductCategory(s)
+        $storeIdsByProductCategories = Product::when(count($categoryIds), function ($query) use ($categoryIds) {
+            $query->whereIn('category_ids', $categoryIds);
+        })
+            ->statusActive()
+            ->when(!$keyword, function ($query) {
+                $query->limit(250);
+            })
+            ->get()
+            ->unique('store_id')
+            ->pluck('store_id')
+            ->all();
+
+        $storeIds = array_intersect($storeIdsByStoreCategories, $storeIdsByProductCategories);
+
+        // TODO Get matching keywords from Typesense
+
+        $stores = Store::objectIDs($storeIds)
+            ->statusActive()
+            ->with([
+                'categories' => function ($category) {
+                    $category->select('item_ids', 'title', 'store_category_type');
+                },
+                'orders',
+            ])
+            ->get();
+
+        $reviews = ProductReview::whereIn('store_id', $storeIds)
+            ->where('reply_status', 'APPROVED')
+            ->get();
+
+        if (isset($userId)) {
+            $customer = User::find($userId)->account->customer;
+            $wishlistItems = $customer->wishlistItems()->get()->pluck('store_id')->all();
+        } else {
+            $wishlistItems = [];
+        }
+
+        foreach ($stores as $store) {
+            $this->appendStoreAttributes($store, $reviews, $wishlistItems, $latitude, $longitude);
+        }
+
+        return $stores;
+    }
+
+    public function getStoreDetails(Request $request)
+    {
+        $storeId = $request->route('store_id');
+        $latitude = $request->input('latitude', '22.3193');
+        $longitude = $request->input('longitude', '114.1694');
+        $userId = $request->input('user_id');
+        if ($userId === "") $userId = null;
+
+        $store = Store::with([
+            'categories' => function ($category) {
+                $category->select('item_ids', 'title', 'store_category_type');
+            },
+            'orders',
+        ])
+            ->find($storeId);
+
+        $reviews = ProductReview::where('store_id', $storeId)
+            ->where('reply_status', 'APPROVED')
+            ->get();
+
+        if (isset($userId)) {
+            $customer = User::find($userId)->account->customer;
+            $wishlistItems = $customer->wishlistItems()->get()->pluck('store_id')->all();
+        } else {
+            $wishlistItems = [];
+        }
+
+        $this->appendStoreAttributes($store, $reviews, $wishlistItems, $latitude, $longitude);
+
+        return $store;
+    }
+
+    public function getStoreProducts(Request $request)
+    {
+        $store = Store::find($request->route('store_id'));
+
+        $productIds = Product::where('store_id', $request->route('store_id'))
+            ->statusActive()
+            ->get()
+            ->pluck('_id')
+            ->all();
+        $products = $this->getProjectProductsInfoByAggregation($productIds, $store);
+
+        return $products;
+    }
+
+    public function getStoreReviews(Request $request)
+    {
+        $reviews = ProductReview::where('store_id', $request->route('store_id'))
+            ->where('reply_status', 'APPROVED')
+            ->get();
+
+        return $reviews;
     }
 }

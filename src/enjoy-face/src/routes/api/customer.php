@@ -30,7 +30,11 @@ Route::group(
     ['prefix' => '/stores'],
     function () {
         $defaultController = OfflineStoreManagementController::class;
-        Route::get('/categories/all', [$defaultController, 'getAllStoreCategories']);
+        Route::get('/categories/all', [$defaultController, 'getAllStoreCategories'])->middleware(['pagination']);
+        Route::get('/filter', [$defaultController, 'filterStoresByCategories'])->middleware(['pagination']);
+        Route::get('/{store_id}/details', [$defaultController, 'getStoreDetails']);
+        Route::get('/{store_id}/products', [$defaultController, 'getStoreProducts'])->middleware(['pagination']);
+        Route::get('/{store_id}/reviews', [$defaultController, 'getStoreReviews'])->middleware(['pagination']);
 
         Route::group(
             ['middleware' => 'auth:api'],
