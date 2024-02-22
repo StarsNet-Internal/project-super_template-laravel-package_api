@@ -3,6 +3,7 @@
 // Default Imports
 use Illuminate\Support\Facades\Route;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\TestingController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\OfflineStoreManagementController;
 
 /*
@@ -22,6 +23,23 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+// PRODUCT
+Route::group(
+    ['prefix' => 'products'],
+    function () {
+        $defaultController = ProductController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
+
+                Route::put('/reviews/status', [$defaultController, 'updateReviewStatus']);
+            }
+        );
     }
 );
 
