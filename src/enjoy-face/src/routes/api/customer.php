@@ -6,6 +6,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\TestingController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\OfflineStoreManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\WishlistController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\OrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,5 +94,17 @@ Route::group(
         $defaultController = OfflineStoreManagementController::class;
 
         Route::get('/all', [$defaultController, 'getReviews'])->middleware(['pagination']);
+    }
+);
+
+// ORDER
+Route::group(
+    ['prefix' => 'orders'],
+    function () {
+        $defaultController = OrderController::class;
+
+        Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::get('/{order_id}/details', [$defaultController, 'getOrderDetails']);
+        });
     }
 );
