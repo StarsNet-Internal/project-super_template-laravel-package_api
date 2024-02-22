@@ -30,7 +30,8 @@ class ShoppingCartController extends CustomerShoppingCartController
 
         $data['cart_items'] = array_map(function ($item) {
             $variant = ProductVariant::find($item['product_variant_id']);
-            $item['qty'] = $variant->cost;
+            $item['qty'] = $variant->weight;
+            $item['discounted_price_per_unit'] = $variant->cost;
             $item['product_variant_title'] = $this->store->title;
             if (count($this->store->images)) {
                 $item['image'] = $this->store->images[0];
