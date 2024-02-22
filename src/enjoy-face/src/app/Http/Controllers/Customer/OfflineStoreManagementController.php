@@ -223,7 +223,7 @@ class OfflineStoreManagementController extends Controller
             $query->where('store_id', $storeId);
         })
             ->when(isset($userId), function ($query) use ($userId) {
-                $query->where('user_id', $userId);
+                $query->where('user_id', intval($userId));
             })
             ->where('reply_status', 'APPROVED')
             ->get();
