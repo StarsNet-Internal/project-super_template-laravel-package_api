@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\TestingController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\OfflineStoreManagementController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\WishlistController;
 
 /*
@@ -62,19 +63,14 @@ Route::group(
             }
         );
 
-        // // SHOPPING_CART
-        // Route::group(['prefix' => 'shopping-cart'], function () {
-        //     $defaultController = ShoppingCartController::class;
+        // SHOPPING_CART
+        Route::group(['prefix' => 'shopping-cart'], function () {
+            $defaultController = ShoppingCartController::class;
 
-        //     Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
-        //         Route::post('/add-to-cart', [$defaultController, 'addToCart']);
-        //         Route::post('/update-checkout', [$defaultController, 'updateCartItemCheckoutStatus']);
-
-        //         Route::post('/all', [$defaultController, 'getAll']);
-
-        //         Route::delete('/clear-cart', [$defaultController, 'clearCart']);
-        //     });
-        // });
+            Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                Route::post('/all', [$defaultController, 'getAll']);
+            });
+        });
 
         // // CHECKOUT
         // Route::group(
