@@ -82,7 +82,7 @@ class WishlistController extends Controller
 
         // Get WishlistItem(s)
         $wishlistItemIds = $customer->wishlistItems()
-            ->pluck('_id')
+            ->pluck('store_id')
             ->all();
 
         $storeIds = array_intersect($wishlistItemIds, $storeIdsByProductCategories);
@@ -101,15 +101,8 @@ class WishlistController extends Controller
             ->where('reply_status', 'APPROVED')
             ->get();
 
-        if (isset($userId)) {
-            $customer = User::find($userId)->account->customer;
-            $wishlistItems = $customer->wishlistItems()->get()->pluck('store_id')->all();
-        } else {
-            $wishlistItems = [];
-        }
-
         foreach ($stores as $store) {
-            $this->appendStoreAttributes($store, $reviews, $wishlistItems, $latitude, $longitude);
+            $this->appendStoreAttributes($store, $reviews, $wishlistItemIds, $latitude, $longitude);
         }
 
         return $stores;
