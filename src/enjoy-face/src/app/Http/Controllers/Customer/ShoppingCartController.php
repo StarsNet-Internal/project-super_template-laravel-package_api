@@ -33,9 +33,9 @@ class ShoppingCartController extends CustomerShoppingCartController
             $item['qty'] = $variant->weight;
             $item['discounted_price_per_unit'] = strval($variant->cost);
             $item['product_variant_title'] = $this->store->title;
-            if (count($this->store->images)) {
-                $item['image'] = $this->store->images[0];
-            }
+            // if (count($this->store->images)) {
+            //     $item['image'] = $this->store->images[0];
+            // }
             return $item;
         }, $data['cart_items']);
 
