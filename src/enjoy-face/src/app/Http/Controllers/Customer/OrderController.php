@@ -39,12 +39,7 @@ class OrderController extends CustomerOrderController
             $variant = ProductVariant::find($item['product_variant_id']);
             $item['qty'] = $variant->weight;
             $item['discounted_price_per_unit'] = strval($variant->cost);
-            $item['product_variant_title'] = $this->store->title;
             $item['created_at'] = Carbon::parse($order['created_at'])->addDays($variant->weight);
-
-            // if (count($this->store->images)) {
-            //     $item['image'] = $this->store->images[0];
-            // }
             return $item;
         }, $order['cart_items']);
 
