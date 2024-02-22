@@ -106,12 +106,14 @@ class ProductController extends Controller
         $reviews = ProductReview::find($reviewIDs);
 
         foreach ($reviews as $review) {
-            $review->updateStatus($status);
+            $review->update([
+                'reply_status' => $status
+            ]);
         }
 
         // Return success message
         return response()->json([
-            'message' => 'Updated ' . $reviews->count() . ' Post(s) successfully'
+            'message' => 'Approved ' . $reviews->count() . ' Review(s) successfully'
         ], 200);
     }
 }
