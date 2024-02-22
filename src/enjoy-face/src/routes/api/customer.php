@@ -7,6 +7,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\OfflineStoreManagem
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\WishlistController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\OrderController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\AuthenticationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,28 @@ Route::group(
     }
 );
 
+// AUTH
+Route::group(
+    ['prefix' => 'auth'],
+    function () {
+        $defaultController = AuthenticationController::class;
+
+        Route::post('/login', [$defaultController, 'login']);
+        Route::post('/register', [$defaultController, 'register']);
+
+        Route::post('/forget-password', [$defaultController, 'forgetPassword']);
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/logout', [$defaultController, 'logoutMobileDevice']);
+
+                Route::get('/verification-code', [$defaultController, 'getVerificationCode']);
+            }
+        );
+    }
+);
+
 // OFFLINE_STORE
 Route::group(
     ['prefix' => '/stores'],
@@ -38,12 +61,6 @@ Route::group(
         Route::get('/filter', [$defaultController, 'filterStoresByCategories'])->middleware(['pagination']);
         Route::get('/{store_id}/details', [$defaultController, 'getStoreDetails']);
         Route::get('/{store_id}/products', [$defaultController, 'getStoreProducts'])->middleware(['pagination']);
-
-        Route::group(
-            ['middleware' => 'auth:api'],
-            function () use ($defaultController) {
-            }
-        );
     }
 );
 
@@ -72,18 +89,6 @@ Route::group(
                 Route::post('/all', [$defaultController, 'getAll']);
             });
         });
-
-        // // CHECKOUT
-        // Route::group(
-        //     ['prefix' => 'checkouts'],
-        //     function () {
-        //         $defaultController = CheckoutController::class;
-
-        //         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
-        //             Route::post('/', [$defaultController, 'checkOut']);
-        //         });
-        //     }
-        // );
     }
 );
 
