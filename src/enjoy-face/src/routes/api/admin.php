@@ -3,6 +3,7 @@
 // Default Imports
 use Illuminate\Support\Facades\Route;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\TestingController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\StaffManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\OfflineStoreManagementController;
 
@@ -23,6 +24,18 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+// STAFF
+Route::group(
+    ['prefix' => 'staff'],
+    function () {
+        $defaultController = StaffManagementController::class;
+
+        Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::put('/merchants/{account_id}/details', [$defaultController, 'updateMerchantDetails']);
+        });
     }
 );
 
