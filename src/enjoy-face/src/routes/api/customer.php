@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\TestingController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\OfflineStoreManagementController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\WishlistController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,6 +42,51 @@ Route::group(
             function () use ($defaultController) {
             }
         );
+    }
+);
+
+// STORE
+Route::group(
+    ['prefix' => '/stores/{store_id}/'],
+    function () {
+        // WISHLIST
+        Route::group(
+            ['prefix' => 'wishlist'],
+            function () {
+                $defaultController = WishlistController::class;
+
+                Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                    Route::get('/all', [$defaultController, 'getAll'])->middleware(['pagination']);
+                    Route::post('/add-to-wishlist', [$defaultController, 'addAndRemove']);
+                });
+            }
+        );
+
+        // // SHOPPING_CART
+        // Route::group(['prefix' => 'shopping-cart'], function () {
+        //     $defaultController = ShoppingCartController::class;
+
+        //     Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+        //         Route::post('/add-to-cart', [$defaultController, 'addToCart']);
+        //         Route::post('/update-checkout', [$defaultController, 'updateCartItemCheckoutStatus']);
+
+        //         Route::post('/all', [$defaultController, 'getAll']);
+
+        //         Route::delete('/clear-cart', [$defaultController, 'clearCart']);
+        //     });
+        // });
+
+        // // CHECKOUT
+        // Route::group(
+        //     ['prefix' => 'checkouts'],
+        //     function () {
+        //         $defaultController = CheckoutController::class;
+
+        //         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+        //             Route::post('/', [$defaultController, 'checkOut']);
+        //         });
+        //     }
+        // );
     }
 );
 
