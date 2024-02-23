@@ -34,7 +34,7 @@ Route::group(
         $defaultController = StaffManagementController::class;
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
-            Route::put('/merchants/{account_id}/details', [$defaultController, 'updateMerchantDetails']);
+            Route::put('/merchants/{id}/details', [$defaultController, 'updateMerchantDetails']);
         });
     }
 );
