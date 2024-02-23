@@ -21,6 +21,35 @@ use App\Http\Controllers\Admin\OfflineStoreManagementController as AdminOfflineS
 
 class OfflineStoreManagementController extends AdminOfflineStoreManagementController
 {
+    public function getAllOfflineStores(Request $request)
+    {
+        // Extract attributes from $request
+        $statuses = (array) $request->input('status', Status::$typesForAdmin);
+
+        // Get all Store(s)
+        $stores = Store::whereType(StoreType::OFFLINE)
+            ->statusesAllowed(Status::$typesForAdmin, $statuses)
+            ->with([
+                'warehouses' => function ($query) {
+                    $query->statuses(Status::$typesForAdmin)->get();
+                },
+                'cashiers' => function ($query) {
+                    $query->statuses(Status::$typesForAdmin)->get();
+                },
+                'orders',
+            ])
+            ->get();
+
+        // Append attributes
+        foreach ($stores as $store) {
+            $store['order_count'] = count($store['orders']);
+            unset($store['orders']);
+        }
+
+        // Return Store(s)
+        return $stores;
+    }
+
     public function createStoreCategory(Request $request)
     {
         // Create StoreCategory

@@ -65,6 +65,8 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::get('/offline/all', [$defaultController, 'getAllOfflineStores'])->middleware(['pagination']);
+
                 Route::get('/categories/all', [$defaultController, 'getAllStoreCategories'])->middleware(['pagination']);
                 Route::post('/categories', [$defaultController, 'createStoreCategory']);
 
