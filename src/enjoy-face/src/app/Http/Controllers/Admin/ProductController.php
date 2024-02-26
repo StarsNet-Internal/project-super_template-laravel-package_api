@@ -7,7 +7,7 @@ use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\Status;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerGroup;
-use App\Models\Store;
+// use App\Models\Store;
 use Illuminate\Http\Request;
 
 use App\Models\Product;
@@ -15,6 +15,8 @@ use App\Models\ProductReview;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantDiscount;
 use App\Models\ProductVariantOption;
+use StarsNet\Project\EnjoyFace\App\Models\Store;
+use StarsNet\Project\EnjoyFace\App\Models\StoreCategory;
 use App\Traits\Controller\Cacheable;
 use App\Traits\Controller\ProductTrait;
 use App\Traits\Controller\ReviewTrait;
@@ -100,15 +102,43 @@ class ProductController extends Controller
     public function updateReviewStatus(Request $request)
     {
         // Extract attributes from $request
-        $reviewIDs = $request->input('ids', []);
+        $reviewIds = $request->input('ids', []);
         $status = $request->input('status');
 
-        $reviews = ProductReview::find($reviewIDs);
+        $reviews = ProductReview::find($reviewIds);
 
         foreach ($reviews as $review) {
             $review->update([
                 'reply_status' => $status
             ]);
+        }
+
+        $storeIds = $reviews->unique('store_id')->pluck('store_id')->all();
+        $stores = Store::find($storeIds);
+        $ratingCategories = StoreCategory::whereItemType('Store')
+            ->where('store_category_type', 'RATING')
+            ->get();
+
+        foreach ($ratingCategories as $ratingCategory) {
+            $ratingCategory->detachStores($stores);
+        }
+
+        $approvedReviews = ProductReview::whereIn('store_id', $storeIds)
+            ->where('reply_status', 'APPROVED')
+            ->get();
+
+        foreach ($stores as $store) {
+            $storeReviews = $approvedReviews->filter(function ($review) use ($store) {
+                return $review['store_id'] === $store['_id'];
+            });
+            $rating = $storeReviews->avg('rating') ?? 0;
+
+            foreach ($ratingCategories as $ratingCategory) {
+                if ($ratingCategory['title']['en'] < $rating) {
+                    var_dump($ratingCategory['_id']);
+                    $ratingCategory->attachStores(collect([$store]));
+                }
+            }
         }
 
         // Return success message
