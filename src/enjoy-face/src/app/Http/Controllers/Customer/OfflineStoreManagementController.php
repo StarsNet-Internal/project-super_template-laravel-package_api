@@ -226,7 +226,19 @@ class OfflineStoreManagementController extends Controller
                 $query->where('user_id', intval($userId));
             })
             ->where('reply_status', 'APPROVED')
+            ->with([
+                'store',
+                'productVariant',
+            ])
             ->get();
+
+        $reviews = array_map(function ($review) {
+            $review['product_variant_title'] = $review['store']['title'];
+            $review['user_id'] = $review['product_variant']['cost'] ?? 0;
+
+            unset($review['store'], $review['product_variant']);
+            return $review;
+        }, $reviews->toArray());
 
         return $reviews;
     }
