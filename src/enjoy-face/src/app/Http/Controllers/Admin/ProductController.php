@@ -135,7 +135,6 @@ class ProductController extends Controller
 
             foreach ($ratingCategories as $ratingCategory) {
                 if ($ratingCategory['title']['en'] < $rating) {
-                    var_dump($ratingCategory['_id']);
                     $ratingCategory->attachStores(collect([$store]));
                 }
             }
