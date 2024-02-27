@@ -3,6 +3,7 @@
 // Default Imports
 use Illuminate\Support\Facades\Route;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\TestingController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\OfflineStoreManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\WishlistController;
@@ -68,6 +69,16 @@ Route::group(
 Route::group(
     ['prefix' => '/stores/{store_id}/'],
     function () {
+        // PRODUCT_MANAGEMENT
+        Route::group(
+            ['prefix' => 'product-management'],
+            function () {
+                $defaultController = ProductManagementController::class;
+
+                Route::get('/categories/all/hierachy', [$defaultController, 'getAllProductCategoryHierarchy'])->middleware(['pagination']);
+            }
+        );
+
         // WISHLIST
         Route::group(
             ['prefix' => 'wishlist'],
