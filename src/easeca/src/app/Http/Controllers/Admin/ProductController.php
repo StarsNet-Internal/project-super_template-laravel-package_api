@@ -81,6 +81,7 @@ class ProductController extends AdminProductController
 
             ));
             $collectedReviews = collect($product->reviews);
+            $firstVariant = $collectedVariants->first();
 
             // Append attributes
             $product['min_original_price'] = max($collectedVariants->min('price'), 0) ?? 0;
@@ -93,7 +94,8 @@ class ProductController extends AdminProductController
             $product['review_count'] = $collectedReviews->count() ?? 0;
             $product['inventory_count'] = collect($product->warehouseInventories)->sum('qty') ?? 0;
             $product['wishlist_item_count'] = collect($product->wishlistItems)->count() ?? 0;
-            $product['sku'] = $collectedVariants->toArray()[0]['sku'];
+            $product['sku'] = $firstVariant ? $firstVariant['sku'] : null;
+            $product['product_variant_title'] = $firstVariant ? $firstVariant['title'] : null;
 
             unset($product['variants'], $product['reviews'], $product['warehouseInventories'], $product['wishlistItems']);
         }
