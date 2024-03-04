@@ -40,7 +40,7 @@ trait ProjectStoreTrait
             return $review['store_id'] === $store['_id'];
         });
 
-        $store['rating'] = $storeReviews->avg('rating') ?? 0;
+        $store['rating'] = round($storeReviews->avg('rating') ?? 0, 1);
         $store['review_count'] = $storeReviews->count() ?? 0;
 
         $store['distance'] = round($this->vincentyGreatCircleDistance(
