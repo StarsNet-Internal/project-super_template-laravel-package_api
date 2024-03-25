@@ -92,7 +92,6 @@ class CustomerController extends Controller
                 $industries = array_filter($groups[$groupKey]['customers'][$customerKey]['groups'], function ($group) {
                     return $group['slug'] === null;
                 });
-                $industries = reset($industries);
 
                 $groups[$groupKey]['customers'][$customerKey]['user'] = [
                     'username' => $groups[$groupKey]['customers'][$customerKey]['account']['username'],
