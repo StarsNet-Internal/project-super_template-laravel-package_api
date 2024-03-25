@@ -118,6 +118,9 @@ class CustomerController extends Controller
 
                 unset($groups[$groupKey]['customers'][$customerKey]['account'], $groups[$groupKey]['customers'][$customerKey]['groups']);
             }
+            $groups[$groupKey]['customers'] = array_filter($groups[$groupKey]['customers'], function ($customer) {
+                return $customer['member_level']['slug'] !== 'website-members';
+            });
         }
 
         return $groups;
