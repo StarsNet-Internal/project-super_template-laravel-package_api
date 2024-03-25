@@ -89,9 +89,9 @@ class CustomerController extends Controller
                 $memberLevel = array_filter($groups[$groupKey]['customers'][$customerKey]['groups'], function ($group) {
                     return $group['slug'] !== null;
                 });
-                $industries = array_filter($groups[$groupKey]['customers'][$customerKey]['groups'], function ($group) {
-                    return $group['slug'] === null;
-                });
+                // $industries = array_filter($groups[$groupKey]['customers'][$customerKey]['groups'], function ($group) {
+                //     return $group['slug'] === null;
+                // });
 
                 $groups[$groupKey]['customers'][$customerKey]['user'] = [
                     'username' => $groups[$groupKey]['customers'][$customerKey]['account']['username'],
@@ -109,18 +109,19 @@ class CustomerController extends Controller
                     $groups[$groupKey]['customers'][$customerKey]['account']['short_description']
                     : ['en' => null, 'zh' => null, 'cn' => null];
                 $groups[$groupKey]['customers'][$customerKey]['member_level'] = reset($memberLevel);
-                $groups[$groupKey]['customers'][$customerKey]['industries'] = array_map(function ($industry) {
-                    return [
-                        '_id' => $industry['_id'],
-                        'title' => $industry['title'],
-                    ];
-                }, $industries);
+                // $groups[$groupKey]['customers'][$customerKey]['industries'] = array_map(function ($industry) {
+                //     return [
+                //         '_id' => $industry['_id'],
+                //         'title' => $industry['title'],
+                //     ];
+                // }, $industries);
 
                 unset($groups[$groupKey]['customers'][$customerKey]['account'], $groups[$groupKey]['customers'][$customerKey]['groups']);
             }
             $groups[$groupKey]['customers'] = array_filter($groups[$groupKey]['customers'], function ($customer) {
                 return $customer['member_level']['slug'] !== 'website-members';
             });
+            $groups[$groupKey]['customers'] = reset($groups[$groupKey]['customers']);
         }
 
         return $groups;
