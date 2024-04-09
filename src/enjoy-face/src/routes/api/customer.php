@@ -9,6 +9,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\ShoppingCartControl
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\WishlistController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\OrderController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\AuthenticationController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,6 +50,18 @@ Route::group(
                 Route::get('/verification-code', [$defaultController, 'getVerificationCode']);
             }
         );
+    }
+);
+
+// PROFILE
+Route::group(
+    ['prefix' => 'profiles'],
+    function () {
+        $defaultController = ProfileController::class;
+
+        Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::post('/membership/transfer', [$defaultController, 'transferMembershipPoint']);
+        });
     }
 );
 
