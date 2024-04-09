@@ -44,42 +44,42 @@ class ProfileController extends Controller
 
         // Extract attributes
         $point = $request->input('point', 1);
-        $userId = $request->area_code . $request->phone;
+        $toLoginId = $request->area_code . $request->phone;
         $remarks = $request->remarks;
 
         // Get authenticated User information
-        $user = $this->user();
-        $customer = $this->customer();
+        $fromUser = $this->user();
+        $fromCustomer = $this->customer();
 
-        if (!$customer->isEnoughMembershipPoints($point)) {
+        if (!$fromCustomer->isEnoughMembershipPoints($point)) {
             return response()->json([
                 'message' => 'Customer does not have enough membership points for this transaction',
             ], 403);
         }
 
-        $user = User::where('login_id', $userId)->first();
-        if (is_null($user)) {
+        $toUser = User::where('login_id', $toLoginId)->first();
+        if (is_null($toUser)) {
             return response()->json([
                 'message' => 'User not found'
             ], 404);
         }
 
         $description = [
-            'en' => 'Transferred from ' . $user->login_id,
-            'zh' => 'Transferred from ' . $user->login_id,
-            'cn' => 'Transferred from ' . $user->login_id
+            'en' => 'Transferred from ' . $fromUser->login_id,
+            'zh' => 'Transferred from ' . $fromUser->login_id,
+            'cn' => 'Transferred from ' . $fromUser->login_id
         ];
         MembershipPoint::createByCustomer(
-            $user->account->customer,
+            $toUser->account->customer,
             $point,
             MembershipPointHistoryType::GIFT,
             now()->addYears(2),
             $description,
-            $remarks
+            $remarks,
         );
 
         // Get and filter MembershipPoint records
-        $points = $customer->getAvailableMembershipPointRecords();
+        $points = $fromCustomer->getAvailableMembershipPointRecords();
         $availablePoints =
             $points->filter(function ($point) {
                 return $point->earned > $point->used;
@@ -90,13 +90,13 @@ class ProfileController extends Controller
             'type' => MembershipPointHistoryType::GIFT,
             'value' => -1 * abs($point),
             'description' => [
-                'en' => 'Transferred to ' . $userId,
-                'zh' => 'Transferred to ' . $userId,
-                'cn' => 'Transferred to ' . $userId
+                'en' => 'Transferred to ' . $toLoginId,
+                'zh' => 'Transferred to ' . $toLoginId,
+                'cn' => 'Transferred to ' . $toLoginId
             ],
             'remarks' => $remarks,
         ];
-        $historyRecord = $customer->membershipPointHistories()->create($attributes);
+        $historyRecord = $fromCustomer->membershipPointHistories()->create($attributes);
 
         // Deduct required points 
         $remainder = $point;

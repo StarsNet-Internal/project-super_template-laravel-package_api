@@ -6,6 +6,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\StaffManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\OfflineStoreManagementController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\CustomerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +25,21 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+// CUSTOMER
+Route::group(
+    ['prefix' => 'customers'],
+    function () {
+        $defaultController = CustomerController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/membership/distribute', [$defaultController, 'distributeMembershipPoint']);
+            }
+        );
     }
 );
 
