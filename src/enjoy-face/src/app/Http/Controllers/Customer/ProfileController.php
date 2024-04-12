@@ -94,7 +94,7 @@ class ProfileController extends Controller
                 'zh' => 'Transferred to ' . $toLoginId,
                 'cn' => 'Transferred to ' . $toLoginId
             ],
-            'remarks' => $remarks,
+            'remarks' => $remarks ? $remarks : '',
         ];
         $historyRecord = $fromCustomer->membershipPointHistories()->create($attributes);
 

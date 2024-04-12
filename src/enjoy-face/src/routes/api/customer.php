@@ -10,7 +10,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\WishlistController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\OrderController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\AuthenticationController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\ProfileController;
-use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\EnquiryController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\PostController;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,14 +66,14 @@ Route::group(
     }
 );
 
-// ENQUIRY
+// POST
 Route::group(
-    ['prefix' => 'enquiries'],
+    ['prefix' => 'posts'],
     function () {
-        $defaultController = EnquiryController::class;
+        $defaultController = PostController::class;
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
-            Route::post('/', [$defaultController, 'createEnquiry']);
+            Route::get('/{id}/reviews', [$defaultController, 'getPostReviews'])->middleware(['pagination']);
         });
     }
 );
