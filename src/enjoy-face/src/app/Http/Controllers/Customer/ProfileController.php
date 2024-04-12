@@ -77,7 +77,7 @@ class ProfileController extends Controller
         // Create MembershipPointHistory
         $history = MembershipPointHistory::create([
             'type' => MembershipPointHistoryType::GIFT,
-            'value' => -1 * abs($point),
+            'value' => $point,
             'description' => [
                 'en' => 'Transferred from ' . $fromUser->login_id,
                 'zh' => 'Transferred from ' . $fromUser->login_id,
