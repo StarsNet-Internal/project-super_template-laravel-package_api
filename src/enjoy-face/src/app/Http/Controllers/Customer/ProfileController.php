@@ -45,7 +45,7 @@ class ProfileController extends Controller
         // Extract attributes
         $point = $request->input('point', 1);
         $toLoginId = $request->area_code . $request->phone;
-        $remarks = $request->remarks;
+        $remarks = $request->input('remarks', '');
 
         // Get authenticated User information
         $fromUser = $this->user();
@@ -94,7 +94,7 @@ class ProfileController extends Controller
                 'zh' => 'Transferred to ' . $toLoginId,
                 'cn' => 'Transferred to ' . $toLoginId
             ],
-            'remarks' => $remarks ? $remarks : '',
+            'remarks' => $remarks,
         ];
         $historyRecord = $fromCustomer->membershipPointHistories()->create($attributes);
 
