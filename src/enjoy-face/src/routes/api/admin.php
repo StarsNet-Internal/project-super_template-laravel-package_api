@@ -55,6 +55,21 @@ Route::group(
     }
 );
 
+// POST
+Route::group(
+    ['prefix' => 'posts'],
+    function () {
+        $defaultController = PostController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::put('/reviews/status', [$defaultController, 'updatePostReviewReplyStatus']);
+            }
+        );
+    }
+);
+
 // PRODUCT
 Route::group(
     ['prefix' => 'products'],
