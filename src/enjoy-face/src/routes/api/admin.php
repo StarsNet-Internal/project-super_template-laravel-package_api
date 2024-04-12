@@ -7,6 +7,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\StaffManagementControl
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\OfflineStoreManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\CustomerController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\PostController;
 
 /*
 |--------------------------------------------------------------------------
