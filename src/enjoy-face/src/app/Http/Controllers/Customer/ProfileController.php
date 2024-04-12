@@ -46,7 +46,7 @@ class ProfileController extends Controller
         $point = $request->input('point', 1);
         $toLoginId = $request->area_code . $request->phone;
         $remarks = $request->remarks;
-        $remarks = is_null($remarks) ? '' : $remarks;
+        $remarks = strval($remarks);
 
         // Get authenticated User information
         $fromUser = $this->user();
