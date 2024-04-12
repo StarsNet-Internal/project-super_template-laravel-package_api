@@ -5,6 +5,7 @@ namespace StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer;
 use App\Constants\Model\MembershipPointHistoryType;
 use App\Http\Controllers\Controller;
 use App\Models\MembershipPoint;
+use App\Models\MembershipPointHistory;
 use App\Models\User;
 use App\Traits\Controller\AuthenticationTrait;
 use Illuminate\Http\Request;
