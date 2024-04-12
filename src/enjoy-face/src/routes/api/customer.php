@@ -10,6 +10,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\WishlistController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\OrderController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\AuthenticationController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\ProfileController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\EnquiryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,6 +62,18 @@ Route::group(
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
             Route::post('/membership/transfer', [$defaultController, 'transferMembershipPoint']);
+        });
+    }
+);
+
+// ENQUIRY
+Route::group(
+    ['prefix' => 'enquiries'],
+    function () {
+        $defaultController = EnquiryController::class;
+
+        Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::post('/', [$defaultController, 'createEnquiry']);
         });
     }
 );
