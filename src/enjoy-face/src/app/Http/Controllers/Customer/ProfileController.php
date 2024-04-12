@@ -78,8 +78,8 @@ class ProfileController extends Controller
             'expires_at' => now()->addYears(2)
         ];
         $pointAttributes = array_filter($pointAttributes); // Remove all null values
-        $point = MembershipPoint::create($pointAttributes);
-        $point->associateCustomer($toCustomer);
+        $membershipPoint = MembershipPoint::create($pointAttributes);
+        $membershipPoint->associateCustomer($toCustomer);
 
         // Create MembershipPointHistory
         MembershipPointHistory::createByCustomer(
