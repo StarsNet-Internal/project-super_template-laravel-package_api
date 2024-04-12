@@ -67,29 +67,26 @@ class ProfileController extends Controller
         }
 
         $toCustomer = $toUser->account->customer;
-        $description = [
-            'en' => 'Transferred from ' . $fromUser->login_id,
-            'zh' => 'Transferred from ' . $fromUser->login_id,
-            'cn' => 'Transferred from ' . $fromUser->login_id
-        ];
-        $pointAttributes = [
+        $membershipPoint = MembershipPoint::create([
             'earned' => $point,
             'remarks' => $remarks,
             'expires_at' => now()->addYears(2)
-        ];
-        $pointAttributes = array_filter($pointAttributes); // Remove all null values
-        $membershipPoint = MembershipPoint::create($pointAttributes);
+        ]);
         $membershipPoint->associateCustomer($toCustomer);
 
         // Create MembershipPointHistory
-        MembershipPointHistory::createByCustomer(
-            $toCustomer,
-            $point,
-            MembershipPointHistoryType::GIFT,
-            now()->addYears(2),
-            $description,
-            $remarks
-        );
+        $history = MembershipPointHistory::create([
+            'type' => MembershipPointHistoryType::GIFT,
+            'value' => -1 * abs($point),
+            'description' => [
+                'en' => 'Transferred from ' . $fromUser->login_id,
+                'zh' => 'Transferred from ' . $fromUser->login_id,
+                'cn' => 'Transferred from ' . $fromUser->login_id
+            ],
+            'remarks' => $remarks,
+        ]);
+        $history->setExpiresAt(now()->addYears(2));
+        $history->associateCustomer($toCustomer);
 
         // Get and filter MembershipPoint records
         $points = $fromCustomer->getAvailableMembershipPointRecords();
@@ -109,7 +106,7 @@ class ProfileController extends Controller
             ],
             'remarks' => $remarks,
         ];
-        $historyRecord = $fromCustomer->membershipPointHistories()->create($attributes);
+        $fromCustomer->membershipPointHistories()->create($attributes);
 
         // Deduct required points 
         $remainder = $point;
