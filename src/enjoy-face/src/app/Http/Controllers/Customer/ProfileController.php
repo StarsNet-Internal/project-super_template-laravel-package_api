@@ -65,18 +65,29 @@ class ProfileController extends Controller
             ], 404);
         }
 
+        $toCustomer = $toUser->account->customer;
         $description = [
             'en' => 'Transferred from ' . $fromUser->login_id,
             'zh' => 'Transferred from ' . $fromUser->login_id,
             'cn' => 'Transferred from ' . $fromUser->login_id
         ];
-        MembershipPoint::createByCustomer(
-            $toUser->account->customer,
+        $pointAttributes = [
+            'earned' => $point,
+            'remarks' => $remarks,
+            'expires_at' => now()->addYears(2)
+        ];
+        $pointAttributes = array_filter($pointAttributes); // Remove all null values
+        $point = MembershipPoint::create($pointAttributes);
+        $point->associateCustomer($toCustomer);
+
+        // Create MembershipPointHistory
+        MembershipPointHistory::createByCustomer(
+            $toCustomer,
             $point,
             MembershipPointHistoryType::GIFT,
             now()->addYears(2),
             $description,
-            $remarks,
+            $remarks
         );
 
         // Get and filter MembershipPoint records
