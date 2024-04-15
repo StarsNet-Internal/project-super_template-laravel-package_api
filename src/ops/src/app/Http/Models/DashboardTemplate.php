@@ -48,6 +48,12 @@ class DashboardTemplate extends Eloquent
 
         // Default
         'title' => null,
+        'subtitle' => null,
+        'description' => null,
+        'images' => [],
+        'color' => null,
+        'icon' => null,
+        'url' => null,
         'components' => [],
         'status' => Status::ACTIVE,
 

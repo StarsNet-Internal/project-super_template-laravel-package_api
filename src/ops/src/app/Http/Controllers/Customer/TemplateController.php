@@ -46,9 +46,7 @@ class TemplateController extends Controller
     {
         $account = $this->account();
 
-        $template = DashboardTemplate::create([
-            'title' => $request->input('title', ''),
-        ]);
+        $template = DashboardTemplate::create($request->all());
         $template->attachAccounts(collect([$account]));
 
         foreach ($request->input('components', []) as $component) {
