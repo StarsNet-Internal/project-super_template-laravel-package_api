@@ -31,6 +31,8 @@ Route::group(
 
                 Route::get('/{id}/details', [$defaultController, 'getTemplateDetails']);
                 Route::put('/{id}/details', [$defaultController, 'updateTemplateDetails']);
+
+                Route::get('/admin', [$defaultController, 'getAllAdminTemplates'])->middleware(['pagination']);
             }
         );
     }

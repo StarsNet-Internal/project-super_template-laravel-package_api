@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
+use App\Models\Account;
 use StarsNet\Project\Ops\App\Models\DashboardTemplate;
 
 class TemplateController extends Controller
@@ -101,5 +102,16 @@ class TemplateController extends Controller
         return response()->json([
             'message' => 'Updated Template successfully',
         ], 200);
+    }
+
+    public function getAllAdminTemplates(Request $request)
+    {
+        $account = Account::find('user_id', 1);
+
+        $templates = DashboardTemplate::where('account_ids', 'all', [$account->_id])
+            ->where('status', 'ACTIVE')
+            ->get();
+
+        return $templates;
     }
 }
