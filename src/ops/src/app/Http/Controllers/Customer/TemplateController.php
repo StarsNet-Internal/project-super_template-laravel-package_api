@@ -106,7 +106,7 @@ class TemplateController extends Controller
 
     public function getAllAdminTemplates(Request $request)
     {
-        $account = Account::find('user_id', 1);
+        $account = Account::where('user_id', 1)->first();
 
         $templates = DashboardTemplate::where('account_ids', 'all', [$account->_id])
             ->where('status', 'ACTIVE')
