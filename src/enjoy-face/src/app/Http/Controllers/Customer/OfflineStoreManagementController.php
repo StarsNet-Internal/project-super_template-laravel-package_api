@@ -225,6 +225,7 @@ class OfflineStoreManagementController extends Controller
             ->when(isset($userId), function ($query) use ($userId) {
                 $query->where('user_id', intval($userId));
             })
+            ->where('model_type', 'PRODUCT')
             ->where('reply_status', 'APPROVED')
             ->with([
                 'store',
