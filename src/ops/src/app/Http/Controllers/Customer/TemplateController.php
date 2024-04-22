@@ -47,12 +47,12 @@ class TemplateController extends Controller
     {
         $account = $this->account();
 
-        $template = DashboardTemplate::create($request->except('components'));
+        $template = DashboardTemplate::create($request->all());
         $template->attachAccounts(collect([$account]));
 
-        foreach ($request->input('components', []) as $component) {
-            $template->createComponent($component);
-        }
+        // foreach ($request->input('components', []) as $component) {
+        //     $template->createComponent($component);
+        // }
 
         return response()->json([
             'message' => 'Created New Template successfully',
