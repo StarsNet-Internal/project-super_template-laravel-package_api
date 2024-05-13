@@ -11,6 +11,7 @@ use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ConsignmentReq
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\OrderController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ProductController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ProductManagementController;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\WishlistController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\TestingController;
 
@@ -72,7 +73,7 @@ Route::group(
                 Route::get('/{auction_lot_id}/details', [$defaultController, 'getAuctionLotDetails']);
                 Route::get('/owned/all', [$defaultController, 'getAllOwnedAuctionLots'])->middleware(['pagination']);
                 Route::get('/participated/all', [$defaultController, 'getAllParticipatedAuctionLots'])->middleware(['pagination']);
-                Route::post('/{auction_lot_id}/bids', [$defaultController, 'createBid']);
+                Route::post('/{auction_lot_id}/bids', [$defaultController, 'createMaximumBid']);
             }
         );
     }
@@ -112,7 +113,6 @@ Route::group(
     ['prefix' => 'consignments'],
     function () {
         $defaultController = ConsignmentRequestController::class;
-
 
         Route::group(
             ['middleware' => 'auth:api'],
@@ -182,6 +182,19 @@ Route::group(
 
                 Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
                     Route::get('/all', [$defaultController, 'getAllWishlistAuctionLots'])->middleware(['pagination']);
+                });
+            }
+        );
+
+        // Shopping Cart
+        Route::group(
+            ['prefix' => 'shopping-cart'],
+            function () {
+                $defaultController = ShoppingCartController::class;
+
+                Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                    Route::post('/auction/all', [$defaultController, 'getAllAuctionCartItems']);
+                    Route::post('/auction/checkout', [$defaultController, 'getAllAuctionCartItems']);
                 });
             }
         );

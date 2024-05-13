@@ -4,6 +4,7 @@ namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer;
 
 use App\Constants\Model\ProductVariantDiscountType;
 use App\Http\Controllers\Controller;
+use App\Models\Configuration;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Store;
@@ -96,6 +97,42 @@ class ProductManagementController extends Controller
 
         // Filter Product(s)
         $products = $this->getProductsInfoByAggregation($productIDs);
+
+        // Re-calculate current_bid
+        $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
+
+        foreach ($products as $product) {
+            $validBids = (array) $product->valid_bid_values ?? [];
+            $uniqueValidBids = array_unique($validBids);
+            rsort($uniqueValidBids);
+
+            $previousValidBid = $product->startingPrice;
+            $highestValidBid = $product->startingPrice;
+
+            if (count($uniqueValidBids) == 0) {
+                $product->current_bid = $product->starting_price;
+            } else {
+                if (count($uniqueValidBids) >= 2) {
+                    $previousValidBid = $uniqueValidBids[1];
+                    $highestValidBid = $uniqueValidBids[0];
+                } else if (count($uniqueValidBids) == 1) {
+                    $highestValidBid = $uniqueValidBids[0];
+                }
+
+                $incrementRules = $incrementRulesDocument->bidding_increments;
+                foreach ($incrementRules as $key => $interval) {
+                    if ($previousValidBid >= $interval['from'] && $previousValidBid < $interval['to']) {
+                        $highestValidBid = $previousValidBid + $interval['increment'];
+                    }
+                }
+            }
+
+            unset($product->valid_bid_values);
+            // unset($product->reserve_price);
+            $product->current_bid = $highestValidBid ?? $product->starting_price;
+
+            $product->is_reserve_price_met = $product->current_bid >= $product->reserve_price ? true : false;
+        }
 
         // Return data
         return $products;
@@ -345,6 +382,48 @@ class ProductManagementController extends Controller
                     ],
                 ],
                 'as' => 'auction_lots',
+            ];
+
+            // Get Bid
+            $aggregate[]['$lookup'] = [
+                'from' => 'bids',
+                'let' => ['product_id' => '$_id'],
+                'pipeline' => [
+                    [
+                        '$match' => [
+                            '$expr' => [
+                                '$and' => [
+                                    ['$eq' => ['$store_id', $storeID]],
+                                    ['$eq' => ['$product_id', '$$product_id']],
+                                    ['$eq' => ['$is_hidden', false]],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                'as' => 'bids',
+            ];
+
+            $aggregate[]['$addFields'] = [
+                'starting_price' => [
+                    '$arrayElemAt' => [
+                        '$auction_lots.starting_price',
+                        0
+                    ]
+                ],
+                'reserve_price' => [
+                    '$arrayElemAt' => [
+                        '$auction_lots.reserve_price',
+                        0
+                    ]
+                ],
+                'valid_bid_values' => [
+                    '$map' => [
+                        'input' => '$bids',
+                        'as' => 'bid',
+                        'in' => '$$bid.bid'
+                    ]
+                ]
             ];
 
             // Get ProductVariants
@@ -656,6 +735,7 @@ class ProductManagementController extends Controller
                 'reviews',
                 'inventories',
                 // 'wishlist_items',
+                'bids',
                 'auction_lots'
             ];
             $aggregate[]['$project'] = array_merge(...array_map(function ($item) {

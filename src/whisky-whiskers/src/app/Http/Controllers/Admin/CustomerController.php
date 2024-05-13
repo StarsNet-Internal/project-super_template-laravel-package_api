@@ -60,6 +60,7 @@ class CustomerController extends Controller
         $customerId = $request->route('customer_id');
 
         $products = Bid::where('customer_id', $customerId)
+            ->where('is_hidden', false)
             ->with([
                 'product',
                 'productVariant',
@@ -68,5 +69,17 @@ class CustomerController extends Controller
             ->get();
 
         return $products;
+    }
+
+    public function hideBid(Request $request)
+    {
+        // Extract attributes from $request
+        $bidId = $request->route('bid_id');
+
+        Bid::where('_id', $bidId)->update(['is_hidden' => true]);
+
+        return response()->json([
+            'message' => 'Bid updated is_hidden as true'
+        ], 200);
     }
 }

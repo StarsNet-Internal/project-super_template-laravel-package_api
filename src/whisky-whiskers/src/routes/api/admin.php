@@ -2,11 +2,12 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
-// use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\AuctionController;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\AuctionController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\AuctionRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\ConsignmentRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\CustomerController;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\ServiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +37,21 @@ Route::group(
 //         Route::post('/', [$defaultController, 'createAuctionStore']);
 //     }
 // );
+
+Route::group(
+    ['prefix' => 'auctions'],
+    function () {
+        $defaultController = AuctionController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/{store_id}/auction-lots/unpaid', [$defaultController, 'getAllUnpaidAuctionLots'])->middleware(['pagination']);
+                Route::put('/{store_id}/auction-lots/return', [$defaultController, 'returnAuctionLotToOriginalCustomer']);
+            }
+        );
+    }
+);
 
 Route::group(
     ['prefix' => 'auction-requests'],
@@ -79,6 +95,21 @@ Route::group(
                 Route::get('/{customer_id}/products/all', [$defaultController, 'getAllOwnedProducts'])->middleware(['pagination']);
                 Route::get('/{customer_id}/auction-lots/all', [$defaultController, 'getAllOwnedAuctionLots'])->middleware(['pagination']);
                 Route::get('/{customer_id}/bids/all', [$defaultController, 'getAllBids'])->middleware(['pagination']);
+                Route::put('/{customer_id}/bids/{bid_id}/hide', [$defaultController, 'hideBid']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'services'],
+    function () {
+        $defaultController = ServiceController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::put('/stores/archive', [$defaultController, 'archiveStores']);
             }
         );
     }

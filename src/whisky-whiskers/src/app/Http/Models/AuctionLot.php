@@ -142,7 +142,7 @@ class AuctionLot extends Eloquent
     public function winningBidCustomer(): BelongsTo
     {
         return $this->belongsTo(
-            Account::class,
+            Customer::class,
             'winning_bid_customer_id'
         );
     }

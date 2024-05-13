@@ -44,6 +44,7 @@ class ConsignmentRequestItem extends Eloquent
         'is_approved' => false,
         'evaluated_price' => 0,
         'evaluated_currency' => 'HKD',
+        'rejection_reason' => null,
         'remarks' => null
 
         // Timestamps
@@ -57,7 +58,7 @@ class ConsignmentRequestItem extends Eloquent
 
     /**
      * Blacklisted model properties from doing mass assignment.
-     * None are blacklisted by default for flexibility.
+     * None are blacklisted by default for flexibility. 
      * 
      * @var array
      */
