@@ -68,6 +68,7 @@ class AuctionLot extends Eloquent
         // Booleans
         'is_disabled' => false,
         'is_paid' => false,
+        'is_bid_placed' => false,
 
         // Timestamps
         'deleted_at' => null

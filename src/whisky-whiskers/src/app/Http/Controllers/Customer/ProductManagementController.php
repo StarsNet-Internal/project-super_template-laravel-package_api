@@ -52,16 +52,6 @@ class ProductManagementController extends Controller
             }
         }
 
-        // Get all ProductCategory(s)
-        // if (count($categoryIDs) === 0) {
-        //     $categoryIDs = $this->store
-        //         ->productCategories()
-        //         ->statusActive()
-        //         ->get()
-        //         ->pluck('_id')
-        //         ->all();
-        // }
-
         // Get Product(s) from selected ProductCategory(s)
         $productIDs = AuctionLot::where('store_id', $this->store->id)
             ->statusActive()
@@ -98,40 +88,77 @@ class ProductManagementController extends Controller
         // Filter Product(s)
         $products = $this->getProductsInfoByAggregation($productIDs);
 
-        // Re-calculate current_bid
+        // Re-calculate current_bid value
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
 
         foreach ($products as $product) {
-            $validBids = (array) $product->valid_bid_values ?? [];
-            $uniqueValidBids = array_unique($validBids);
-            rsort($uniqueValidBids);
-
-            $previousValidBid = $product->startingPrice;
-            $highestValidBid = $product->startingPrice;
-
-            if (count($uniqueValidBids) == 0) {
+            if (count($product['bids']) <= 1) {
                 $product->current_bid = $product->starting_price;
             } else {
-                if (count($uniqueValidBids) >= 2) {
-                    $previousValidBid = $uniqueValidBids[1];
-                    $highestValidBid = $uniqueValidBids[0];
-                } else if (count($uniqueValidBids) == 1) {
-                    $highestValidBid = $uniqueValidBids[0];
+                $validBidValues = (array) $product->valid_bid_values;
+                $validBidValues = array_unique($validBidValues);
+                rsort($validBidValues);
+
+                // Get all earliest bid per bid value
+                $previousBiddingCustomerID = null;
+                $earliestValidBids = new Collection();
+
+                $bids = collect($product->bids);
+                foreach ($validBidValues as $searchingBidValue) {
+                    $filteredBids = $bids->filter(function ($item) use ($searchingBidValue, $previousBiddingCustomerID) {
+                        return $item->bid === $searchingBidValue;
+                    });
+                    $earliestBid = $filteredBids->sortBy('created_at')->first();
+                    if (is_null($earliestBid)) continue;
+
+                    // Extract info
+                    $earliestValidBids->push($earliestBid);
                 }
 
-                $incrementRules = $incrementRulesDocument->bidding_increments;
-                foreach ($incrementRules as $key => $interval) {
-                    if ($previousValidBid >= $interval['from'] && $previousValidBid < $interval['to']) {
-                        $highestValidBid = $previousValidBid + $interval['increment'];
+                // Splice all Bid with successive customer_id
+                $validBids = new Collection();
+                foreach ($earliestValidBids as $item) {
+                    if ($item->customer_id != $previousBiddingCustomerID) {
+                        $validBids->push($item);
+                        $previousBiddingCustomerID = $item->customer_id;
                     }
+                }
+
+                // Finalize the final bid highest value
+                $validBids = $validBids->sortByDesc('bid')->values();
+                if (!is_null($incrementRulesDocument)) {
+                    $previousValidBid = $bids->get(1)->bid;
+
+                    // Calculate next valid minimum bid value
+                    $incrementRules = $incrementRulesDocument->bidding_increments;
+                    $nextValidBid = $previousValidBid;
+                    foreach ($incrementRules as $key => $interval) {
+                        if ($previousValidBid >= $interval['from'] && $previousValidBid < $interval['to']) {
+                            $nextValidBid = $previousValidBid + $interval['increment'];
+                        }
+                    }
+
+                    $validBids->transform(function (
+                        $item,
+                        $key
+                    ) use ($nextValidBid) {
+                        if ($key == 0) {
+                            if ($item['bid'] > $nextValidBid) {
+                                $item['bid'] = $nextValidBid;
+                            }
+                        }
+                        return $item;
+                    });
+
+                    $product->current_bid = $validBids[0]->bid;
                 }
             }
 
-            unset($product->valid_bid_values);
-            // unset($product->reserve_price);
-            $product->current_bid = $highestValidBid ?? $product->starting_price;
-
             $product->is_reserve_price_met = $product->current_bid >= $product->reserve_price ? true : false;
+
+            unset($product->bids);
+            unset($product->valid_bid_values);
+            unset($product->reserve_price);
         }
 
         // Return data
@@ -644,48 +671,32 @@ class ProductManagementController extends Controller
                 ]
             ];
 
-            // Append Auction Info
-            // $aggregate[]['$addFields'] = [
-            //     'current_bid' => ['$first' => '$auction_lots.current_bid'],
-            //     'is_reserved_price_met' => [
-            //         '$cond' => [
-            //             'if' => [
-            //                 '$gte' => [
-            //                     ['$first' => '$auction_lots.current_bid'],
-            //                     ['$first' => '$auction_lots.reserve_price'],
-            //                 ],
-            //             ],
-            //             'then' => true,
-            //             'else' => false
-            //         ],
-            //     ]
-            // ];
-
             $aggregate[]['$addFields'] = [
-                'current_bid' => [
-                    '$cond' => [
-                        'if' => [
-                            '$gt' => [
-                                ['$size' => '$auction_lots'],
-                                0
-                            ]
-                        ],
-                        'then' => ['$first' => '$auction_lots.current_bid'],
-                        'else' => 0
-                    ],
-                ],
-                'is_reserve_price_met' => [
-                    '$cond' => [
-                        'if' => [
-                            '$gte' => [
-                                ['$first' => '$auction_lots.current_bid'],
-                                ['$first' => '$auction_lots.reserve_price'],
-                            ],
-                        ],
-                        'then' => true,
-                        'else' => false
-                    ],
-                ],
+                // 'current_bid' => [
+                //     '$cond' => [
+                //         'if' => [
+                //             '$gt' => [
+                //                 ['$size' => '$auction_lots'],
+                //                 0
+                //             ]
+                //         ],
+                //         'then' => ['$first' => '$auction_lots.current_bid'],
+                //         'else' => 0
+                //     ],
+                // ],
+                // 'is_reserve_price_met' => [
+                //     '$cond' => [
+                //         'if' => [
+                //             '$gte' => [
+                //                 ['$first' => '$auction_lots.current_bid'],
+                //                 ['$first' => '$auction_lots.reserve_price'],
+                //             ],
+                //         ],
+                //         'then' => true,
+                //         'else' => false
+                //     ],
+                // ],
+                'is_bid_placed' => ['$first' => '$auction_lots.is_bid_placed'],
                 'auction_lot_id' => [
                     '$cond' => [
                         'if' => [
@@ -735,8 +746,10 @@ class ProductManagementController extends Controller
                 'reviews',
                 'inventories',
                 // 'wishlist_items',
-                'bids',
-                'auction_lots'
+                // 'bids',
+                'auction_lots',
+                'listing_status',
+                'owned_by_customer_id',
             ];
             $aggregate[]['$project'] = array_merge(...array_map(function ($item) {
                 return [$item => false];

@@ -40,6 +40,7 @@
         "StarsNet\\Project\\Commads\\ProjectServiceProvider",
         "StarsNet\\Project\\Course\\ProjectServiceProvider",
         "StarsNet\\Project\\WhiskyWhiskers\\ProjectServiceProvider",
+        "StarsNet\\Project\\WhiskyWhiskers\\EventServiceProvider",
         "StarsNet\\Project\\HeiFei\\ProjectServiceProvider",
         "StarsNet\\Project\\ShoppingCart\\ProjectServiceProvider",
         "StarsNet\\Project\\Splitwise\\ProjectServiceProvider",

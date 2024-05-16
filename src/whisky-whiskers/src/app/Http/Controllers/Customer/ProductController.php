@@ -15,6 +15,7 @@ class ProductController extends Controller
 
         $products = Product::statusActive()
             ->where('owned_by_customer_id', $customer->_id)
+            ->whereIn('listing_status', ["AVAILABLE", "PENDING_FOR_AUCTION"])
             ->get();
 
         foreach ($products as $product) {

@@ -9,6 +9,7 @@ use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\Authentication
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\BidController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ConsignmentRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\OrderController;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\PaymentController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ProductController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ShoppingCartController;
@@ -66,6 +67,7 @@ Route::group(
         $defaultController = AuctionLotController::class;
 
         Route::get('/{auction_lot_id}/bids', [$defaultController, 'getBiddingHistory'])->middleware(['pagination']);
+        // Route::get('/{auction_lot_id}/bids', [$defaultController, 'getBiddingHistory']);
 
         Route::group(
             ['middleware' => 'auth:api'],
@@ -194,9 +196,20 @@ Route::group(
 
                 Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
                     Route::post('/auction/all', [$defaultController, 'getAllAuctionCartItems']);
-                    Route::post('/auction/checkout', [$defaultController, 'getAllAuctionCartItems']);
+                    Route::post('/auction/checkout', [$defaultController, 'checkoutAuctionStore']);
+                    Route::post('/main-store/all', [$defaultController, 'getAllMainStoreCartItems']);
+                    Route::post('/main-store/checkout', [$defaultController, 'checkOutMainStore']);
                 });
             }
         );
+    }
+);
+
+Route::group(
+    ['prefix' => 'payment'],
+    function () {
+        $defaultController = PaymentController::class;
+
+        Route::post('/callback', [$defaultController, 'onlinePaymentCallback']);
     }
 );
