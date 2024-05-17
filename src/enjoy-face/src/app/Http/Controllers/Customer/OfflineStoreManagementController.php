@@ -138,7 +138,30 @@ class OfflineStoreManagementController extends Controller
 
         $storeIds = array_intersect($storeIdsByStoreCategories, $storeIdsByProductCategories);
 
-        // TODO Get matching keywords from Typesense
+        if (!is_null($keyword)) {
+            $storeIdsByKeyword = $this->getIDsFromSearch(
+                'https://typesense.client.enjoy-face.tinkleex.com',
+                'client_enjoy_face_stores',
+                $keyword,
+                'title.en,title.zh',
+                'id'
+            );
+            if (count($storeIdsByKeyword) === 0) return new Collection();
+
+            $storeIdsByProduct = $this->getIDsFromSearch(
+                'https://typesense.client.enjoy-face.tinkleex.com',
+                'client_enjoy_face_products',
+                $keyword,
+                'title.en,title.zh',
+                'store_id'
+            );
+            if (count($storeIdsByProduct) === 0) return new Collection();
+
+            $storeIdsFromSearch = array_merge($storeIdsByKeyword, $storeIdsByProduct);
+            $storeIds = array_intersect($storeIds, $storeIdsFromSearch);
+        }
+        $storeIds = array_values($storeIds);
+        if (count($storeIds) === 0) return new Collection();
 
         $stores = Store::objectIDs($storeIds)
             ->statusActive()
@@ -242,5 +265,42 @@ class OfflineStoreManagementController extends Controller
         }, $reviews->toArray());
 
         return $reviews;
+    }
+
+    public function search(string $baseUrl, string $collection, string $keyword, string $queryBy)
+    {
+        $url = $baseUrl . '/typesense/search';
+
+        $request = [
+            'collection' => $collection,
+            'keyword' => $keyword,
+            'queryBy' => $queryBy,
+        ];
+
+        // Get response from TypeSense Service
+        try {
+            $response = Http::get($url, $request);
+        } catch (\Throwable $th) {
+            return null;
+        }
+
+        // Extract properties from $data
+        $data = json_decode($response->getBody()->getContents(), true);
+
+        return $data;
+    }
+
+    public function getIDsFromSearch(
+        string $baseUrl,
+        string $collection,
+        string $keyword,
+        string $queryBy,
+        string $attribute,
+        string $sortByColumn = 'created_at',
+        string $sortByOrder = 'desc'
+    ): ?array {
+        $data = $this->search($baseUrl, $collection, $keyword, $queryBy);
+        $IDs = array_map(fn ($value): string => $value['document'][$attribute], $data['hits']);
+        return $IDs;
     }
 }
