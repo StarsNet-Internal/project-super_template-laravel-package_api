@@ -27,6 +27,8 @@ use App\Traits\StarsNet\TypeSenseSearchEngine;
 use StarsNet\Project\EnjoyFace\App\Traits\Controller\ProjectProductTrait;
 use StarsNet\Project\EnjoyFace\App\Traits\Controller\ProjectStoreTrait;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Http;
 
 class OfflineStoreManagementController extends Controller
 {
@@ -146,7 +148,6 @@ class OfflineStoreManagementController extends Controller
                 'title.en,title.zh',
                 'id'
             );
-            if (count($storeIdsByKeyword) === 0) return new Collection();
 
             $storeIdsByProduct = $this->getIDsFromSearch(
                 'https://typesense.client.enjoy-face.tinkleex.com',
@@ -155,7 +156,6 @@ class OfflineStoreManagementController extends Controller
                 'title.en,title.zh',
                 'store_id'
             );
-            if (count($storeIdsByProduct) === 0) return new Collection();
 
             $storeIdsFromSearch = array_merge($storeIdsByKeyword, $storeIdsByProduct);
             $storeIds = array_intersect($storeIds, $storeIdsFromSearch);
