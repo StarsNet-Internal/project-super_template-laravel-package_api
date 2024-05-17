@@ -1,10 +1,13 @@
 <?php
 
 // Default Imports
+
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionLotController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionRequestController;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuthController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuthenticationController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\BidController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ConsignmentRequestController;
@@ -33,6 +36,20 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+Route::group(
+    ['prefix' => 'auth'],
+    function () {
+        $defaultController = AuthController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/customer', [$defaultController, 'getCustomerInfo']);
+            }
+        );
     }
 );
 

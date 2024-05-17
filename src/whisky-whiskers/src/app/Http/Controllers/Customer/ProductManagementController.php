@@ -4,6 +4,7 @@ namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer;
 
 use App\Constants\Model\ProductVariantDiscountType;
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Configuration;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -169,114 +170,87 @@ class ProductManagementController extends Controller
     {
         // Extract attributes from $request
         $productID = $request->input('product_id');
+        $storeID = $request->route('store_id');
         $excludedProductIDs = $request->input('exclude_ids', []);
         $itemsPerPage = $request->input('items_per_page');
 
         // Append to excluded Product
         $excludedProductIDs[] = $productID;
 
-        // Initialize a Product collector
-        // $products = [];
+        // Get configuraion
+        $config = Configuration::slug('main-store-category-ordering')->latest()->first();
+        $parentCategoryIDs = $config->category_ids;
 
-        /*
-        *   Stage 1:
-        *   Get Product(s) from System ProductCategory, recommended-products
-        */
-        // $systemCategory = ProductCategory::slug('recommended-products')->first();
+        // Get Product(s) registered for this auction/store
+        $productIDs = AuctionLot::where('store_id', $storeID)->pluck('product_id')->all();
+        $parentCategoryCount = count($parentCategoryIDs);
 
-        // if (!is_null($systemCategory)) {
-        //     // Get Product(s)
-        //     $recommendedProducts = $systemCategory->products()
-        //         ->statusActive()
-        //         ->excludeIDs($excludedProductIDs)
-        //         ->get();
+        // Create aggregation pipeline stage for matching_score
+        $aggregateMatchingScore = [
+            'matching_score' => [
+                '$add' => []
+            ]
+        ];
 
-        //     // Randomize ordering
-        //     $recommendedProducts = $recommendedProducts->shuffle(); // randomize ordering
+        foreach ($parentCategoryIDs as $key => $parentCategoryID) {
+            $childrenCategoryIDs = Category::where('parent_id', $parentCategoryID)->pluck('_id')->all();
 
-        //     // Collect data
-        //     $products = array_merge($products, $recommendedProducts->all()); // collect Product(s)
-        //     $excludedProductIDs = array_merge($excludedProductIDs, $recommendedProducts->pluck('_id')->all()); // collect _id
-        // }
+            $weightingFactor = 2;
+            $weighting = pow(2, $parentCategoryCount - $key - 1) * $weightingFactor;
 
-        /*
-        *   Stage 2:
-        *   Get Product(s) from active, related ProductCategory(s)
-        */
-        $product = Product::find($productID);
+            $aggregateMatchingScore["matching_score"]['$add'][] = [
+                '$multiply' => [
+                    [
+                        '$size' => [
+                            '$setIntersection' =>
+                            ['$category_ids', $childrenCategoryIDs]
+                        ]
+                    ],
+                    $weighting
+                ]
+            ];
+        }
 
-        $productIDs = AuctionLot::where(
-            'store_id',
-            $this->store->id
-        )
-            ->where('product_id', '!=', $productID)
-            ->statusActive()
-            ->get()
-            ->pluck('product_id')
-            ->all();
 
-        // if (!is_null($product)) {
-        //     // Get related ProductCategory(s) by Product and within Store
-        //     $relatedCategories = $product->categories()
-        //         ->storeID($this->store)
-        //         ->statusActive()
-        //         ->get();
+        // Get Products 
+        $products = Product::raw(
+            function ($collection) use ($productIDs, $aggregateMatchingScore) {
+                $aggregate = [];
 
-        //     $relatedCategoryIDs = $relatedCategories->pluck('_id')->all();
+                // Convert ObjectIDs to String
+                $aggregate[]['$addFields'] = [
+                    '_id' => [
+                        '$toString' => '$_id'
+                    ]
+                ];
 
-        //     // Get Product(s)
-        //     $relatedProducts = Product::whereHas('categories', function ($query) use ($relatedCategoryIDs) {
-        //         $query->whereIn('_id', $relatedCategoryIDs);
-        //     })
-        //         ->statusActive()
-        //         ->excludeIDs($excludedProductIDs)
-        //         ->get();
+                // Find matching Product ids
+                $aggregate[]['$match'] = [
+                    '_id' => [
+                        '$in' => $productIDs
+                    ]
+                ];
 
-        //     // Randomize ordering
-        //     $relatedProducts = $relatedProducts->shuffle(); // randomize ordering
+                $aggregate[]['$addFields'] = $aggregateMatchingScore;
 
-        //     // Collect data
-        //     $products = array_merge($products, $relatedProducts->all()); // collect Product(s)
-        //     $excludedProductIDs = array_merge($excludedProductIDs, $relatedProducts->pluck('_id')->all()); // collect _id
-        // }
+                // Sort from highest to lowest
+                $aggregate[]['$sort'] = [
+                    'matching_score' => -1
+                ];
 
-        /*
-        *   Stage 3:
-        *   Get Product(s) assigned to this Store's active ProductCategory(s)
-        */
-        // Get remaining ProductCategory(s) by Store
-        // if (!isset($relatedCategoryIDs)) $relatedCategoryIDs = [];
-        // $otherCategories = $this->store
-        //     ->productCategories()
-        //     ->statusActive()
-        //     ->excludeIDs($relatedCategoryIDs)
-        //     ->get();
-
-        // if ($otherCategories->count() > 0) {
-        //     $otherCategoryIDs = $otherCategories->pluck('_id')->all();
-
-        //     // Get Product(s)
-        //     $otherProducts = Product::whereHas('categories', function ($query) use ($otherCategoryIDs) {
-        //         $query->whereIn('_id', $otherCategoryIDs);
-        //     })
-        //         ->statusActive()
-        //         ->excludeIDs($excludedProductIDs)
-        //         ->get();
-
-        //     // Randomize ordering
-        //     $otherProducts = $otherProducts->shuffle();
-
-        //     // Collect data
-        //     $products = array_merge($products, $otherProducts->all());
-        // }
+                return $collection->aggregate($aggregate);
+            }
+        );
 
         /*
         *   Stage 4:
         *   Generate URLs
         */
-        $productIDsSet = collect($productIDs)
+        $productIDsSet = $products
+            ->pluck('_id')
             ->chunk($itemsPerPage)
             ->all();
+
 
         $urls = [];
         foreach ($productIDsSet as $IDsSet) {
@@ -297,6 +271,79 @@ class ProductManagementController extends Controller
 
         // Append attributes to each Product
         $products = $this->getProductsInfoByAggregation($productIDs);
+
+        // Re-calculate current_bid value
+        $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
+
+        foreach ($products as $product) {
+            if (count($product['bids']) <= 1) {
+                $product->current_bid = $product->starting_price;
+            } else {
+                $validBidValues = (array) $product->valid_bid_values;
+                $validBidValues = array_unique($validBidValues);
+                rsort($validBidValues);
+
+                // Get all earliest bid per bid value
+                $previousBiddingCustomerID = null;
+                $earliestValidBids = new Collection();
+
+                $bids = collect($product->bids);
+                foreach ($validBidValues as $searchingBidValue) {
+                    $filteredBids = $bids->filter(function ($item) use ($searchingBidValue, $previousBiddingCustomerID) {
+                        return $item->bid === $searchingBidValue;
+                    });
+                    $earliestBid = $filteredBids->sortBy('created_at')->first();
+                    if (is_null($earliestBid)) continue;
+
+                    // Extract info
+                    $earliestValidBids->push($earliestBid);
+                }
+
+                // Splice all Bid with successive customer_id
+                $validBids = new Collection();
+                foreach ($earliestValidBids as $item) {
+                    if ($item->customer_id != $previousBiddingCustomerID) {
+                        $validBids->push($item);
+                        $previousBiddingCustomerID = $item->customer_id;
+                    }
+                }
+
+                // Finalize the final bid highest value
+                $validBids = $validBids->sortByDesc('bid')->values();
+                if (!is_null($incrementRulesDocument)) {
+                    $previousValidBid = $bids->get(1)->bid;
+
+                    // Calculate next valid minimum bid value
+                    $incrementRules = $incrementRulesDocument->bidding_increments;
+                    $nextValidBid = $previousValidBid;
+                    foreach ($incrementRules as $key => $interval) {
+                        if ($previousValidBid >= $interval['from'] && $previousValidBid < $interval['to']) {
+                            $nextValidBid = $previousValidBid + $interval['increment'];
+                        }
+                    }
+
+                    $validBids->transform(function (
+                        $item,
+                        $key
+                    ) use ($nextValidBid) {
+                        if ($key == 0) {
+                            if ($item['bid'] > $nextValidBid) {
+                                $item['bid'] = $nextValidBid;
+                            }
+                        }
+                        return $item;
+                    });
+
+                    $product->current_bid = $validBids[0]->bid;
+                }
+            }
+
+            $product->is_reserve_price_met = $product->current_bid >= $product->reserve_price ? true : false;
+
+            unset($product->bids);
+            unset($product->valid_bid_values);
+            unset($product->reserve_price);
+        }
 
         // Return data
         return $products;

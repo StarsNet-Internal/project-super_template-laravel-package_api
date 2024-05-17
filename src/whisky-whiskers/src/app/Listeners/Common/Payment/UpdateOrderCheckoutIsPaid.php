@@ -107,7 +107,7 @@ class UpdateOrderCheckoutIsPaid
 
         if ($store->_id == optional($defaultMainStore)->value) {
             // Main Store logic
-            Log::info(['message' => "This is main store order"]);
+            // Log::info(['message' => "This is main store order"]);
 
             if (count($productIDs) > 0) {
                 Product::objectIDs($productIDs)->update(
