@@ -65,6 +65,8 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::post('/reviews/{review_id}/reply', [$defaultController, 'replyPostReview']);
+
                 Route::put('/reviews/status', [$defaultController, 'updatePostReviewReplyStatus']);
             }
         );

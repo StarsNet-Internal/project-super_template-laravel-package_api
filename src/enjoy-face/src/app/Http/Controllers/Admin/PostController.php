@@ -36,6 +36,43 @@ class PostController extends Controller
         Reviewable,
         ReviewTrait;
 
+    public function replyPostReview(Request $request)
+    {
+        // Extract attributes from $request
+        $reviewID = $request->route('review_id');
+
+        // Get PostReview, then validate
+        /** @var PostReview $review */
+        $review = PostReview::find($reviewID);
+
+        if (is_null($review)) {
+            return response()->json([
+                'message' => 'Review not found'
+            ], 404);
+        }
+
+        // Get authenticated User information
+        $user = $this->user();
+
+        // Create ReviewReply
+        $replyAttribute = [
+            'images' => $request->images ?? [],
+            'rating' => $request->rating ?? 0,
+            'comment' => $request->comment ?? '',
+            'status' => Status::ACTIVE
+        ];
+        $reply = $review->replies()->create($replyAttribute);
+
+        // Update ReviewReply
+        $reply->associateUser($user);
+
+        // Return success message
+        return response()->json([
+            'message' => 'Replied to Review',
+            '_id' => $reply->_id
+        ], 200);
+    }
+
     public function updatePostReviewReplyStatus(Request $request)
     {
         // Extract attributes from $request
