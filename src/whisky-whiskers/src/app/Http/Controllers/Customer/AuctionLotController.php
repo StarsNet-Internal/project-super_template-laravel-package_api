@@ -496,9 +496,9 @@ class AuctionLotController extends Controller
 
         if ($auctionLot->is_bid_placed == false) {
             $auctionLot->update([
-                'is_bid_placed' => true
+                'is_bid_placed' => true,
                 // 'current_bid' => $requestedBid,
-                // 'latest_bid_customer_id' => $customer->_id
+                'latest_bid_customer_id' => $customer->_id
             ]);
         }
 
