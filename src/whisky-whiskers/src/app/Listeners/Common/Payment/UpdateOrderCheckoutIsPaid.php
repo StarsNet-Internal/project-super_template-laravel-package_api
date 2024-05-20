@@ -22,6 +22,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
 use StarsNet\Project\WhiskyWhiskers\App\Models\Bid;
 
 class UpdateOrderCheckoutIsPaid
@@ -123,6 +124,12 @@ class UpdateOrderCheckoutIsPaid
                         'listing_status' => 'AVAILABLE'
                     ]
                 );
+
+                AuctionLot::whereIn('product_id', $productIDs)->update([
+                    'winning_bid_customer_id' => $order->customer_id,
+                    'latest_bid_customer_id' => $order->customer_id,
+                    'is_paid' => true
+                ]);
             }
 
             // Attach relationship with previous system-generated order

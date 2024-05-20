@@ -223,7 +223,7 @@ Route::group(
 );
 
 Route::group(
-    ['prefix' => 'payment'],
+    ['prefix' => 'payments'],
     function () {
         $defaultController = PaymentController::class;
 

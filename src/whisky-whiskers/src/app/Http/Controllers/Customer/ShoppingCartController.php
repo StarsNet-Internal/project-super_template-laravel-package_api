@@ -10,6 +10,7 @@ use App\Constants\Model\StoreType;
 use App\Constants\Model\WarehouseInventoryHistoryType;
 use App\Events\Common\Checkout\OfflineCheckoutImageUploaded;
 use App\Http\Controllers\Controller;
+use App\Models\Alias;
 use App\Models\Checkout;
 use App\Models\Courier;
 use App\Models\Order;
@@ -28,10 +29,22 @@ class ShoppingCartController extends Controller
 {
     use RoundingTrait;
 
+    private function getStore(string $storeID): ?Store
+    {
+        // Get Store via id
+        $store = Store::find($storeID);
+        if (!is_null($store)) return $store;
+
+        // Get Store via alias
+        $storeID = Alias::getValue($storeID);
+        $store = Store::find($storeID);
+        return $store;
+    }
+
     public function getAllAuctionCartItems(Request $request)
     {
         $storeID = $request->route('store_id');
-        $store = Store::find($storeID);
+        $store = self::getStore($storeID);
 
         // Get authenticated User information
         $customer = $this->customer();
@@ -133,7 +146,7 @@ class ShoppingCartController extends Controller
     public function getAllMainStoreCartItems(Request $request)
     {
         $storeID = $request->route('store_id');
-        $store = Store::find($storeID);
+        $store = self::getStore($storeID);
 
         // Extract attributes from $request
         $checkoutVariantIDs = $request->checkout_product_variant_ids;
@@ -188,6 +201,7 @@ class ShoppingCartController extends Controller
             !is_null($courier) ?
             $courier->getShippingFeeByTotalFee($totalPrice) :
             0;
+        $totalPrice += $shippingFee;
 
         // form calculation data object
         $rawCalculation = [
@@ -227,7 +241,7 @@ class ShoppingCartController extends Controller
     public function checkOutAuctionStore(Request $request)
     {
         $storeID = $request->route('store_id');
-        $store = Store::find($storeID);
+        $store = self::getStore($storeID);
 
         // Get authenticated User information
         $customer = $this->customer();
@@ -282,6 +296,7 @@ class ShoppingCartController extends Controller
             !is_null($courier) ?
             $courier->getShippingFeeByTotalFee($totalPrice) :
             0;
+        $totalPrice += $shippingFee;
 
         // form calculation data object
         $rawCalculation = [
@@ -328,6 +343,9 @@ class ShoppingCartController extends Controller
             'delivery_info' => $this->getDeliveryInfo($deliveryInfo),
             'delivery_details' => $deliveryDetails,
             'is_voucher_applied' => $checkoutDetails['is_voucher_applied'],
+
+            'paid_order_id' => null,
+            'is_storage' => $isStorage
         ];
         $order = $customer->createOrder($orderAttributes, $store);
 
@@ -384,20 +402,20 @@ class ShoppingCartController extends Controller
             }
         }
 
-        if ($paymentMethod === CheckoutType::OFFLINE) {
-            // Delete ShoppingCartItem(s)
-            $variants = ProductVariant::objectIDs($request->checkout_product_variant_ids)->get();
-            $customer->clearCartByStore($store, $variants);
+        // if ($paymentMethod === CheckoutType::OFFLINE) {
+        //     // Delete ShoppingCartItem(s)
+        //     $variants = ProductVariant::objectIDs($request->checkout_product_variant_ids)->get();
+        //     $customer->clearCartByStore($store, $variants);
 
-            // Update product
-            foreach ($variants as $variant) {
-                $product = $variant->product;
-                $product->update([
-                    'owned_by_customer_id' => $this->customer()->_id,
-                    'listing_status' => 'AVAILABLE'
-                ]);
-            }
-        }
+        //     // Update product
+        //     foreach ($variants as $variant) {
+        //         $product = $variant->product;
+        //         $product->update([
+        //             'owned_by_customer_id' => $this->customer()->_id,
+        //             'listing_status' => 'AVAILABLE'
+        //         ]);
+        //     }
+        // }
 
         // Return data
         $data = [
@@ -412,7 +430,7 @@ class ShoppingCartController extends Controller
     public function checkOutMainStore(Request $request)
     {
         $storeID = $request->route('store_id');
-        $store = Store::find($storeID);
+        $store = self::getStore($storeID);
 
         // Get authenticated User information
         $customer = $this->customer();
@@ -461,6 +479,7 @@ class ShoppingCartController extends Controller
             !is_null($courier) ?
             $courier->getShippingFeeByTotalFee($totalPrice) :
             0;
+        $totalPrice += $shippingFee;
 
         // form calculation data object
         $rawCalculation = [
@@ -491,7 +510,10 @@ class ShoppingCartController extends Controller
             'discounts' => [],
             'calculations' => $roundedCalculation,
             'is_voucher_applied' => false,
-            'is_enough_membership_points' => true
+            'is_enough_membership_points' => true,
+
+            'paid_order_id' => null,
+            'is_storage' => false
         ];
 
         // Validate, and update attributes
@@ -577,8 +599,6 @@ class ShoppingCartController extends Controller
                 ]);
             }
         }
-
-        return $checkoutDetails;
 
         // Return data
         $data = [

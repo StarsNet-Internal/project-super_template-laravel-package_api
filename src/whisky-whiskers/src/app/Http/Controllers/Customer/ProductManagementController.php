@@ -128,7 +128,7 @@ class ProductManagementController extends Controller
                 // Finalize the final bid highest value
                 $validBids = $validBids->sortByDesc('bid')->values();
                 if (!is_null($incrementRulesDocument)) {
-                    $previousValidBid = $bids->get(1)->bid;
+                    $previousValidBid = $validBids->get(1)->bid;
 
                     // Calculate next valid minimum bid value
                     $incrementRules = $incrementRulesDocument->bidding_increments;
