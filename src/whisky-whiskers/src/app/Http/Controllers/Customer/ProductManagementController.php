@@ -96,6 +96,7 @@ class ProductManagementController extends Controller
             if (count($product['bids']) <= 1) {
                 $product->current_bid = $product->starting_price;
             } else {
+                // Get all valid bids
                 $validBidValues = (array) $product->valid_bid_values;
                 $validBidValues = array_unique($validBidValues);
                 rsort($validBidValues);
@@ -113,13 +114,14 @@ class ProductManagementController extends Controller
                     if (is_null($earliestBid)) continue;
 
                     // Extract info
+                    $earliestBid->bid_counter = $filteredBids->count();
                     $earliestValidBids->push($earliestBid);
                 }
 
                 // Splice all Bid with successive customer_id
                 $validBids = new Collection();
                 foreach ($earliestValidBids as $item) {
-                    if ($item->customer_id != $previousBiddingCustomerID) {
+                    if ($item->customer_id != $previousBiddingCustomerID || $item->bid_counter >= 2) {
                         $validBids->push($item);
                         $previousBiddingCustomerID = $item->customer_id;
                     }
@@ -127,7 +129,7 @@ class ProductManagementController extends Controller
 
                 // Finalize the final bid highest value
                 $validBids = $validBids->sortByDesc('bid')->values();
-                if (!is_null($incrementRulesDocument)) {
+                if (!is_null($incrementRulesDocument) && $validBids->get(0)->bid_counter < 2) {
                     $previousValidBid = $validBids->get(1)->bid;
 
                     // Calculate next valid minimum bid value
@@ -151,6 +153,8 @@ class ProductManagementController extends Controller
                         return $item;
                     });
 
+                    $product->current_bid = $validBids[0]->bid;
+                } else {
                     $product->current_bid = $validBids[0]->bid;
                 }
             }
@@ -296,13 +300,14 @@ class ProductManagementController extends Controller
                     if (is_null($earliestBid)) continue;
 
                     // Extract info
+                    $earliestBid->bid_counter = $filteredBids->count();
                     $earliestValidBids->push($earliestBid);
                 }
 
                 // Splice all Bid with successive customer_id
                 $validBids = new Collection();
                 foreach ($earliestValidBids as $item) {
-                    if ($item->customer_id != $previousBiddingCustomerID) {
+                    if ($item->customer_id != $previousBiddingCustomerID || $item->bid_counter >= 2) {
                         $validBids->push($item);
                         $previousBiddingCustomerID = $item->customer_id;
                     }
@@ -310,7 +315,7 @@ class ProductManagementController extends Controller
 
                 // Finalize the final bid highest value
                 $validBids = $validBids->sortByDesc('bid')->values();
-                if (!is_null($incrementRulesDocument)) {
+                if (!is_null($incrementRulesDocument) && $validBids->get(0)->bid_counter < 2) {
                     $previousValidBid = $bids->get(1)->bid;
 
                     // Calculate next valid minimum bid value
@@ -334,6 +339,8 @@ class ProductManagementController extends Controller
                         return $item;
                     });
 
+                    $product->current_bid = $validBids[0]->bid;
+                } else {
                     $product->current_bid = $validBids[0]->bid;
                 }
             }

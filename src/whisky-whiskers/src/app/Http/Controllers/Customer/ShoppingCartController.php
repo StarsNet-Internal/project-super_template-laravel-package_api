@@ -107,6 +107,7 @@ class ShoppingCartController extends Controller
             !is_null($courier) ?
             $courier->getShippingFeeByTotalFee($totalPrice) :
             0;
+        $totalPrice += $shippingFee;
 
         // form calculation data object
         $rawCalculation = [

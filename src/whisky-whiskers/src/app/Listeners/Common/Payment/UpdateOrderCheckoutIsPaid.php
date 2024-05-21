@@ -134,10 +134,10 @@ class UpdateOrderCheckoutIsPaid
 
             // Attach relationship with previous system-generated order
             $previousGeneratedOrder = Order::where('customer_id', $order->customer_id)
-                ->where('store_id', $store->_id)
-                ->whereNot('_id', $order->_id)
-                ->latest()
-                ->last();
+                ->where('store_id', $order->store_id)
+                ->where('_id', '!=', $order->_id)
+                ->orderBy('created_at', 'asc')
+                ->first();
 
             if (!is_null($previousGeneratedOrder)) {
                 $previousGeneratedOrder->update([

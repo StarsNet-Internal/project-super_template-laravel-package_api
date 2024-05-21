@@ -52,20 +52,21 @@ class BidController extends Controller
             $previousBiddingCustomerID = null;
             $earliestValidBids = new Collection();
             foreach ($validBidValues as $searchingBidValue) {
-                $filteredBids = $bids->filter(function ($item) use ($searchingBidValue, $previousBiddingCustomerID) {
+                $filteredBids = $otherBids->filter(function ($item) use ($searchingBidValue, $previousBiddingCustomerID) {
                     return $item->bid === $searchingBidValue;
                 });
                 $earliestBid = $filteredBids->sortBy('created_at')->first();
                 if (is_null($earliestBid)) continue;
 
                 // Extract info
+                $earliestBid->bid_counter = $filteredBids->count();
                 $earliestValidBids->push($earliestBid);
             }
 
             // Splice all Bid with successive customer_id
             $validBids = new Collection();
             foreach ($earliestValidBids as $item) {
-                if ($item->customer_id != $previousBiddingCustomerID) {
+                if ($item->customer_id != $previousBiddingCustomerID || $item->bid_counter >= 2) {
                     $validBids->push($item);
                     $previousBiddingCustomerID = $item->customer_id;
                 }
@@ -75,7 +76,7 @@ class BidController extends Controller
             $validBids = $validBids->sortByDesc('bid')->values();
 
             if ($validBids->count() >= 2) {
-                if (!is_null($incrementRulesDocument)) {
+                if (!is_null($incrementRulesDocument) && $validBids->get(0)->bid_counter < 2) {
                     $previousValidBid = $validBids->get(1)->bid;
 
                     // Calculate next valid minimum bid value
@@ -103,7 +104,12 @@ class BidController extends Controller
                 }
             }
 
+            if ($validBids->count() == 1) {
+                $validBids[0]->bid = $auctionLot->starting_price;
+            }
+
             $calculatedCurrentBid = null;
+
             // Update current_bid
             if ($validBids->count() > 0) {
                 $calculatedCurrentBid = $validBids[0]->bid;

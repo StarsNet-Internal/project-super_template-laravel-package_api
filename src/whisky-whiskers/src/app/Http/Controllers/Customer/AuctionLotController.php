@@ -53,7 +53,6 @@ class AuctionLotController extends Controller
             ->sortByDesc('bid')
             ->sortBy('created_at')
             ->sortByDesc('bid');
-
         $validBidValues = $bids->unique('bid')->pluck('bid')->sort()->values()->all();
 
         // Get all earliest bid per bid value
@@ -62,20 +61,19 @@ class AuctionLotController extends Controller
         foreach ($validBidValues as $searchingBidValue) {
             $filteredBids = $bids->filter(function ($item) use ($searchingBidValue, $previousBiddingCustomerID) {
                 return $item->bid === $searchingBidValue;
-                // return $item->bid === $searchingBidValue && $item->customer_id != $previousBiddingCustomerID;
             });
             $earliestBid = $filteredBids->sortBy('created_at')->first();
             if (is_null($earliestBid)) continue;
 
             // Extract info
+            $earliestBid->bid_counter = $filteredBids->count();
             $earliestValidBids->push($earliestBid);
-            // $previousBiddingCustomerID = $earliestBid->customer_id;
         }
 
         // Splice all Bid with successive customer_id
         $validBids = new Collection();
         foreach ($earliestValidBids as $item) {
-            if ($item->customer_id != $previousBiddingCustomerID) {
+            if ($item->customer_id != $previousBiddingCustomerID || $item->bid_counter >= 2) {
                 $validBids->push($item);
                 $previousBiddingCustomerID = $item->customer_id;
             }
@@ -87,9 +85,9 @@ class AuctionLotController extends Controller
 
         // Finalize the final bid highest value
         if ($validBids->count() >= 2) {
-            if (!is_null($incrementRulesDocument)) {
+            if (!is_null($incrementRulesDocument) && $validBids->get(0)->bid_counter < 2) {
                 $previousValidBid = $validBids->get(1)->bid;
-                // echo $previousValidBid;
+
                 // Calculate next valid minimum bid value
                 $incrementRules = $incrementRulesDocument->bidding_increments;
                 $nextValidBid = $previousValidBid;
@@ -144,6 +142,86 @@ class AuctionLotController extends Controller
                 'winningBidCustomer'
             ])->get();
 
+        foreach ($auctionLots as $auctionLot) {
+            // Correct the bid value of highest bid to the lowest increment possible
+            $bids = $auctionLot->bids()
+                ->where('is_hidden', false)
+                ->get()
+                ->sortByDesc('bid')
+                ->sortBy('created_at')
+                ->sortByDesc('bid');
+            $validBidValues = $bids->unique('bid')->pluck('bid')->sort()->values()->all();
+
+            // Get all earliest bid per bid value
+            $previousBiddingCustomerID = null;
+            $earliestValidBids = new Collection();
+            foreach ($validBidValues as $searchingBidValue) {
+                $filteredBids = $bids->filter(function ($item) use ($searchingBidValue, $previousBiddingCustomerID) {
+                    return $item->bid === $searchingBidValue;
+                });
+                $earliestBid = $filteredBids->sortBy('created_at')->first();
+                if (is_null($earliestBid)) continue;
+
+                // Extract info
+                $earliestBid->bid_counter = $filteredBids->count();
+                $earliestValidBids->push($earliestBid);
+            }
+
+            // Splice all Bid with successive customer_id
+            $validBids = new Collection();
+            foreach ($earliestValidBids as $item) {
+                if ($item->customer_id != $previousBiddingCustomerID || $item->bid_counter >= 2) {
+                    $validBids->push($item);
+                    $previousBiddingCustomerID = $item->customer_id;
+                }
+            }
+
+            // Correct the bid value of highest bid to the lowest increment possible
+            $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
+            $validBids = $validBids->sortByDesc('bid')->values();
+
+            // Finalize the final bid highest value
+            if ($validBids->count() >= 2) {
+                if (!is_null($incrementRulesDocument) && $validBids->get(0)->bid_counter < 2) {
+                    $previousValidBid = $validBids->get(1)->bid;
+
+                    // Calculate next valid minimum bid value
+                    $incrementRules = $incrementRulesDocument->bidding_increments;
+                    $nextValidBid = $previousValidBid;
+                    foreach ($incrementRules as $key => $interval) {
+                        if ($previousValidBid >= $interval['from'] && $previousValidBid < $interval['to']) {
+                            $nextValidBid = $previousValidBid + $interval['increment'];
+                        }
+                    }
+
+                    $validBids->transform(function (
+                        $item,
+                        $key
+                    ) use ($nextValidBid) {
+                        if (
+                            $key == 0
+                        ) {
+                            if ($item['bid'] > $nextValidBid) {
+                                $item['bid'] = $nextValidBid;
+                            }
+                        }
+                        return $item;
+                    });
+                }
+            }
+
+            if ($validBids->count() == 1) {
+                $validBids[0]->bid = $auctionLot->starting_price;
+            }
+
+            // Update current_bid
+            if ($validBids->count() > 0) {
+                $auctionLot->current_bid = $validBids[0]->bid;
+            } else {
+                $auctionLot->current_bid = $auctionLot->starting_price;
+            }
+        }
+
         return $auctionLots;
     }
 
@@ -193,13 +271,14 @@ class AuctionLotController extends Controller
                 if (is_null($earliestBid)) continue;
 
                 // Extract info
+                $earliestBid->bid_counter = $filteredBids->count();
                 $earliestValidBids->push($earliestBid);
             }
 
             // Splice all Bid with successive customer_id
             $validBids = new Collection();
             foreach ($earliestValidBids as $item) {
-                if ($item->customer_id != $previousBiddingCustomerID) {
+                if ($item->customer_id != $previousBiddingCustomerID || $item->bid_counter >= 2) {
                     $validBids->push($item);
                     $previousBiddingCustomerID = $item->customer_id;
                 }
@@ -209,7 +288,7 @@ class AuctionLotController extends Controller
             $validBids = $validBids->sortByDesc('bid')->values();
 
             if ($validBids->count() >= 2) {
-                if (!is_null($incrementRulesDocument)) {
+                if (!is_null($incrementRulesDocument) && $validBids->get(0)->bid_counter < 2) {
                     $previousValidBid = $validBids->get(1)->bid;
 
                     // Calculate next valid minimum bid value
@@ -272,7 +351,6 @@ class AuctionLotController extends Controller
             ->sortByDesc('bid')
             ->sortBy('created_at')
             ->sortByDesc('bid');
-
         $validBidValues = $bids->unique('bid')->pluck('bid')->sort()->values()->all();
 
         // Get all earliest bid per bid value
@@ -281,26 +359,23 @@ class AuctionLotController extends Controller
         foreach ($validBidValues as $searchingBidValue) {
             $filteredBids = $bids->filter(function ($item) use ($searchingBidValue, $previousBiddingCustomerID) {
                 return $item->bid === $searchingBidValue;
-                // return $item->bid === $searchingBidValue && $item->customer_id != $previousBiddingCustomerID;
             });
             $earliestBid = $filteredBids->sortBy('created_at')->first();
             if (is_null($earliestBid)) continue;
 
             // Extract info
+            $earliestBid->bid_counter = $filteredBids->count();
             $earliestValidBids->push($earliestBid);
-            // $previousBiddingCustomerID = $earliestBid->customer_id;
         }
-        // return $earliestValidBids;
 
         // Splice all Bid with successive customer_id
         $validBids = new Collection();
         foreach ($earliestValidBids as $item) {
-            if ($item->customer_id != $previousBiddingCustomerID) {
+            if ($item->customer_id != $previousBiddingCustomerID || $item->bid_counter >= 2) {
                 $validBids->push($item);
                 $previousBiddingCustomerID = $item->customer_id;
             }
         }
-        // return $validBids;
 
         // Correct the bid value of highest bid to the lowest increment possible
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
@@ -308,7 +383,7 @@ class AuctionLotController extends Controller
 
         // Finalize the final bid highest value
         if ($validBids->count() >= 2) {
-            if (!is_null($incrementRulesDocument)) {
+            if (!is_null($incrementRulesDocument) && $validBids->get(0)->bid_counter < 2) {
                 $previousValidBid = $validBids->get(1)->bid;
 
                 // Calculate next valid minimum bid value
@@ -335,17 +410,30 @@ class AuctionLotController extends Controller
             $validBids[0]->bid = $auctionLot->starting_price;
         }
 
+        // For highest bid correction
+        $highestBid = $validBidValues[0];
+        $correctedHighestBid = $validBids[0]->bid;
+
+        $extractedBids = $bids->filter(function ($item) use ($highestBid, $correctedHighestBid) {
+            return $item->bid == $highestBid || $item->bid <= $correctedHighestBid;
+        });
+
         // Attach customer information per Bid
-        foreach ($validBids as $bid) {
+        foreach ($extractedBids as $bid) {
             $customer = $bid->customer;
             $account = $customer->account;
 
             $bid->username = optional($account)->username;
             $bid->avatar = optional($account)->avatar;
+
+            if ($bid->bid == $highestBid && $highestBid != $correctedHighestBid) {
+                $bid->bid == $correctedHighestBid;
+            }
         }
 
+
         // Return validated Bids
-        return $validBids;
+        return $extractedBids;
     }
 
     public function createMaximumBid(Request $request)
