@@ -16,7 +16,6 @@ use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\PaymentControl
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ProductController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\ShoppingCartController;
-use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\WishlistController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\TestingController;
 
 /*

@@ -118,13 +118,16 @@ class UpdateOrderCheckoutIsPaid
         } else {
             // Auction Store logic
             if (count($productIDs) > 0) {
+                // Update Product ownership and listing_status
+                $listingStatus = $order->is_storage ? 'AVAILABLE' : 'ALREADY_CHECKOUT';
                 Product::objectIDs($productIDs)->update(
                     [
                         'owned_by_customer_id' => $order->customer_id,
-                        'listing_status' => 'AVAILABLE'
+                        'listing_status' => $listingStatus
                     ]
                 );
 
+                // Update AuctionLot paid status
                 AuctionLot::whereIn('product_id', $productIDs)->update([
                     'winning_bid_customer_id' => $order->customer_id,
                     'latest_bid_customer_id' => $order->customer_id,

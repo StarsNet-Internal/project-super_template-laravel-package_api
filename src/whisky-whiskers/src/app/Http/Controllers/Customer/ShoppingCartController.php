@@ -224,7 +224,11 @@ class ShoppingCartController extends Controller
         ];
 
         $rationalizedCalculation = $this->rationalizeRawCalculation($rawCalculation);
-        $roundedCalculation = $this->roundingNestedArray($rationalizedCalculation); // Round off values
+        $roundedCalculation = $this->roundingNestedArray($rationalizedCalculation, 2); // Round off values
+
+        // Round up calculations.price.total only
+        $roundedCalculation['price']['total'] = ceil($roundedCalculation['price']['total']);
+        $roundedCalculation['price']['total'] .= '.00';
 
         // Return data
         $data = [
@@ -320,6 +324,10 @@ class ShoppingCartController extends Controller
 
         $rationalizedCalculation = $this->rationalizeRawCalculation($rawCalculation);
         $roundedCalculation = $this->roundingNestedArray($rationalizedCalculation); // Round off values
+
+        // Round up calculations.price.total only
+        $roundedCalculation['price']['total'] = ceil($roundedCalculation['price']['total']);
+        $roundedCalculation['price']['total'] .= '.00';
 
         // Return data
         $checkoutDetails = [

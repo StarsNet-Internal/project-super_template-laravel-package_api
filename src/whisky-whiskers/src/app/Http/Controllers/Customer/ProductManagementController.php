@@ -3,6 +3,7 @@
 namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer;
 
 use App\Constants\Model\ProductVariantDiscountType;
+use App\Constants\Model\Status;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Configuration;
@@ -34,6 +35,7 @@ class ProductManagementController extends Controller
     {
         // Extract attributes from $request
         $categoryIDs = $request->input('category_ids', []);
+        $categoryIDs = array_unique($categoryIDs);
         $keyword = $request->input('keyword');
         if ($keyword === "") $keyword = null;
         $slug = $request->input('slug', 'by-keyword-relevance');
@@ -55,23 +57,26 @@ class ProductManagementController extends Controller
 
         // Get Product(s) from selected ProductCategory(s)
         $productIDs = AuctionLot::where('store_id', $this->store->id)
-            ->statusActive()
+            ->statuses([Status::ACTIVE, Status::ARCHIVED])
             ->get()
             ->pluck('product_id')
             ->all();
 
         if (count($categoryIDs) > 0) {
-            $productIDs = Product::objectIDs($productIDs)
-                ->whereHas('categories', function ($query) use ($categoryIDs) {
-                    $query->whereIn('_id', $categoryIDs);
-                })
-                ->statusActive()
-                ->when(!$keyword, function ($query) {
-                    $query->limit(250);
-                })
-                ->get()
-                ->pluck('_id')
-                ->all();
+            $allProductCategoryIDs = Category::slug('all-products')->pluck('_id')->all();
+            if (!array_intersect($categoryIDs, $allProductCategoryIDs)) {
+                $productIDs = Product::objectIDs($productIDs)
+                    ->whereHas('categories', function ($query) use ($categoryIDs) {
+                        $query->whereIn('_id', $categoryIDs);
+                    })
+                    ->statuses([Status::ACTIVE, Status::ARCHIVED])
+                    ->when(!$keyword, function ($query) {
+                        $query->limit(250);
+                    })
+                    ->get()
+                    ->pluck('_id')
+                    ->all();
+            }
         }
 
         // Get matching keywords from Typesense
@@ -412,6 +417,85 @@ class ProductManagementController extends Controller
             return new Collection();
         }
         $products = $this->getProductsInfoByAggregation($productIDs);
+
+        // Re-calculate current_bid value
+        $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
+
+        foreach ($products as $product) {
+            if (count($product['bids']) <= 1) {
+                $product->current_bid = $product->starting_price;
+            } else {
+                // Get all valid bids
+                $validBidValues = (array) $product->valid_bid_values;
+                $validBidValues = array_unique($validBidValues);
+                rsort($validBidValues);
+
+                // Get all earliest bid per bid value
+                $previousBiddingCustomerID = null;
+                $earliestValidBids = new Collection();
+
+                $bids = collect($product->bids);
+                foreach ($validBidValues as $searchingBidValue) {
+                    $filteredBids = $bids->filter(function ($item) use ($searchingBidValue, $previousBiddingCustomerID) {
+                        return $item->bid === $searchingBidValue;
+                    });
+                    $earliestBid = $filteredBids->sortBy('created_at')->first();
+                    if (is_null($earliestBid)) continue;
+
+                    // Extract info
+                    $earliestBid->bid_counter = $filteredBids->count();
+                    $earliestValidBids->push($earliestBid);
+                }
+
+                // Splice all Bid with successive customer_id
+                $validBids = new Collection();
+                foreach ($earliestValidBids as $item) {
+                    if ($item->customer_id != $previousBiddingCustomerID || $item->bid_counter >= 2) {
+                        $validBids->push($item);
+                        $previousBiddingCustomerID = $item->customer_id;
+                    }
+                }
+
+                // Finalize the final bid highest value
+                $validBids = $validBids->sortByDesc('bid')->values();
+                if (
+                    !is_null($incrementRulesDocument) && $validBids->get(0)->bid_counter < 2
+                ) {
+                    $previousValidBid = $validBids->get(1)->bid;
+
+                    // Calculate next valid minimum bid value
+                    $incrementRules = $incrementRulesDocument->bidding_increments;
+                    $nextValidBid = $previousValidBid;
+                    foreach ($incrementRules as $key => $interval) {
+                        if ($previousValidBid >= $interval['from'] && $previousValidBid < $interval['to']) {
+                            $nextValidBid = $previousValidBid + $interval['increment'];
+                        }
+                    }
+
+                    $validBids->transform(function (
+                        $item,
+                        $key
+                    ) use ($nextValidBid) {
+                        if ($key == 0) {
+                            if ($item['bid'] > $nextValidBid) {
+                                $item['bid'] = $nextValidBid;
+                            }
+                        }
+                        return $item;
+                    });
+
+                    $product->current_bid = $validBids[0]->bid;
+                } else {
+                    $product->current_bid = $validBids[0]->bid;
+                }
+            }
+
+            $product->is_reserve_price_met = $product->current_bid >= $product->reserve_price ? true : false;
+
+            unset($product->bids);
+            unset($product->valid_bid_values);
+            unset($product->reserve_price);
+        }
 
         // Return data
         return $products;
