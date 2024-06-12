@@ -191,7 +191,10 @@ class ProductManagementController extends Controller
         $parentCategoryIDs = $config->category_ids;
 
         // Get Product(s) registered for this auction/store
-        $productIDs = AuctionLot::where('store_id', $storeID)->pluck('product_id')->all();
+        $productIDs = AuctionLot::where('store_id', $storeID)
+            ->whereNotIn('product_id', $excludedProductIDs)
+            ->pluck('product_id')
+            ->all();
         $parentCategoryCount = count($parentCategoryIDs);
 
         // Create aggregation pipeline stage for matching_score
@@ -288,6 +291,7 @@ class ProductManagementController extends Controller
             if (count($product['bids']) <= 1) {
                 $product->current_bid = $product->starting_price;
             } else {
+                // Get all valid bids
                 $validBidValues = (array) $product->valid_bid_values;
                 $validBidValues = array_unique($validBidValues);
                 rsort($validBidValues);
@@ -320,8 +324,10 @@ class ProductManagementController extends Controller
 
                 // Finalize the final bid highest value
                 $validBids = $validBids->sortByDesc('bid')->values();
-                if (!is_null($incrementRulesDocument) && $validBids->get(0)->bid_counter < 2) {
-                    $previousValidBid = $bids->get(1)->bid;
+                if (
+                    !is_null($incrementRulesDocument) && $validBids->get(0)->bid_counter < 2
+                ) {
+                    $previousValidBid = $validBids->get(1)->bid;
 
                     // Calculate next valid minimum bid value
                     $incrementRules = $incrementRulesDocument->bidding_increments;
@@ -356,6 +362,7 @@ class ProductManagementController extends Controller
             unset($product->valid_bid_values);
             unset($product->reserve_price);
         }
+
 
         // Return data
         return $products;

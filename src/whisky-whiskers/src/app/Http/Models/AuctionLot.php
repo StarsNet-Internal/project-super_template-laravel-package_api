@@ -220,7 +220,26 @@ class AuctionLot extends Eloquent
             return $highestTwo[0]['highest_bid_value'];
         }
 
-        // If more than 2 users share the same highest bid
+        // If same customer_id for both earliest bid
+        $firstHighestEarliestBidCustomerID = Bid::where('auction_lot_id', $this->_id)
+            ->where('is_hidden', false)
+            ->where('bid', $highestTwo->max('highest_bid_value'))
+            ->oldest()
+            ->first()
+            ->customer_id;
+
+        $secondHighestEarliestBidCustomerID = Bid::where('auction_lot_id', $this->_id)
+            ->where('is_hidden', false)
+            ->where('bid', $highestTwo->min('highest_bid_value'))
+            ->oldest()
+            ->first()
+            ->customer_id;
+
+        if ($firstHighestEarliestBidCustomerID === $secondHighestEarliestBidCustomerID) {
+            return $highestTwo->min('highest_bid_value');
+        }
+
+        // If different customer_id for both earliest bids
         $incrementRules = $incrementRulesDocument->bidding_increments;
         $previousValidBid = $highestTwo->count() > 1 ?
             $highestTwo[1]['highest_bid_value'] :
@@ -231,6 +250,7 @@ class AuctionLot extends Eloquent
                 $nextValidBid = $previousValidBid + $interval['increment'];
             }
         }
+
         return $nextValidBid;
     }
 

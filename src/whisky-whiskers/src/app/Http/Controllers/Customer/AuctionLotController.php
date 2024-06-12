@@ -140,6 +140,7 @@ class AuctionLotController extends Controller
             // Get the two earliest bids for the current bid value
             $twoEarliestBids = $auctionLot->bids()
                 ->where('bid', $value)
+                ->where('is_hidden', false)
                 ->orderBy('created_at', 'asc')
                 ->take(2)
                 ->get();
@@ -159,7 +160,8 @@ class AuctionLotController extends Controller
 
         // Calculate the new current bid and override
         if ($distinctBidValues->count() > 0) {
-            $highestMaximumBid = $distinctBidValues[0];
+            // Get highest with max(), sort reverse didn't work
+            $highestMaximumBid = $distinctBidValues->max();
 
             // Calculate the new highest bid value
             $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
