@@ -132,6 +132,11 @@ class AuthenticationController extends CustomerAuthenticationController
                     'zh' => '首張訂單輸入優惠碼"' . $discountCode->full_code . '"即可享優惠。',
                     'cn' => '首张订单输入优惠码"' . $discountCode->full_code . '"即可享优惠。',
                 ],
+                'long_description' => [
+                    'en' => $discountCode->full_code,
+                    'zh' => $discountCode->full_code,
+                    'cn' => $discountCode->full_code,
+                ],
             ]);
             $account->likePost($post);
             $category->attachPosts(collect([$post]));
