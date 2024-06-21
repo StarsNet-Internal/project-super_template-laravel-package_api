@@ -36,17 +36,23 @@ class OrderController extends CustomerOrderController
     {
         $response = parent::getOrderDetailsAsCustomer($request);
         $order = json_decode(json_encode($response), true)['original'];
-        $miniStore = Store::where('slug', 'default-mini-store')->first();
-        $orders = Order::where('store_id', '!=', $miniStore->_id)->get()->toArray();
 
-        $order['cashier_id'] = $this->getReceiptNumber($order, $orders);
-        $order['cart_items'] = array_map(function ($item) use ($order) {
-            $variant = ProductVariant::find($item['product_variant_id']);
-            $item['qty'] = $variant->weight;
-            $item['discounted_price_per_unit'] = strval($variant->cost);
-            $item['created_at'] = Carbon::parse($order['created_at'])->addDays($variant->weight);
-            return $item;
-        }, $order['cart_items']);
+        $miniStore = Store::where('slug', 'default-mini-store')->first();
+        $miniStoreId = $miniStore->_id;
+        $orders = Order::where('store_id', '!=', $miniStoreId)->get()->toArray();
+
+        if ($order['store_id'] !== $miniStoreId) {
+            $order['cashier_id'] = $this->getReceiptNumber($order, $orders);
+            $order['cart_items'] = array_map(function ($item) use ($order) {
+                $variant = ProductVariant::find($item['product_variant_id']);
+                $item['qty'] = $variant->weight;
+                $item['discounted_price_per_unit'] = strval($variant->cost);
+                $item['created_at'] = Carbon::parse($order['created_at'])->addDays($variant->weight);
+                return $item;
+            }, $order['cart_items']);
+        } else {
+            $order['cashier_id'] = substr($order['_id'], -6);
+        }
 
         // Return data
         return response()->json($order, $response->getStatusCode());

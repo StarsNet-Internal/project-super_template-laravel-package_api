@@ -25,7 +25,7 @@ trait ProjectOrderTrait
 
         // Generate the receipt number
         $datePart = $createdAt->format('Ymd');
-        $orderNumber = str_pad(count($filteredOrders), 4, '0', STR_PAD_LEFT);
+        $orderNumber = str_pad(count($filteredOrders) + 1, 4, '0', STR_PAD_LEFT);
         $receiptNumber = $datePart . $orderNumber;
 
         return $receiptNumber;
