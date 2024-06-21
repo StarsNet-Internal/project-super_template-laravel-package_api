@@ -37,7 +37,7 @@ class OrderController extends CustomerOrderController
         $response = parent::getOrderDetailsAsCustomer($request);
         $order = json_decode(json_encode($response), true)['original'];
         $miniStore = Store::where('slug', 'default-mini-store')->first();
-        $orders = Order::where('store_id', '!=', $miniStore->_id);
+        $orders = Order::where('store_id', '!=', $miniStore->_id)->get();
 
         $order['cashier_id'] = $this->getReceiptNumber($order, $orders);
         $order['cart_items'] = array_map(function ($item) use ($order) {
