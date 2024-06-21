@@ -11,11 +11,15 @@ use App\Models\Account;
 use App\Models\User;
 use App\Models\VerificationCode;
 use App\Models\Store;
+use App\Models\DiscountTemplate;
+use App\Models\Post;
+use App\Models\PostCategory;
 use App\Traits\Controller\AuthenticationTrait;
 use App\Traits\Controller\StoreDependentTrait;
 use StarsNet\Project\Easeca\App\Traits\Controller\ProjectAuthenticationTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use App\Http\Controllers\Customer\AuthenticationController as CustomerAuthenticationController;
 
 class AuthenticationController extends CustomerAuthenticationController
@@ -81,6 +85,21 @@ class AuthenticationController extends CustomerAuthenticationController
 
     public function register(Request $request)
     {
+        // Validate Request
+        $invitationCode = $request->input('invitation_code');
+        if ($invitationCode === "") $invitationCode = null;
+        if (!is_null($invitationCode)) {
+            $voucher = DiscountTemplate::where('prefix', $invitationCode)
+                ->statusActive()
+                ->latest()
+                ->first();
+            if (is_null($voucher)) {
+                return response()->json([
+                    'message' => 'InvitationCode not found'
+                ], 400);
+            }
+        }
+
         // Generate a new customer-identity Account
         $user = $this->createNewUserAsCustomer($request);
         $user->setAsCustomerAccount();
@@ -96,6 +115,27 @@ class AuthenticationController extends CustomerAuthenticationController
         // Update Account
         $account = $user->account;
         $this->updateAccountViaRegistration($account, $request);
+
+        // First-time voucher
+        if (!is_null($voucher)) {
+            $category = PostCategory::where('item_type', 'Post')->first();
+            $suffix = strtoupper(Str::random(6));
+            $discountCode = $voucher->createVoucher($suffix, $account->customer, false);
+            $post = Post::create([
+                'title' => [
+                    'en' => 'New User Offer',
+                    'zh' => '新用戶優惠',
+                    'cn' => '新用户优惠',
+                ],
+                'short_description' => [
+                    'en' => 'Enter the promo code "' . $discountCode->full_code . '" for your first order to enjoy the offer.',
+                    'zh' => '首張訂單輸入優惠碼"' . $discountCode->full_code . '"即可享優惠。',
+                    'cn' => '首张订单输入优惠码"' . $discountCode->full_code . '"即可享优惠。',
+                ],
+            ]);
+            $account->likePost($post);
+            $category->attachPosts(collect([$post]));
+        }
 
         // Return success message
         return response()->json([
