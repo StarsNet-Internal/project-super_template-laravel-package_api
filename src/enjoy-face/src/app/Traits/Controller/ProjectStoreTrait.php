@@ -56,6 +56,7 @@ trait ProjectStoreTrait
         $store['mtr'] = reset($mtr);
 
         $store['is_orderable'] = $store['quota'] > count($store['orders']);
+        $store['remaining_quota'] = max(0, $store['quota'] - count($store['orders']));
         $store['is_liked'] = array_search($store['_id'], $wishlistItems) !== false ? true : false;
 
         unset($store['category_ids'], $store['opening_hours'], $store['quota'], $store['categories'], $store['orders']);
