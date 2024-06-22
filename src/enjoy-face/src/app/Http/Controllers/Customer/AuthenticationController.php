@@ -12,11 +12,10 @@ use App\Models\User;
 use App\Models\VerificationCode;
 use App\Models\Store;
 use App\Models\DiscountTemplate;
-use App\Models\Post;
-use App\Models\PostCategory;
 use App\Traits\Controller\AuthenticationTrait;
 use App\Traits\Controller\StoreDependentTrait;
 use StarsNet\Project\Easeca\App\Traits\Controller\ProjectAuthenticationTrait;
+use StarsNet\Project\EnjoyFace\App\Traits\Controller\ProjectPostTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -24,7 +23,10 @@ use App\Http\Controllers\Customer\AuthenticationController as CustomerAuthentica
 
 class AuthenticationController extends CustomerAuthenticationController
 {
-    use AuthenticationTrait, StoreDependentTrait, ProjectAuthenticationTrait;
+    use AuthenticationTrait,
+        StoreDependentTrait,
+        ProjectAuthenticationTrait,
+        ProjectPostTrait;
 
     public function generatePhoneVerificationCodeByType(User $user, string $type, int $minutesAllowed = 60): VerificationCode
     {
@@ -118,10 +120,11 @@ class AuthenticationController extends CustomerAuthenticationController
 
         // First-time voucher
         if (!is_null($voucher)) {
-            $category = PostCategory::where('item_type', 'Post')->first();
             $suffix = strtoupper(Str::random(6));
             $discountCode = $voucher->createVoucher($suffix, $account->customer, false);
-            $post = Post::create([
+
+            // Inbox
+            $inboxAttributes = [
                 'title' => [
                     'en' => 'New User Offer',
                     'zh' => '新用戶優惠',
@@ -137,9 +140,8 @@ class AuthenticationController extends CustomerAuthenticationController
                     'zh' => $discountCode->full_code,
                     'cn' => $discountCode->full_code,
                 ],
-            ]);
-            $account->likePost($post);
-            $category->attachPosts(collect([$post]));
+            ];
+            $this->createInboxPost($inboxAttributes, [$account->_id], true);
         }
 
         // Return success message

@@ -8,6 +8,7 @@ use App\Models\MembershipPoint;
 use App\Models\MembershipPointHistory;
 use App\Models\User;
 use App\Traits\Controller\AuthenticationTrait;
+use StarsNet\Project\EnjoyFace\App\Traits\Controller\ProjectPostTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -15,7 +16,7 @@ use Carbon\Carbon;
 
 class ProfileController extends Controller
 {
-    use AuthenticationTrait;
+    use AuthenticationTrait, ProjectPostTrait;
 
     public function transferMembershipPoint(Request $request)
     {
@@ -50,13 +51,19 @@ class ProfileController extends Controller
         $remarks = strval($remarks);
 
         // Get authenticated User information
-        $fromUser = $this->user();
+        $fromAccount = $this->account();
         $fromCustomer = $this->customer();
 
         if (!$fromCustomer->isEnoughMembershipPoints($point)) {
             return response()->json([
                 'message' => 'Customer does not have enough membership points for this transaction',
             ], 403);
+        }
+
+        if ($fromAccount->login_id === $toLoginId) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
         }
 
         $toUser = User::where('login_id', $toLoginId)->first();
@@ -66,7 +73,8 @@ class ProfileController extends Controller
             ], 404);
         }
 
-        $toCustomer = $toUser->account->customer;
+        $toAccount = $toUser->account;
+        $toCustomer = $toAccount->customer;
         $membershipPoint = MembershipPoint::create([
             'earned' => $point,
             'remarks' => $remarks,
@@ -79,9 +87,9 @@ class ProfileController extends Controller
             'type' => MembershipPointHistoryType::GIFT,
             'value' => $point,
             'description' => [
-                'en' => 'Transferred from ' . $fromUser->login_id,
-                'zh' => 'Transferred from ' . $fromUser->login_id,
-                'cn' => 'Transferred from ' . $fromUser->login_id
+                'en' => 'Received points from ' . $fromAccount->username,
+                'zh' => '收到來自' . $fromAccount->username . '的積分',
+                'cn' => '收到来自' . $fromAccount->username . '的积分',
             ],
             'remarks' => $remarks,
         ]);
@@ -100,13 +108,28 @@ class ProfileController extends Controller
             'type' => MembershipPointHistoryType::GIFT,
             'value' => -1 * abs($point),
             'description' => [
-                'en' => 'Transferred to ' . $toLoginId,
-                'zh' => 'Transferred to ' . $toLoginId,
-                'cn' => 'Transferred to ' . $toLoginId
+                'en' => 'Gave points to ' . $toAccount->username,
+                'zh' => '給予' . $toAccount->username . '積分',
+                'cn' => '给予' . $toAccount->username . '积分',
             ],
             'remarks' => $remarks,
         ];
         $fromCustomer->membershipPointHistories()->create($attributes);
+
+        // Inbox
+        $inboxAttributes = [
+            'title' => [
+                'en' => 'You have received ' . $point . ' membership points from ' . $fromAccount->username,
+                'zh' => '您已收到來自' . $fromAccount->username . '的 ' . $point . ' 會員積分',
+                'cn' => '您已收到来自' . $fromAccount->username . '的 ' . $point . ' 会员积分',
+            ],
+            'short_description' => [
+                'en' => $remarks,
+                'zh' => $remarks,
+                'cn' => $remarks,
+            ],
+        ];
+        $this->createInboxPost($inboxAttributes, [$toAccount->_id], false);
 
         // Deduct required points 
         $remainder = $point;
