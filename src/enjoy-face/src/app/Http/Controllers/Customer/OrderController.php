@@ -37,12 +37,9 @@ class OrderController extends CustomerOrderController
         $response = parent::getOrderDetailsAsCustomer($request);
         $order = json_decode(json_encode($response), true)['original'];
 
-        $miniStore = Store::where('slug', 'default-mini-store')->first();
-        $miniStoreId = $miniStore->_id;
-        $orders = Order::where('store_id', '!=', $miniStoreId)->get()->toArray();
-
-        if ($order['store_id'] !== $miniStoreId) {
-            $order['cashier_id'] = $this->getReceiptNumber($order, $orders);
+        $bookings = $this->getOfflineOrders();
+        $order['cashier_id'] = $this->getReceiptNumber($order, $bookings);
+        if ($order['store']['slug'] !== 'default-mini-store') {
             $order['cart_items'] = array_map(function ($item) use ($order) {
                 $variant = ProductVariant::find($item['product_variant_id']);
                 $item['qty'] = $variant->weight;
@@ -50,8 +47,6 @@ class OrderController extends CustomerOrderController
                 $item['created_at'] = Carbon::parse($order['created_at'])->addDays($variant->weight);
                 return $item;
             }, $order['cart_items']);
-        } else {
-            $order['cashier_id'] = substr($order['_id'], -6);
         }
 
         // Return data
