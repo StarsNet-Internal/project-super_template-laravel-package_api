@@ -68,7 +68,7 @@ class PostController extends Controller
         $account = $this->account();
 
         // Get liked Post(s) by Account
-        $posts = $account->likedPosts->whereStatusActive();
+        $posts = $account->likedPosts()->statusActive();
 
         // Convert _id to MongoDB ObjectId
         $postIDs = $this->extractIDsFromCollection($posts);
