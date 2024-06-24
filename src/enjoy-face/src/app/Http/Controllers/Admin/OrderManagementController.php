@@ -34,7 +34,7 @@ class OrderManagementController extends AdminOrderManagementController
 
     public function getAllOrdersByStore(Request $request)
     {
-        $orders = parent::getAllOrdersByStore($request);
+        $orders = parent::getAllOrdersByStore($request)->toArray();
 
         $bookings = $this->getOfflineOrders();
         foreach ($orders as $order) {
