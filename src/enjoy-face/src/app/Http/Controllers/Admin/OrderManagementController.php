@@ -37,8 +37,8 @@ class OrderManagementController extends AdminOrderManagementController
         $orders = parent::getAllOrdersByStore($request)->toArray();
 
         $bookings = $this->getOfflineOrders();
-        foreach ($orders as $order) {
-            $order['cashier_id'] = $this->getReceiptNumber($order, $bookings);
+        foreach ($orders as $key => $order) {
+            $orders[$key]['cashier_id'] = $this->getReceiptNumber($order, $bookings);
         }
 
         // Return Order
