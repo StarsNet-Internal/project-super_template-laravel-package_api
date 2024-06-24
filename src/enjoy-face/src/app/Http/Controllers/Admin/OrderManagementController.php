@@ -34,8 +34,7 @@ class OrderManagementController extends AdminOrderManagementController
 
     public function getAllOrdersByStore(Request $request)
     {
-        $response = parent::getAllOrdersByStore($request);
-        $orders = json_decode(json_encode($response), true)['original'];
+        $orders = parent::getAllOrdersByStore($request);
 
         $bookings = $this->getOfflineOrders();
         foreach ($orders as $order) {
@@ -43,7 +42,7 @@ class OrderManagementController extends AdminOrderManagementController
         }
 
         // Return Order
-        return response()->json($order, $response->getStatusCode());
+        return $orders;
     }
 
     public function getOrderDetails(Request $request)
