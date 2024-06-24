@@ -82,7 +82,7 @@ class CustomerController extends Controller
                 'cn' => $remarks,
             ],
         ];
-        $this->createInboxPost($inboxAttributes, [$request->account_ids], false);
+        $this->createInboxPost($inboxAttributes, $request->account_ids, false);
 
         // Return success message
         return response()->json([
