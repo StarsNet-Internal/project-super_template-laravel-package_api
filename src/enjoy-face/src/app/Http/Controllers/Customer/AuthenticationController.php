@@ -100,6 +100,8 @@ class AuthenticationController extends CustomerAuthenticationController
                     'message' => 'InvitationCode not found'
                 ], 400);
             }
+        } else {
+            $voucher = null;
         }
 
         // Generate a new customer-identity Account
