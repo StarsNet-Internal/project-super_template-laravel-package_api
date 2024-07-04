@@ -28,8 +28,6 @@ class AuctionLotController extends Controller
             'product',
             'productVariant',
             'store',
-            // 'latestBidCustomer',
-            // 'winningBidCustomer'
         ])->find($auctionLotId);
 
         if (!in_array(
@@ -94,14 +92,8 @@ class AuctionLotController extends Controller
                 'product',
                 'productVariant',
                 'store',
-                // 'latestBidCustomer',
-                // 'winningBidCustomer'
             ])
             ->get();
-
-        // foreach ($auctionLots as $lot) {
-        //     $lot->bid_count = $lot->bids()->count();
-        // }
 
         // Calculate highest bid
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
@@ -185,6 +177,7 @@ class AuctionLotController extends Controller
         $requestedBid = $request->bid;
 
         // Check auction lot
+        /** @var AuctionLot $auctionLot */
         $auctionLot = AuctionLot::find($auctionLotId);
 
         if (is_null($auctionLot)) {
@@ -204,6 +197,14 @@ class AuctionLotController extends Controller
                 'message' => 'Auction Lot not found'
             ], 404);
         }
+
+        // if (
+        //     $auctionLot->owned_by_customer_id == $this->customer()->_id
+        // ) {
+        //     return response()->json([
+        //         'message' => 'You cannot place bid on your own auction lot'
+        //     ], 404);
+        // }
 
         // Check time
         $store = $auctionLot->store;
@@ -235,29 +236,25 @@ class AuctionLotController extends Controller
         }
 
         // Get current bid
-        $currentBid = optional($auctionLot)->current_bid ?? 0;
+        $biddingIncrementRules = Configuration::slug('bidding-increments')->latest()->first();
+        $currentBid = $auctionLot->getCurrentBidPrice($biddingIncrementRules);
 
         // Get bidding increment, and valid minimum bid 
         $biddingIncrementValue = 0;
 
         if ($auctionLot->is_bid_placed == true) {
-            $slug = 'bidding-increments';
-            $biddingIncrementRules = Configuration::slug($slug)->latest()->first();
-
-            if (!is_null($biddingIncrementRules)) {
-                $range = $biddingIncrementRules->bidding_increments;
-                foreach ($range as $key => $interval) {
-                    if ($currentBid >= $interval['from'] && $currentBid < $interval['to']) {
-                        $biddingIncrementValue = $interval['increment'];
-                        break;
-                    }
+            $range = $biddingIncrementRules->bidding_increments;
+            foreach ($range as $key => $interval) {
+                if ($currentBid >= $interval['from'] && $currentBid < $interval['to']) {
+                    $biddingIncrementValue = $interval['increment'];
+                    break;
                 }
             }
         }
 
         $minimumBid = $currentBid + $biddingIncrementValue;
 
-        if ($request->bid <= $minimumBid) {
+        if ($minimumBid > $request->bid) {
             return response()->json([
                 'message' => 'Your bid is lower than current valid bid ' .  $minimumBid . '.',
                 'error_status' => 0,

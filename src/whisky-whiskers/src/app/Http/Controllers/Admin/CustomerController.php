@@ -3,6 +3,7 @@
 namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Configuration;
 use App\Models\Customer;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -42,7 +43,7 @@ class CustomerController extends Controller
     {
         $customerId = $request->route('customer_id');
 
-        $products = AuctionLot::where('owned_by_customer_id', $customerId)
+        $auctionLots = AuctionLot::where('owned_by_customer_id', $customerId)
             ->with([
                 'product',
                 'productVariant',
@@ -52,7 +53,12 @@ class CustomerController extends Controller
             ])
             ->get();
 
-        return $products;
+        $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
+        foreach ($auctionLots as $auctionLot) {
+            $auctionLot->current_bid = $auctionLot->getCurrentBidPrice($incrementRulesDocument);
+        }
+
+        return $auctionLots;
     }
 
     public function getAllBids(Request $request)
