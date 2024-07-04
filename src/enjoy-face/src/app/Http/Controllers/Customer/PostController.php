@@ -61,4 +61,31 @@ class PostController extends Controller
         // Return data
         return $reviews;
     }
+
+    public function getAllLikedPosts(Request $request)
+    {
+        // Get authenticated User information
+        $account = $this->account();
+
+        // Get liked Post(s) by Account
+        $posts = $account
+            ->likedPosts()
+            ->statusActive()
+            ->get();
+
+        // Convert _id to MongoDB ObjectId
+        $postIDs = $this->extractIDsFromCollection($posts);
+        $postIDs = $this->toObjectIDs($postIDs);
+
+        // Get Post(s), and append attributes by MongoDB aggregation
+        $posts = $this->getPostsWithLikedAndCommentCount($postIDs);
+
+        $posts->map(function ($post) {
+            $post->is_liked = count($post->category_ids) > 0;
+            return $post;
+        });
+
+        // Return data
+        return $posts;
+    }
 }

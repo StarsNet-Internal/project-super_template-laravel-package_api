@@ -6,6 +6,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\StaffManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\OfflineStoreManagementController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\OrderManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\CustomerController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\PostController;
 
@@ -106,6 +107,25 @@ Route::group(
 
                 Route::put('/categories/{category_id}/stores/assign', [$defaultController, 'assignStoresToCategory']);
                 Route::put('/categories/{category_id}/stores/unassign', [$defaultController, 'unassignStoresFromCategory']);
+            }
+        );
+    }
+);
+
+// ORDER
+Route::group(
+    ['prefix' => 'orders'],
+    function () {
+        $defaultController = OrderManagementController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllOrdersByStore'])->middleware(['pagination']);
+
+                Route::get('/{id}/details', [$defaultController, 'getOrderDetails']);
+
+                Route::put('/{id}/address', [$defaultController, 'updateDeliveryAddress']);
             }
         );
     }

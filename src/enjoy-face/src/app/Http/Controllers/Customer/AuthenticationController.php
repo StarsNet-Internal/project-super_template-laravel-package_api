@@ -11,16 +11,22 @@ use App\Models\Account;
 use App\Models\User;
 use App\Models\VerificationCode;
 use App\Models\Store;
+use App\Models\DiscountTemplate;
 use App\Traits\Controller\AuthenticationTrait;
 use App\Traits\Controller\StoreDependentTrait;
 use StarsNet\Project\Easeca\App\Traits\Controller\ProjectAuthenticationTrait;
+use StarsNet\Project\EnjoyFace\App\Traits\Controller\ProjectPostTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use App\Http\Controllers\Customer\AuthenticationController as CustomerAuthenticationController;
 
 class AuthenticationController extends CustomerAuthenticationController
 {
-    use AuthenticationTrait, StoreDependentTrait, ProjectAuthenticationTrait;
+    use AuthenticationTrait,
+        StoreDependentTrait,
+        ProjectAuthenticationTrait,
+        ProjectPostTrait;
 
     public function generatePhoneVerificationCodeByType(User $user, string $type, int $minutesAllowed = 60): VerificationCode
     {
@@ -81,6 +87,23 @@ class AuthenticationController extends CustomerAuthenticationController
 
     public function register(Request $request)
     {
+        // Validate Request
+        $invitationCode = $request->input('invitation_code');
+        if ($invitationCode === "") $invitationCode = null;
+        if (!is_null($invitationCode)) {
+            $voucher = DiscountTemplate::where('prefix', $invitationCode)
+                ->statusActive()
+                ->latest()
+                ->first();
+            if (is_null($voucher)) {
+                return response()->json([
+                    'message' => 'InvitationCode not found'
+                ], 400);
+            }
+        } else {
+            $voucher = null;
+        }
+
         // Generate a new customer-identity Account
         $user = $this->createNewUserAsCustomer($request);
         $user->setAsCustomerAccount();
@@ -96,6 +119,35 @@ class AuthenticationController extends CustomerAuthenticationController
         // Update Account
         $account = $user->account;
         $this->updateAccountViaRegistration($account, $request);
+
+        // First-time voucher
+        if (!is_null($voucher)) {
+            $account->update([
+                'country' => $invitationCode
+            ]);
+            $suffix = strtoupper(Str::random(6));
+            $discountCode = $voucher->createVoucher($suffix, $account->customer, false);
+
+            // Inbox
+            $inboxAttributes = [
+                'title' => [
+                    'en' => 'New User Offer',
+                    'zh' => '新用戶優惠',
+                    'cn' => '新用户优惠',
+                ],
+                'short_description' => [
+                    'en' => 'Enter the promo code "' . $discountCode->full_code . '" for your first order to enjoy the offer.',
+                    'zh' => '首張訂單輸入優惠碼"' . $discountCode->full_code . '"即可享優惠。',
+                    'cn' => '首张订单输入优惠码"' . $discountCode->full_code . '"即可享优惠。',
+                ],
+                'long_description' => [
+                    'en' => $discountCode->full_code,
+                    'zh' => $discountCode->full_code,
+                    'cn' => $discountCode->full_code,
+                ],
+            ];
+            $this->createInboxPost($inboxAttributes, [$account->_id], true);
+        }
 
         // Return success message
         return response()->json([

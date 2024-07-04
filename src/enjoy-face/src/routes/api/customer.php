@@ -74,6 +74,8 @@ Route::group(
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
             Route::get('/{id}/reviews', [$defaultController, 'getPostReviews'])->middleware(['pagination']);
+
+            Route::get('/liked/all', [$defaultController, 'getAllLikedPosts'])->middleware(['pagination']);
         });
     }
 );
