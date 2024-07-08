@@ -53,6 +53,8 @@ class UpdateOrderCheckoutIsPaid
         $isPaid = $request->type == 'payment_intent.succeeded';
         $paymentMethod = 'CREDIT CARD';
 
+        if ($isPaid === false) return;
+
         // Get Checkout
         $checkout = $this->getCheckoutByTransactionID($transactionID);
         // if (is_null($checkout)) return;

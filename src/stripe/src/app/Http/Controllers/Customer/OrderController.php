@@ -287,14 +287,20 @@ class OrderController extends Controller
         if ($paymentMethod === CheckoutType::OFFLINE && $requiredPoints > 0) {
             $history = $customer->deductMembershipPoints($requiredPoints);
 
-            $description = 'Redemption Record for Order ID: ' . $order->_id;
             $historyAttributes = [
+                // 'description' => [
+                //     'en' => 'Redemption Record for Order ID: ' . $order->_id,
+                //     'zh' =>
+                //     '兌換記錄 訂單編號 ' . $order->_id,
+                //     'cn' =>
+                //     '兑换记录 订单编号:' . $order->_id,
+                // ],
                 'description' => [
-                    'en' => $description,
-                    'zh' => $description,
-                    'cn' => $description,
+                    'en' => 'Thank you for your redemption.',
+                    'zh' => '兌換成功！謝謝！',
+                    'cn' => '兑换成功！谢谢！'
                 ],
-                'remarks' => $description
+                'remarks' => ''
             ];
             $history->update($historyAttributes);
         }
