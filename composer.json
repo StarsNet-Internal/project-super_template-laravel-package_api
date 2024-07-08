@@ -25,7 +25,8 @@
       "StarsNet\\Project\\EnjoyFace\\": "src/enjoy-face/src/",
       "StarsNet\\Project\\Esgone\\": "src/esgone/src/",
       "StarsNet\\Project\\Ops\\": "src/ops/src/",
-      "StarsNet\\Project\\SunKwong\\": "src/sun-kwong/src/"
+      "StarsNet\\Project\\SunKwong\\": "src/sun-kwong/src/",
+      "StarsNet\\Project\\Stripe\\": "src/stripe/src/"
     }
   },
   "extra": {
