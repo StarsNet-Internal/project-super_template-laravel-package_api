@@ -72,8 +72,8 @@ class AuctionController extends Controller
             ->with([
                 'product',
                 'store',
-                'winningBidCustomer',
-                'winningBidCustomer.account'
+                // 'winningBidCustomer',
+                // 'winningBidCustomer.account'
             ])
             ->get();
 
