@@ -44,12 +44,6 @@ Route::group(
     ['prefix' => 'payments'],
     function () {
         $defaultController = OrderController::class;
-
-        Route::group(
-            ['middleware' => 'auth:api'],
-            function () use ($defaultController) {
-                Route::post('/callback', [$defaultController, 'onlinePaymentCallback']);
-            }
-        );
+        Route::post('/callback', [$defaultController, 'onlinePaymentCallback']);
     }
 );

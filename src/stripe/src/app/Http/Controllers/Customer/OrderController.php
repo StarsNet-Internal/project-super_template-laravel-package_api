@@ -323,7 +323,7 @@ class OrderController extends Controller
             $paymentMethod === CheckoutType::ONLINE
         ) {
             $data = [
-                'message' => 'Created a transacttion from Stripe successfully',
+                'message' => 'Created a transaction from Stripe successfully',
                 'order_id' => $orderID,
                 'transaction_id' => $transactionID,
                 'client_secret' => $clientSecret
@@ -331,9 +331,10 @@ class OrderController extends Controller
             return response()->json($data);
         } else {
             $data = [
-                'message' => 'Submitted Order successfully',
-                'return_url' => $returnUrl ?? null,
-                'order_id' => $order->_id
+                'message' => 'Created new order',
+                'order_id' => $orderID,
+                'transaction_id' => null,
+                'client_secret' => null
             ];
             return response()->json($data);
         }
