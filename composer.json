@@ -52,7 +52,9 @@
         "StarsNet\\Project\\EnjoyFace\\ProjectServiceProvider",
         "StarsNet\\Project\\Esgone\\ProjectServiceProvider",
         "StarsNet\\Project\\Ops\\ProjectServiceProvider",
-        "StarsNet\\Project\\SunKwong\\ProjectServiceProvider"
+        "StarsNet\\Project\\SunKwong\\ProjectServiceProvider",
+        "StarsNet\\Project\\Stripe\\ProjectServiceProvider",
+        "StarsNet\\Project\\Stripe\\EventServiceProvider"
       ]
     }
   }
