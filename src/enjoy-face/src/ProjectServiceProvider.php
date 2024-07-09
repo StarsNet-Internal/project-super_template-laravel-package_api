@@ -40,6 +40,7 @@ class ProjectServiceProvider extends ServiceProvider
         $getRoutesCallback = function ($router) {
             $this->getAdminRoutes();
             $this->getCustomerRoutes();
+            $this->getInternalRoutes();
         };
 
         // Load all required routes
@@ -78,6 +79,27 @@ class ProjectServiceProvider extends ServiceProvider
         $routeAttributes = [
             'prefix' => 'customer' . '/' . $this->routePrefix,
             'namespace' => 'Customer'
+        ];
+
+        // Include routes to be loaded from
+        $requireRoutes = function () use ($path) {
+            require $path;
+        };
+
+        // Define routes to be loaded from
+        $routes = Route::group($routeAttributes, $requireRoutes);
+
+        return $routes;
+    }
+
+    private function getInternalRoutes()
+    {
+        $path = __DIR__ . '/routes/api/internal.php';
+
+        // Define route attributes
+        $routeAttributes = [
+            'prefix' => 'internal' . '/' . $this->routePrefix,
+            'namespace' => 'Internal'
         ];
 
         // Include routes to be loaded from
