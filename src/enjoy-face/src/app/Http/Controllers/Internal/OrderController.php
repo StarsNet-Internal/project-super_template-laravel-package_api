@@ -17,7 +17,7 @@ class OrderController extends Controller
 
     public function getOrderNumber(Request $request)
     {
-        $order = Order::find($request->route('id'));
+        $order = Order::find($request->route('id'))->toArray();
         $bookings = $this->getOfflineOrders();
         return response()->json([
             'cashier_id' => $this->getReceiptNumber($order, $bookings),
