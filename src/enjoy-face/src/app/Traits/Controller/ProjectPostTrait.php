@@ -19,9 +19,11 @@ trait ProjectPostTrait
         $post = Post::create($postAttributes);
         $accounts = Account::find($accountIds);
 
-        foreach ($accounts as $account) {
-            $account->likePost($post);
-        }
+        $post->likedAccounts()->attach($accountIds);
+
+        // foreach ($accounts as $account) {
+        //     $account->likePost($post);
+        // }
 
         if ($isCopyable) {
             $category = PostCategory::where('item_type', 'Post')->first();
