@@ -4,7 +4,7 @@ namespace StarsNet\Project\EnjoyFace\App\Traits\Controller;
 
 // Default
 
-use App\Models\Account;
+// use App\Models\Account;
 use App\Models\Post;
 use App\Models\PostCategory;
 
@@ -17,7 +17,7 @@ trait ProjectPostTrait
         }
 
         $post = Post::create($postAttributes);
-        $accounts = Account::find($accountIds);
+        // $accounts = Account::find($accountIds);
 
         $post->likedAccounts()->attach($accountIds);
 
