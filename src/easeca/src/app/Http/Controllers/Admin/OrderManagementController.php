@@ -59,4 +59,38 @@ class OrderManagementController extends Controller
 
         return $orders;
     }
+
+    public function updateDeliveryAddress(Request $request)
+    {
+        // Validate Request
+        $validator = Validator::make([
+            'id' => $request->route('id')
+        ], [
+            'id' => [
+                'required',
+                'exists:App\Models\Order,_id'
+            ]
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        // Get Order
+        /** @var Order $order */
+        $order = Order::find($request->route('id'));
+
+        // Extract attributes from $request
+        $address = $request->address;
+
+        // Update Order
+        $order->updateNestedAttributes([
+            'delivery_details.address' => $address,
+        ]);
+
+        // Return success message
+        return response()->json([
+            'message' => 'Updated delivery address successfully',
+        ], 200);
+    }
 }
