@@ -49,7 +49,7 @@ class OrderManagementController extends Controller
         $orders->each(function ($order) {
             $order->productReviews->each(function ($productReview) {
                 $productReview->makeHidden([
-                    'user',
+                    // 'user',
                     'product_title',
                     'product_variant_title',
                     'image'
