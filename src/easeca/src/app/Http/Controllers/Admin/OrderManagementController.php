@@ -41,21 +41,19 @@ class OrderManagementController extends Controller
             ->when($statuses, function ($query, $statuses) {
                 return $query->whereCurrentStatuses($statuses);
             })->with([
-                'productReviews' => function ($query) {
-                    $query->select('order_id', 'comment');
-                }
+                'productReviews'
             ])->get();
 
-        $orders->each(function ($order) {
-            $order->productReviews->each(function ($productReview) {
-                $productReview->makeHidden([
-                    // 'user',
-                    'product_title',
-                    'product_variant_title',
-                    'image'
-                ]);
-            });
-        });
+        // $orders->each(function ($order) {
+        //     $order->productReviews->each(function ($productReview) {
+        //         $productReview->makeHidden([
+        //             'user',
+        //             'product_title',
+        //             'product_variant_title',
+        //             'image'
+        //         ]);
+        //     });
+        // });
 
         return $orders;
     }
