@@ -9,12 +9,14 @@ use App\Constants\Model\ShipmentDeliveryStatus;
 use App\Constants\Model\Status;
 use App\Events\Common\Order\OrderPaid;
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\Checkout;
 use App\Models\Customer;
 use App\Models\CustomerGroup;
 use App\Models\DiscountTemplate;
 use App\Models\Order;
 use App\Models\OrderStatus;
+use App\Models\ProductReview;
 use App\Models\ProductVariant;
 use App\Models\RefundRequest;
 use App\Models\Store;
@@ -40,21 +42,43 @@ class OrderManagementController extends Controller
         $orders = Order::whereIn('store_id', $request->store_id)
             ->when($statuses, function ($query, $statuses) {
                 return $query->whereCurrentStatuses($statuses);
-            })->with([
-                'productReviews'
-            ])->get();
+            })
+            ->get()
+            ->makeHidden(
+                [
+                    'cart_items',
+                    'gift_items',
+                ]
+            );
+        $reviews = ProductReview::all()
+            ->unique('order_id')
+            ->makeHidden(
+                [
+                    'user',
+                    'product_title',
+                    'product_variant_title',
+                    'image',
+                ]
+            );
+        $accounts = Account::all();
 
-        // $orders->each(function ($order) {
-        //     $order->productReviews->each(function ($productReview) {
-        //         $productReview->makeHidden([
-        //             'user',
-        //             'product_title',
-        //             'product_variant_title',
-        //             'image'
-        //         ]);
-        //     });
-        // });
+        foreach ($orders as $order) {
+            $filtered = $reviews->filter(function ($review) use ($order) {
+                return $review->order_id == $order->_id;
+            });
+            $orderReviews = $filtered->values()->toArray();
 
+            foreach ($orderReviews as $key => $orderReview) {
+                $user = [
+                    'username' => $accounts->first(function ($account) use ($orderReview) {
+                        return $account->user_id == $orderReview['user_id'];
+                    })->username,
+                    'avatar' => null,
+                ];
+                $orderReviews[$key]['user'] = $user;
+            }
+            $order->product_reviews = $orderReviews;
+        }
         return $orders;
     }
 
