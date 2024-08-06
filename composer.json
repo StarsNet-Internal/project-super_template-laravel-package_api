@@ -26,7 +26,8 @@
       "StarsNet\\Project\\Esgone\\": "src/esgone/src/",
       "StarsNet\\Project\\Ops\\": "src/ops/src/",
       "StarsNet\\Project\\SunKwong\\": "src/sun-kwong/src/",
-      "StarsNet\\Project\\Stripe\\": "src/stripe/src/"
+      "StarsNet\\Project\\Stripe\\": "src/stripe/src/",
+      "StarsNet\\Project\\SnoreCircle\\": "src/snore-circle/src/"
     }
   },
   "extra": {
@@ -54,7 +55,8 @@
         "StarsNet\\Project\\Ops\\ProjectServiceProvider",
         "StarsNet\\Project\\SunKwong\\ProjectServiceProvider",
         "StarsNet\\Project\\Stripe\\ProjectServiceProvider",
-        "StarsNet\\Project\\Stripe\\EventServiceProvider"
+        "StarsNet\\Project\\Stripe\\EventServiceProvider",
+        "StarsNet\\Project\\SnoreCircle\\ProjectServiceProvider"
       ]
     }
   }
