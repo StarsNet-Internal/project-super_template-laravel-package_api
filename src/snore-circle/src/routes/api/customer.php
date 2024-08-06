@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 
 // Controllers
+use StarsNet\Project\SnoreCircle\App\Http\Controllers\Customer\DevelopmentController;
 use StarsNet\Project\SnoreCircle\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\SnoreCircle\App\Http\Controllers\Customer\OrderController;
 
