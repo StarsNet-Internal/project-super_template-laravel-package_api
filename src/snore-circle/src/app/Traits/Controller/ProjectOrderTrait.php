@@ -4,6 +4,7 @@ namespace StarsNet\Project\SnoreCircle\App\Traits\Controller;
 
 // Default
 
+use App\Models\Order;
 use Carbon\Carbon;
 
 trait ProjectOrderTrait
