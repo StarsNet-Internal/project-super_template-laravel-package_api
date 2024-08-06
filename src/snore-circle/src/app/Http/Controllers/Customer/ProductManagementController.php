@@ -37,7 +37,7 @@ class ProductManagementController extends CustomerProductManagementController
     public function getAllReviews(Request $request)
     {
         // Extract attributes from $request
-        $rating = $request->input('rating', '4');
+        $rating = (int) $request->input('rating', '4');
         $slug = $request->input('slug', 'from-new-to-old');
 
         // Get sorting attributes via slugs
