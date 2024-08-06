@@ -35,8 +35,10 @@ class OrderController extends CustomerOrderController
     public function getAll(Request $request)
     {
         $orders = parent::getAll($request)->toArray();
+        $allOrders = $this->getAllOrders();
+
         foreach ($orders as $key => $order) {
-            $orders[$key]['cashier_id'] = $this->getReceiptNumber($order, $orders);
+            $orders[$key]['cashier_id'] = $this->getReceiptNumber($order, $allOrders);
         }
 
         // Return data
