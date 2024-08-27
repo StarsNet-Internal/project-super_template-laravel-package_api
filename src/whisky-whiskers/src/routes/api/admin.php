@@ -42,6 +42,7 @@ Route::group(
     ['prefix' => 'auctions'],
     function () {
         $defaultController = AuctionController::class;
+        Route::put('/statuses', [$defaultController, 'updateAuctionStatuses']);
 
         Route::group(
             ['middleware' => 'auth:api'],
@@ -62,6 +63,7 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getAllAuctionRequests'])->middleware(['pagination']);
+                Route::put('/{id}/edit', [$defaultController, 'updateAuctionRequests']);
                 Route::put('/{id}/approve', [$defaultController, 'approveAuctionRequest']);
             }
         );

@@ -85,6 +85,9 @@ class ShoppingCartController extends Controller
         $subtotalPrice = 0;
         $storageFee = 0;
 
+        $SERVICE_CHARGE_MULTIPLIER = 0.1;
+        $totalServiceCharge = 0;
+
         foreach ($cartItems as $item) {
             // Add keys
             $item->is_checkout = true;
@@ -95,11 +98,15 @@ class ShoppingCartController extends Controller
             $winningBid = $item->winning_bid ?? 0;
             $subtotalPrice += $winningBid;
 
+            // Service Charge
+            $totalServiceCharge += $winningBid *
+                $SERVICE_CHARGE_MULTIPLIER;
+
             if ($isStorage == true) {
                 $storageFee += $item->storage_fee ?? 0;
             }
         }
-        $totalPrice = $subtotalPrice + $storageFee;
+        $totalPrice = $subtotalPrice + $storageFee + $totalServiceCharge;
 
         // get shippingFee
         $courier = Courier::find($courierID);
@@ -124,12 +131,17 @@ class ShoppingCartController extends Controller
                 'subtotal' => 0,
                 'total' => 0,
             ],
+            'service_charge' => $totalServiceCharge,
             'storage_fee' => $storageFee,
             'shipping_fee' => $shippingFee
         ];
 
         $rationalizedCalculation = $this->rationalizeRawCalculation($rawCalculation);
-        $roundedCalculation = $this->roundingNestedArray($rationalizedCalculation); // Round off values
+        $roundedCalculation = $this->roundingNestedArray($rationalizedCalculation, 2); // Round off values
+
+        // Round down calculations.price.total only
+        $roundedCalculation['price']['total'] = floor($roundedCalculation['price']['total']);
+        $roundedCalculation['price']['total'] .= '.00';
 
         // Return data
         $data = [
@@ -163,7 +175,7 @@ class ShoppingCartController extends Controller
         foreach ($selectedItems as $key => $item) {
             $item->update([
                 'winning_bid' => 0,
-                'storage_fee' => 5
+                'storage_fee' => 0
             ]);
         }
 
@@ -219,6 +231,7 @@ class ShoppingCartController extends Controller
                 'subtotal' => 0,
                 'total' => 0,
             ],
+            'service_charge' => 0,
             'storage_fee' => $storageFee,
             'shipping_fee' => $shippingFee
         ];
@@ -226,8 +239,8 @@ class ShoppingCartController extends Controller
         $rationalizedCalculation = $this->rationalizeRawCalculation($rawCalculation);
         $roundedCalculation = $this->roundingNestedArray($rationalizedCalculation, 2); // Round off values
 
-        // Round up calculations.price.total only
-        $roundedCalculation['price']['total'] = ceil($roundedCalculation['price']['total']);
+        // Round down calculations.price.total only
+        $roundedCalculation['price']['total'] = floor($roundedCalculation['price']['total']);
         $roundedCalculation['price']['total'] .= '.00';
 
         // Return data
@@ -277,6 +290,9 @@ class ShoppingCartController extends Controller
         $subtotalPrice = 0;
         $storageFee = 0;
 
+        $SERVICE_CHARGE_MULTIPLIER = 0.1;
+        $totalServiceCharge = 0;
+
         foreach ($cartItems as $item) {
             // Add keys
             $item->is_checkout = true;
@@ -287,13 +303,18 @@ class ShoppingCartController extends Controller
             $winningBid = $item->winning_bid ?? 0;
             $subtotalPrice += $winningBid;
 
+            // Service Charge
+            $totalServiceCharge += $winningBid *
+                $SERVICE_CHARGE_MULTIPLIER;
+
             if ($isStorage == true) {
                 $storageFee += $item->storage_fee ?? 0;
             } else {
                 $item->storage_fee == 0;
             }
         }
-        $totalPrice = $subtotalPrice + $storageFee;
+        $totalPrice = $subtotalPrice +
+            $storageFee + $totalServiceCharge;
 
         // get shippingFee
         $courier = Courier::find($courierID);
@@ -318,6 +339,7 @@ class ShoppingCartController extends Controller
                 'subtotal' => 0,
                 'total' => 0,
             ],
+            'service_charge' => $totalServiceCharge,
             'storage_fee' => $storageFee,
             'shipping_fee' => $shippingFee
         ];
@@ -635,6 +657,7 @@ class ShoppingCartController extends Controller
                 'subtotal' => max(0, $rawCalculation['point']['subtotal']),
                 'total' => max(0, $rawCalculation['point']['total']),
             ],
+            'service_charge' => max(0, $rawCalculation['service_charge']),
             'shipping_fee' => max(0, $rawCalculation['shipping_fee']),
             'storage_fee' => max(0, $rawCalculation['storage_fee'])
         ];

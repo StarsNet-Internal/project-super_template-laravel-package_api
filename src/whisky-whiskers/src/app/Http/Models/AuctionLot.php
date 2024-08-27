@@ -201,10 +201,25 @@ class AuctionLot extends Eloquent
             ]);
         });
 
-        // If 0 or 1 bids found, or all bids are same customer_id 
-        // ! Note customer_id grouped as primary key _id on aggregation
-        if ($bids->count() <= 1 || $bids->unique('_id')->count() === 1) {
+        // If 0 bids found
+        if ($bids->count() === 0) {
             return $this->starting_price;
+        }
+
+        // If same customer only bid found
+        // ! Note customer_id grouped as primary key _id on aggregation
+        if ($bids->unique('_id')->count() === 1) {
+            $customerID = $bids[0]->_id;
+
+            $customerMaximumBid = Bid::where('customer_id', $customerID)
+                ->where("auction_lot_id", $this->_id)
+                ->where("is_hidden", false)
+                ->get()
+                ->max('bid');
+
+            return $customerMaximumBid > $this->reserve_price ?
+                $this->reserve_price :
+                $this->starting_price;
         }
 
         // If more than 2 bids found
@@ -216,8 +231,9 @@ class AuctionLot extends Eloquent
         })->values();
 
         // If more than 2 users share the same highest bid
-        if ($highestTwo[0]['count'] >= 2) {
-            return $highestTwo[0]['highest_bid_value'];
+        $highestBidValue = $highestTwo[0];
+        if ($highestBidValue['count'] >= 2) {
+            return $highestBidValue['highest_bid_value'];
         }
 
         // If same customer_id for both earliest bid
@@ -236,7 +252,7 @@ class AuctionLot extends Eloquent
             ->customer_id;
 
         if ($firstHighestEarliestBidCustomerID === $secondHighestEarliestBidCustomerID) {
-            return $highestTwo->min('highest_bid_value');
+            return min($highestTwo->min('highest_bid_value'), $this->reserve_price);
         }
 
         // If different customer_id for both earliest bids

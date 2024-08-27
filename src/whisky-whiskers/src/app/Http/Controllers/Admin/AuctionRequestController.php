@@ -39,14 +39,31 @@ class AuctionRequestController extends Controller
         return $forms;
     }
 
-    public function approveAuctionRequest(Request $request)
+    public function updateAuctionRequests(Request $request)
     {
         $form = AuctionRequest::find($request->route('id'));
+        $form->update($request->all());
 
+        return response()->json([
+            'message' => 'Updated AuctionRequest successfully',
+            '_id' => $form->_id,
+        ], 200);
+    }
+
+    public function approveAuctionRequest(Request $request)
+    {
+        // Update reply_status
+        $form = AuctionRequest::find($request->route('id'));
         $form->update(['reply_status' => $request->reply_status]);
 
+        // Update Product listing_status
         $auctionLotId = null;
+        $product = Product::find($form->product_id);
+
         if ($request->reply_status == ReplyStatus::APPROVED) {
+            $product->update(['listing_status' => 'LISTED_IN_AUCTION']);
+
+            // Create auction_lot
             $auctionLotFields = [
                 'auction_request_id' => $form->_id,
                 'owned_by_customer_id' => $form->requested_by_customer_id,
@@ -60,6 +77,8 @@ class AuctionRequestController extends Controller
 
             $auctionLot = AuctionLot::create($auctionLotFields);
             $auctionLotId = $auctionLot->_id;
+        } else if ($request->reply_status == ReplyStatus::REJECTED) {
+            $product->update(['listing_status' => 'AVAILABLE']);
         }
 
         return response()->json([

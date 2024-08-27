@@ -134,7 +134,12 @@ class ProductManagementController extends Controller
 
                 // Finalize the final bid highest value
                 $validBids = $validBids->sortByDesc('bid')->values();
-                if (!is_null($incrementRulesDocument) && $validBids->get(0)->bid_counter < 2) {
+
+                if (
+                    !is_null($incrementRulesDocument)
+                    && $validBids->count() >= 2
+                    && $validBids->get(0)->bid_counter < 2
+                ) {
                     $previousValidBid = $validBids->get(1)->bid;
 
                     // Calculate next valid minimum bid value
@@ -768,7 +773,8 @@ class ProductManagementController extends Controller
                                 ],
                                 'then' => [
                                     '$subtract' => [
-                                        '$price', '$local_discount_value'
+                                        '$price',
+                                        '$local_discount_value'
                                     ]
                                 ]
                             ],
@@ -780,13 +786,16 @@ class ProductManagementController extends Controller
                                     '$divide' => [
                                         [
                                             '$multiply' => [
-                                                '$price', [
+                                                '$price',
+                                                [
                                                     '$subtract' => [
-                                                        100, '$local_discount_value'
+                                                        100,
+                                                        '$local_discount_value'
                                                     ]
                                                 ]
                                             ]
-                                        ], 100
+                                        ],
+                                        100
                                     ]
                                 ]
                             ]
@@ -801,14 +810,16 @@ class ProductManagementController extends Controller
                     '$cond' => [
                         'if' => [
                             '$lte' => [
-                                '$discounted_price', 0
+                                '$discounted_price',
+                                0
                             ],
                         ],
                         'then' =>  '0',
                         'else' => [
                             '$toString' => [
                                 '$round' => [
-                                    '$discounted_price', 2
+                                    '$discounted_price',
+                                    2
                                 ]
                             ]
                         ],
@@ -894,7 +905,7 @@ class ProductManagementController extends Controller
                 // 'bids',
                 'auction_lots',
                 'listing_status',
-                'owned_by_customer_id',
+                // 'owned_by_customer_id',
             ];
             $aggregate[]['$project'] = array_merge(...array_map(function ($item) {
                 return [$item => false];

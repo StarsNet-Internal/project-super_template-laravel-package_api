@@ -18,6 +18,28 @@ use Illuminate\Validation\Rule;
 
 class AuctionController extends Controller
 {
+    public function updateAuctionStatuses(Request $requests)
+    {
+        $now = now();
+
+        // Make stores ACTIVE
+        $archivedStoresUpdateCount = Store::where('type', 'OFFLINE')
+            ->where('status', Status::ARCHIVED)
+            ->where('start_datetime', '<=', $now)
+            ->where('end_datetime', '>', $now)
+            ->update(['status' => Status::ACTIVE]);
+
+        // Make stores ARCHIVED
+        $activeStoresUpdateCount = Store::where('type', 'OFFLINE')
+            ->where('status', Status::ACTIVE)
+            ->where('end_datetime', '<=', $now)
+            ->update(['status' => Status::ARCHIVED]);
+
+        return response()->json([
+            'message' => "Updated {$archivedStoresUpdateCount} Auction(s) as ACTIVE, and {$activeStoresUpdateCount} Auction(s) as ARCHIVED"
+        ], 200);
+    }
+
     // public function createAuctionStore(Request $request)
     // {
     //     // Extract attributes from $request

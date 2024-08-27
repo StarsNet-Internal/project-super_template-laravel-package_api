@@ -159,10 +159,9 @@ class AuctionLotController extends Controller
             $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
             $calculatedCurrentBid = $auctionLot->getCurrentBidPrice($incrementRulesDocument);
 
-            $extractedBids->transform(function ($item) use ($highestMaximumBid, $calculatedCurrentBid) {
-                if ($item['bid'] == $highestMaximumBid) {
-                    $item['bid'] = $calculatedCurrentBid;
-                }
+            $extractedBids->transform(function ($item) use ($highestMaximumBid, $calculatedCurrentBid, $auctionLot) {
+                if ($item['bid'] == $highestMaximumBid) $item['bid'] = $calculatedCurrentBid;
+                $item["is_reserve_price"] = $item['bid'] == $auctionLot->reserve_price;
                 return $item;
             });
         }
@@ -186,25 +185,27 @@ class AuctionLotController extends Controller
             ], 404);
         }
 
+        if (
+            $auctionLot->status == Status::DELETED
+        ) {
+            return response()->json([
+                'message' => 'Auction Lot not found'
+            ], 404);
+        }
+
         if ($auctionLot->status == Status::ARCHIVED) {
             return response()->json([
                 'message' => 'Auction Lot has been archived'
             ], 404);
         }
 
-        if ($auctionLot->status == Status::DELETED) {
+        if (
+            $auctionLot->owned_by_customer_id == $this->customer()->_id
+        ) {
             return response()->json([
-                'message' => 'Auction Lot not found'
+                'message' => 'You cannot place bid on your own auction lot'
             ], 404);
         }
-
-        // if (
-        //     $auctionLot->owned_by_customer_id == $this->customer()->_id
-        // ) {
-        //     return response()->json([
-        //         'message' => 'You cannot place bid on your own auction lot'
-        //     ], 404);
-        // }
 
         // Check time
         $store = $auctionLot->store;
@@ -273,7 +274,7 @@ class AuctionLotController extends Controller
 
         // Determine minimum possible bid for input from Customer
         if (!is_null($userExistingMaximumBid)) {
-            $minimumBid = max($minimumBid, $userExistingMaximumBid->bid ?? 0);;
+            $minimumBid = max($minimumBid, $userExistingMaximumBid->bid ?? 0);
         }
 
         if ($request->bid <= $minimumBid) {
