@@ -358,20 +358,24 @@ class AuctionLotController extends Controller
         // Socket
         $newCurrentBid = $auctionLot->getCurrentBidPrice($biddingIncrementRules);
         if ($newCurrentBid > $currentBid) {
-            $url = 'https://socket.whiskywhiskers.com/api/publish';
-            $data = [
-                "site" => 'whisky-whiskers',
-                "room" => $auctionLotId,
-                "message" => [
-                    "bidPrice" => $newCurrentBid,
-                    "lotId" => $auctionLotId,
-                ]
-            ];
+            try {
+                $url = 'https://socket.whiskywhiskers.com/api/publish';
+                $data = [
+                    "site" => 'whisky-whiskers',
+                    "room" => $auctionLotId,
+                    "message" => [
+                        "bidPrice" => $newCurrentBid,
+                        "lotId" => $auctionLotId,
+                    ]
+                ];
 
-            Http::post(
-                $url,
-                $data
-            );
+                Http::post(
+                    $url,
+                    $data
+                );
+            } catch (\Throwable $th) {
+                print($th);
+            }
         }
 
         // Return Auction Store
