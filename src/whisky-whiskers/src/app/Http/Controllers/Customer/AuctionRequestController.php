@@ -5,8 +5,11 @@ namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\ProductVariant;
 use App\Models\Store;
+use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
 use Illuminate\Http\Request;
 use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionRequest;
+use App\Constants\Model\Status;
+use App\Constants\Model\StoreType;
 
 class AuctionRequestController extends Controller
 {
@@ -73,11 +76,42 @@ class AuctionRequestController extends Controller
         $form = AuctionRequest::create($updateAuctionRequestFields);
         $form->associateRequestedCustomer($customer);
 
-        // Update Product
-        $updateProductFields = [
-            'listing_status' => 'PENDING_FOR_AUCTION'
-        ];
-        $product->update($updateProductFields);
+        // Check if auto-approve needed
+        $now = now();
+        $earliestAvailableStore = Store::where(
+            'type',
+            StoreType::OFFLINE
+        )
+            ->where('status', Status::ARCHIVED)
+            ->where('start_datetime', '>', $now->toDateString())
+            ->orderBy('start_datetime')
+            ->first();
+
+        if ($earliestAvailableStore->_id == $store->_id) {
+            $updateProductFields = [
+                'listing_status' => 'LISTED_IN_AUCTION'
+            ];
+            $product->update($updateProductFields);
+
+            // Create auction_lot
+            $auctionLotFields = [
+                'auction_request_id' => $form->_id,
+                'owned_by_customer_id' => $form->requested_by_customer_id,
+                'product_id' => $form->product_id,
+                'product_variant_id' => $form->product_variant_id,
+                'store_id' => $form->store_id,
+                'starting_price' => $form->starting_bid ?? 0,
+                'current_bid' => $form->starting_bid ?? 0,
+                'reserve_price' => $form->reserve_price ?? 0,
+            ];
+            AuctionLot::create($auctionLotFields);
+        } else {
+            // Update Product
+            $updateProductFields = [
+                'listing_status' => 'PENDING_FOR_AUCTION'
+            ];
+            $product->update($updateProductFields);
+        }
 
         // Return message
         return response()->json([

@@ -200,7 +200,6 @@ class AuctionLotController extends Controller
         $auctionLotId = $request->route('auction_lot_id');
         $requestedBid = $request->bid;
 
-
         // Check auction lot
         /** @var AuctionLot $auctionLot */
         $auctionLot = AuctionLot::find($auctionLotId);
@@ -303,7 +302,7 @@ class AuctionLotController extends Controller
             $minimumBid = max($minimumBid, $userExistingMaximumBid->bid ?? 0);
         }
 
-        if ($request->bid <= $minimumBid) {
+        if ($request->bid < $minimumBid) {
             return response()->json([
                 'message' => 'Your bid is lower than your maximum bid value of ' .  $minimumBid . '.',
                 'error_status' => 1,
@@ -359,7 +358,7 @@ class AuctionLotController extends Controller
         // Socket
         $newCurrentBid = $auctionLot->getCurrentBidPrice($biddingIncrementRules);
         if ($newCurrentBid > $currentBid) {
-            $url = 'http://office.starsnet.com.hk:3001/api/publish';
+            $url = 'https://socket.whiskywhiskers.com/api/publish';
             $data = [
                 "site" => 'whisky-whiskers',
                 "room" => $auctionLotId,
