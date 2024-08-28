@@ -52,7 +52,7 @@ class AuctionLotController extends Controller
 
         // Get current_bid
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
-        $auctionLot->current_bid = $auctionLot->getCurrentBidBid($incrementRulesDocument);
+        $auctionLot->current_bid = $auctionLot->getCurrentBidPrice($incrementRulesDocument);
 
         // Check is_reserve_met
         $auctionLot->is_reserve_price_met = $auctionLot->current_bid >= $auctionLot->reserve_price;
@@ -361,10 +361,10 @@ class AuctionLotController extends Controller
         if ($newCurrentBid > $currentBid) {
             $url = 'http://office.starsnet.com.hk:3001/api/publish';
             $data = [
-                "site" => 'customer-testing',
+                "site" => 'whisky-whiskers',
                 "room" => $auctionLotId,
                 "message" => [
-                    "bidPrice" => 500,
+                    "bidPrice" => $newCurrentBid,
                     "lotId" => $auctionLotId,
                 ]
             ];
