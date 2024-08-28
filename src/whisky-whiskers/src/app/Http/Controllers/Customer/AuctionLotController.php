@@ -7,11 +7,13 @@ use App\Constants\Model\StoreType;
 use App\Http\Controllers\Controller;
 use App\Models\Configuration;
 use App\Models\Store;
+use App\Models\Customer;
 use App\Models\WishlistItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
 use StarsNet\Project\WhiskyWhiskers\App\Models\Bid;
+use Illuminate\Support\Facades\Http;
 
 // Validator
 use Illuminate\Support\Facades\Validator;
@@ -28,6 +30,7 @@ class AuctionLotController extends Controller
             'product',
             'productVariant',
             'store',
+            'bids'
         ])->find($auctionLotId);
 
         if (!in_array(
@@ -49,7 +52,7 @@ class AuctionLotController extends Controller
 
         // Get current_bid
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
-        $auctionLot->current_bid = $auctionLot->getCurrentBidPrice($incrementRulesDocument);
+        $auctionLot->current_bid = $auctionLot->getCurrentBidBid($incrementRulesDocument);
 
         // Check is_reserve_met
         $auctionLot->is_reserve_price_met = $auctionLot->current_bid >= $auctionLot->reserve_price;
@@ -111,62 +114,84 @@ class AuctionLotController extends Controller
 
         // Get Auction Store(s)
         $auctionLot = AuctionLot::find($auctionLotId);
-
         if (is_null($auctionLot)) {
             return response()->json([
                 'message' => 'Auction Lot not found'
             ], 404);
         }
 
-        // Get all distinctive bid values per AuctionLot, then sort from highest to lowest
-        $distinctBidValues = $auctionLot->bids()
-            ->where('is_hidden', false)
-            ->pluck('bid')
-            ->unique()
-            ->sort()
-            ->reverse();
+        // Get all bids
+        $bids = $auctionLot->bids()->where("is_hidden", false)->get();
+        $displayBidRecords = new Collection();
 
-        // Only get the first 2 earliest bid per distinctive bid value
-        $extractedBids = new Collection();
-        foreach ($distinctBidValues as $value) {
-            // Get the two earliest bids for the current bid value
-            $twoEarliestBids = $auctionLot->bids()
-                ->where('bid', $value)
-                ->where('is_hidden', false)
-                ->orderBy('created_at', 'asc')
-                ->take(2)
-                ->get();
+        // If 0 bids found
+        if ($bids->count() === 0) return $displayBidRecords;
 
-            // Merge the two earliest bids to the collection
-            $extractedBids = $extractedBids->merge($twoEarliestBids);
-        }
+        // If only same customer placed bid
+        if ($bids->unique('customer_id')->count() === 1) {
+            $customerID = $bids->unique('customer_id')->first()->customer_id;
+            $customerMaxBid = $bids->where('customer_id', $customerID)->max('bid');
 
-        // Attach customer and account information to each big
-        foreach ($extractedBids as $bid) {
-            $customer = $bid->customer;
-            $account = $customer->account;
+            $reservePrice = $auctionLot->reserve_price;
 
-            $bid->username = optional($account)->username;
-            $bid->avatar = optional($account)->avatar;
-        }
+            if ($customerMaxBid >= $reservePrice) {
+                $displayBidRecords = $bids->sortBy('bid')
+                    ->filter(function ($item) use ($reservePrice) {
+                        return $item->bid >= $reservePrice;
+                    })
+                    ->take(1)
+                    ->values()
+                    ->all();
+                $displayBidRecords[0]['bid'] = $reservePrice;
+            } else {
+                $displayBidRecords = $bids->sortBy('bid')
+                    ->take(1)
+                    ->values()
+                    ->all();
+                $displayBidRecords[0]['bid'] = $auctionLot->starting_price;
+            }
+        } else {
+            // Get all distinctive bid values per AuctionLot, then sort from highest to lowest
+            $allDistinctBidValues =
+                $bids->pluck('bid')->unique()->sort()->reverse()->values();
 
-        // Calculate the new current bid and override
-        if ($distinctBidValues->count() > 0) {
-            // Get highest with max(), sort reverse didn't work
-            $highestMaximumBid = $distinctBidValues->max();
+            // Only get the first 2 earliest bid per distinctive bid value
+            foreach ($allDistinctBidValues as $value) {
+                // Get the two earliest bids for the current bid value
+                $twoEarliestBids = $bids->where('bid', $value)
+                    ->sortBy('created_at')
+                    ->take(2)
+                    ->all();
+
+                // Merge the two earliest bids to the collection
+                $displayBidRecords = $displayBidRecords->merge($twoEarliestBids);
+            }
+
+            // Calculate the new current bid and override
+            $highestMaximumBid = $allDistinctBidValues->max();
 
             // Calculate the new highest bid value
             $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
             $calculatedCurrentBid = $auctionLot->getCurrentBidPrice($incrementRulesDocument);
 
-            $extractedBids->transform(function ($item) use ($highestMaximumBid, $calculatedCurrentBid, $auctionLot) {
+            $displayBidRecords->transform(function ($item) use ($highestMaximumBid, $calculatedCurrentBid) {
                 if ($item['bid'] == $highestMaximumBid) $item['bid'] = $calculatedCurrentBid;
-                $item["is_reserve_price"] = $item['bid'] == $auctionLot->reserve_price;
                 return $item;
             });
         }
 
-        return $extractedBids;
+        // Attach customer and account information to each bid
+        foreach ($displayBidRecords as $bid) {
+            $customer = $bid->customer;
+            $account = $customer->account;
+
+            $bid->username = optional($account)->username;
+            $bid->avatar = optional($account)->avatar;
+
+            $bid["is_reserve_price"] = $bid['bid'] == $auctionLot->reserve_price;
+        }
+
+        return $displayBidRecords;
     }
 
     public function createMaximumBid(Request $request)
@@ -174,6 +199,7 @@ class AuctionLotController extends Controller
         // Extract attributes from $request
         $auctionLotId = $request->route('auction_lot_id');
         $requestedBid = $request->bid;
+
 
         // Check auction lot
         /** @var AuctionLot $auctionLot */
@@ -328,6 +354,25 @@ class AuctionLotController extends Controller
                 // 'current_bid' => $requestedBid,
                 'latest_bid_customer_id' => $customer->_id
             ]);
+        }
+
+        // Socket
+        $newCurrentBid = $auctionLot->getCurrentBidPrice($biddingIncrementRules);
+        if ($newCurrentBid > $currentBid) {
+            $url = 'http://office.starsnet.com.hk:3001/api/publish';
+            $data = [
+                "site" => 'customer-testing',
+                "room" => $auctionLotId,
+                "message" => [
+                    "bidPrice" => 500,
+                    "lotId" => $auctionLotId,
+                ]
+            ];
+
+            Http::post(
+                $url,
+                $data
+            );
         }
 
         // Return Auction Store

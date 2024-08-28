@@ -43,6 +43,9 @@ Route::group(
     function () {
         $defaultController = AuctionController::class;
         Route::put('/statuses', [$defaultController, 'updateAuctionStatuses']);
+        Route::get('/{store_id}/archive', [$defaultController, 'archiveAllAuctionLots']);
+        Route::get('/{store_id}/orders/create', [$defaultController, 'generateAuctionOrders']);
+
 
         Route::group(
             ['middleware' => 'auth:api'],
