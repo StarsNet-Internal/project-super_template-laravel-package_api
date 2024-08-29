@@ -13,7 +13,11 @@ class AuctionController extends Controller
     public function getAllAuctions(Request $request)
     {
         // Extract attributes from $request
-        $statuses = (array) $request->input('status', [Status::ACTIVE, Status::ARCHIVED]);
+        $statuses = (array) $request->input('status', [
+            Status::DRAFT,
+            Status::ACTIVE,
+            Status::ARCHIVED
+        ]);
 
         // Get Auction Store(s)
         $auctions = Store::whereType(StoreType::OFFLINE)

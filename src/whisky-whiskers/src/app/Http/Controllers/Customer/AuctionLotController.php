@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Configuration;
 use App\Models\Store;
 use App\Models\Customer;
+use Carbon\Carbon;
 use App\Models\WishlistItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -338,8 +339,8 @@ class AuctionLotController extends Controller
         ]);
 
         // Extend endDateTime
-        $gracePeriodInMins = 2;
-        $newEndDateTime = now()->addMinutes($gracePeriodInMins)->ceilMinute();
+        $gracePeriodInMins = 15;
+        $newEndDateTime = Carbon::parse($store->end_datetime)->addMinutes($gracePeriodInMins)->ceilMinute();
 
         if ($newEndDateTime > $store->end_datetime) {
             $store->update([
@@ -358,20 +359,26 @@ class AuctionLotController extends Controller
         // Socket
         $newCurrentBid = $auctionLot->getCurrentBidPrice($biddingIncrementRules);
         if ($newCurrentBid > $currentBid) {
-            $url = 'https://socket.whiskywhiskers.com/api/publish';
-            $data = [
-                "site" => 'whisky-whiskers',
-                "room" => $auctionLotId,
-                "message" => [
-                    "bidPrice" => $newCurrentBid,
-                    "lotId" => $auctionLotId,
-                ]
-            ];
+            try {
+                $url = 'https://socket.whiskywhiskers.com/api/publish';
+                $data = [
+                    "site" => 'whisky-whiskers',
+                    "room" => $auctionLotId,
+                    "message" => [
+                        "bidPrice" => $newCurrentBid,
+                        "lotId" => $auctionLotId,
+                    ]
+                ];
 
-            Http::post(
-                $url,
-                $data
-            );
+                $res = Http::post(
+                    $url,
+                    $data
+                );
+            } catch (\Exception $e) {
+                // Optionally log the error
+                print($e);
+                // Continue execution without throwing an exception
+            }
         }
 
         // Return Auction Store

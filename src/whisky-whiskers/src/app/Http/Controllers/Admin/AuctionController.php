@@ -9,8 +9,12 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\Customer;
 use App\Models\Configuration;
+use App\Models\ProductVariant;
+use App\Models\Order;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
+use App\Constants\Model\WarehouseInventoryHistoryType;
 use App\Constants\Model\CheckoutType;
 use App\Constants\Model\OrderDeliveryMethod;
 use App\Constants\Model\ShipmentDeliveryStatus;
@@ -32,19 +36,38 @@ class AuctionController extends Controller
         $now = now();
 
         // Make stores ACTIVE
-        $archivedStoresUpdateCount = Store::where('type', 'OFFLINE')
+        $archivedStores = Store::where('type', 'OFFLINE')
             ->where('status', Status::ARCHIVED)
-            ->where('start_datetime', '<=', $now->toDateString())
-            ->where('end_datetime', '>', $now->toDateString())
-            ->update(['status' => Status::ACTIVE]);
+            ->get();
+
+        $archivedStoresUpdateCount = 0;
+        foreach ($archivedStores as $store) {
+            $startTime = Carbon::parse($store->start_datetime);
+            $endTime = Carbon::parse($store->end_datetime);
+
+            if ($now >= $startTime && $now < $endTime) {
+                $store->update(['status' => Status::ACTIVE]);
+                $archivedStoresUpdateCount++;
+            }
+        }
 
         // Make stores ARCHIVED
-        $activeStoresUpdateCount = Store::where('type', 'OFFLINE')
+        $activeStores = Store::where('type', 'OFFLINE')
             ->where('status', Status::ACTIVE)
-            ->where('end_datetime', '<=', $now->toDateString())
-            ->update(['status' => Status::ARCHIVED]);
+            ->get();
+
+        $activeStoresUpdateCount = 0;
+        foreach ($activeStores as $store) {
+            $endTime = Carbon::parse($store->end_datetime);
+
+            if ($now >= $endTime) {
+                $store->update(['status' => Status::ARCHIVED]);
+                $activeStoresUpdateCount++;
+            }
+        }
 
         return response()->json([
+            'now_time' => $now,
             'message' => "Updated {$archivedStoresUpdateCount} Auction(s) as ACTIVE, and {$activeStoresUpdateCount} Auction(s) as ARCHIVED"
         ], 200);
     }
@@ -96,7 +119,7 @@ class AuctionController extends Controller
                     $highestBidValue = $allBids->pluck('bid')->max();
                     $higestBidderCustomerID = $lot->bids()
                         ->where('bid', $highestBidValue)
-                        ->sortBy('created_at')
+                        ->orderBy('created_at')
                         ->first()
                         ->customer_id;
 
@@ -131,6 +154,7 @@ class AuctionController extends Controller
 
         $winningCustomerIDs = $unpaidAuctionLots->pluck('winning_bid_customer_id')->values()->all();
 
+        $generatedOrderCount = 0;
         foreach ($winningCustomerIDs as $customerID) {
             try {
                 $winningLots = $unpaidAuctionLots->where('winning_bid_customer_id', $customerID)->all();
@@ -227,21 +251,99 @@ class AuctionController extends Controller
                     'payment_method' => $paymentMethod,
                     'discounts' => $checkoutDetails['discounts'],
                     'calculations' => $checkoutDetails['calculations'],
+                    'delivery_info' => [
+                        'country_code' => 'HK',
+                        'method' => 'FACE_TO_FACE_PICKUP',
+                        'courier_id' => null,
+                        'warehouse_id' => null,
+                    ],
+                    'delivery_details' => [
+                        'recipient_name' => null,
+                        'email' => null,
+                        'area_code' => null,
+                        'phone' => null,
+                        'address' => null,
+                        'remarks' => null,
+                    ],
                     'is_voucher_applied' => $checkoutDetails['is_voucher_applied'],
                     'paid_order_id' => null,
                     'is_storage' => false
                 ];
                 $order = $customer->createOrder($orderAttributes, $store);
+
+                // Create OrderCartItem(s)
+                $checkoutItems = collect($checkoutDetails['cart_items'])
+                    ->filter(function ($item) {
+                        return $item->is_checkout;
+                    })->values();
+
+                $variantIDs = [];
+                foreach ($checkoutItems as $item) {
+                    $attributes = $item->toArray();
+                    unset($attributes['_id'], $attributes['is_checkout']);
+
+                    // Update WarehouseInventory(s)
+                    $variantID = $attributes['product_variant_id'];
+                    $variantIDs[] = $variantID;
+                    $qty = $attributes['qty'];
+                    /** @var ProductVariant $variant */
+                    $variant = ProductVariant::find($variantID);
+                    $order->createCartItem($attributes);
+                }
+
+                // Update Order
+                $status = Str::slug(ShipmentDeliveryStatus::SUBMITTED);
+                $order->updateStatus($status);
+
+                // Create Checkout
+                $checkout = $this->createBasicCheckout($order, $paymentMethod);
+
+                // Delete ShoppingCartItem(s)
+                $variants = ProductVariant::objectIDs($variantIDs)->get();
+                $customer->clearCartByStore($store, $variants);
+
+                $generatedOrderCount++;
             } catch (\Throwable $th) {
                 print($th);
             }
         }
 
         return response()->json([
-            'message' => 'Generated All Auction Store Orders Successfully'
+            'message' => "Generated All {$generatedOrderCount} Auction Store Orders Successfully"
         ], 200);
     }
 
+    private function rationalizeRawCalculation(array $rawCalculation)
+    {
+        return [
+            'currency' => $rawCalculation['currency'],
+            'price' => [
+                'subtotal' => max(0, $rawCalculation['price']['subtotal']),
+                'total' => max(0, $rawCalculation['price']['total']),
+            ],
+            'price_discount' => [
+                'local' => $rawCalculation['price_discount']['local'],
+                'global' => $rawCalculation['price_discount']['global'],
+            ],
+            'point' => [
+                'subtotal' => max(0, $rawCalculation['point']['subtotal']),
+                'total' => max(0, $rawCalculation['point']['total']),
+            ],
+            'service_charge' => max(0, $rawCalculation['service_charge']),
+            'shipping_fee' => max(0, $rawCalculation['shipping_fee']),
+            'storage_fee' => max(0, $rawCalculation['storage_fee'])
+        ];
+    }
+
+    private function createBasicCheckout(Order $order, string $paymentMethod = CheckoutType::ONLINE)
+    {
+        $attributes = [
+            'payment_method' => $paymentMethod
+        ];
+        /** @var Checkout $checkout */
+        $checkout = $order->checkout()->create($attributes);
+        return $checkout;
+    }
 
     // public function createAuctionStore(Request $request)
     // {
