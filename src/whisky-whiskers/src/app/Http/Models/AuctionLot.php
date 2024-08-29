@@ -203,52 +203,53 @@ class AuctionLot extends Eloquent
         }
 
         // If more than 2 bids from different customers found
-        $highestTwoDistinctBidValues = $bids->pluck('bid')->unique()->sort()->reverse()->take(2)->values();
-        $highestTwoBidCounts = $bids->filter(function ($item) use ($highestTwoDistinctBidValues) {
-            return in_array($item['bid'], $highestTwoDistinctBidValues->toArray());
-        })
-            ->groupBy('bid')
-            ->map(function ($items, $key) {
-                return ['bid' => $key, 'count' => $items->count()];
-            })
-            ->sort()
-            ->reverse()
-            ->values()
-            ->all();
+        $sortedBids = $bids->sortBy(function ($item) {
+            return [$item->bid, $item->created_at];
+        })->values()->all();
 
-        // If more than 2 users share the same highest bid
-        if ($highestTwoBidCounts[0]['count'] >= 2) {
-            return $highestTwoBidCounts[0]['bid'];
+        $maxBid = collect($sortedBids)->max('bid');
+        $maxBidDuplicateCount = collect($sortedBids)->where('bid', $maxBid)->count();
+        if ($maxBidDuplicateCount > 1) return $maxBid;
+
+        // Splice unwanted bids
+        $previousCustomerID = null;
+        $previousBid = null;
+        foreach ($sortedBids as $bid) {
+            $currentCustomerID = $bid["customer_id"];
+            $currentBid = $bid["bid"];
+
+            if (
+                $currentCustomerID == $previousCustomerID
+            ) {
+                $bid["is_to_be_deleted"] = true;
+            } else if (
+                $currentBid == $previousBid
+            ) {
+                $bid["is_to_be_deleted"] = true;
+            } else {
+                $bid["is_to_be_deleted"] = false;
+            }
+
+            $previousCustomerID = $currentCustomerID;
+            $previousBid = $currentBid;
         }
+        $sortedBids = collect($sortedBids)->filter(function ($item) {
+            return $item["is_to_be_deleted"] == false;
+        });
 
-        // If same customer_id for both earliest bid
-        $firstHighestAndEarliestBidCustomerID = $bids
-            ->where('bid', $highestTwoDistinctBidValues->max())
-            ->sortBy('created_at')
-            ->values()
-            ->first()
-            ->customer_id;
+        $descendingSortedBids = $sortedBids->sortByDesc('bid')->values();
+        $highestBid = $descendingSortedBids[0]['bid'];
+        $secondHighestBid = $descendingSortedBids[1]['bid'];
 
-        $secondHighestAndEarliestBidCustomerID = $bids
-            ->where('bid', $highestTwoDistinctBidValues->min())
-            ->sortBy('created_at')
-            ->values()
-            ->first()
-            ->customer_id;
-
-        if ($firstHighestAndEarliestBidCustomerID === $secondHighestAndEarliestBidCustomerID) {
-            return max($highestTwoDistinctBidValues->min(), $this->reserve_price);
-        }
-
-        // If different customer_id for both earliest bids
+        $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
         $incrementRules = $incrementRulesDocument->bidding_increments;
-        $previousValidBid = count($highestTwoBidCounts) > 1 ?
-            $highestTwoDistinctBidValues->min() :
-            $this->starting_price;
 
+        $nextValidBid = $secondHighestBid;
         foreach ($incrementRules as $key => $interval) {
-            if ($previousValidBid >= $interval['from'] && $previousValidBid < $interval['to']) {
-                $nextValidBid = $previousValidBid + $interval['increment'];
+            if (
+                $secondHighestBid >= $interval['from'] && $secondHighestBid < $interval['to']
+            ) {
+                $nextValidBid = $secondHighestBid + $interval['increment'];
             }
         }
 

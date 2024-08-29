@@ -200,6 +200,7 @@ class AuctionLotController extends Controller
         // Extract attributes from $request
         $auctionLotId = $request->route('auction_lot_id');
         $requestedBid = $request->bid;
+        $now = now();
 
         // Check auction lot
         /** @var AuctionLot $auctionLot */
@@ -340,11 +341,13 @@ class AuctionLotController extends Controller
 
         // Extend endDateTime
         $gracePeriodInMins = 15;
-        $newEndDateTime = Carbon::parse($store->end_datetime)->addMinutes($gracePeriodInMins)->ceilMinute();
+        $currentEndDateTime = Carbon::parse($store->end_datetime);
+        $graceEndDateTime = $currentEndDateTime->copy()->subMinutes($gracePeriodInMins);
 
-        if ($newEndDateTime > $store->end_datetime) {
+        if ($now > $graceEndDateTime) {
+            $newEndDateTime = $currentEndDateTime->copy()->addMinutes($gracePeriodInMins);
             $store->update([
-                'end_datetime' => $newEndDateTime
+                'end_datetime' => $newEndDateTime->toISOString()
             ]);
         }
 
@@ -358,7 +361,7 @@ class AuctionLotController extends Controller
 
         // Socket
         $newCurrentBid = $auctionLot->getCurrentBidPrice($biddingIncrementRules);
-        if ($newCurrentBid > $currentBid) {
+        if ($requestedBid == $auctionLot->starting_price || $newCurrentBid > $currentBid) {
             try {
                 $url = 'https://socket.whiskywhiskers.com/api/publish';
                 $data = [

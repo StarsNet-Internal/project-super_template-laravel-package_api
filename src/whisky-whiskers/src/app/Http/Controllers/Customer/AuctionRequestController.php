@@ -96,7 +96,7 @@ class AuctionRequestController extends Controller
             // Create auction_lot
             $auctionLotFields = [
                 'auction_request_id' => $form->_id,
-                'owned_by_customer_id' => $form->requested_by_customer_id,
+                'owned_by_customer_id' => $customer->_id,
                 'product_id' => $form->product_id,
                 'product_variant_id' => $form->product_variant_id,
                 'store_id' => $form->store_id,
