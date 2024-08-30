@@ -183,77 +183,60 @@ class AuctionLot extends Eloquent
 
     public function getCurrentBidPrice(Configuration $incrementRulesDocument)
     {
-        // Get all bids
-        $bids = $this->bids()->where("is_hidden", false)->get();
+        // Get all highest maximum bids per customer_id
+        $allBids = $this->bids()
+            ->where('is_hidden', false)
+            ->get()
+            ->groupBy('customer_id')
+            ->map(function ($item) {
+                return $item->sortByDesc('bid')->first();
+            })
+            ->sortByDesc('bid')
+            ->values();
 
-        // If 0 bids found
-        if ($bids->count() === 0) return $this->starting_price;
+        // Case 1: If 0 bids
+        $allBidsCount = $allBids->count();
+        $startingPrice = $this->starting_price;
 
-        // If only same customer placed bid
-        if ($bids->unique('customer_id')->count() === 1) {
-            //TODO: Revert later
-            return $this->starting_price;
+        if ($allBidsCount === 0) return $startingPrice; // Case 1
 
-            $customerID = $bids->unique('customer_id')->first()->customer_id;
-            $customerMaxBid = $bids->where('customer_id', $customerID)->max('bid');
+        // If 1 bids
+        $maxBidValue = $allBids->max('bid');
+        $reservePrice = $this->reserve_price;
+        $isReservedPriceMet = $maxBidValue >= $reservePrice;
 
-            return $customerMaxBid > $this->reserve_price ?
-                $this->reserve_price :
-                $this->starting_price;
+        if ($allBidsCount === 1) {
+            return $isReservedPriceMet ?
+                $reservePrice : // Case 3A
+                $startingPrice; // Case 2A
         }
 
-        // If more than 2 bids from different customers found
-        $sortedBids = $bids->sortBy(function ($item) {
-            return [$item->bid, $item->created_at];
-        })->values()->all();
+        // If more than 1 bids
+        $maxBidCount = $allBids->where('bid', $maxBidValue)->count();
+        if ($maxBidCount >= 2) return $maxBidValue; // Case 2B(ii) & 3B (ii)
 
-        $maxBid = collect($sortedBids)->max('bid');
-        $maxBidDuplicateCount = collect($sortedBids)->where('bid', $maxBid)->count();
-        if ($maxBidDuplicateCount > 1) return $maxBid;
-
-        // Splice unwanted bids
-        $previousCustomerID = null;
-        $previousBid = null;
-        foreach ($sortedBids as $bid) {
-            $currentCustomerID = $bid["customer_id"];
-            $currentBid = $bid["bid"];
-
-            if (
-                $currentCustomerID == $previousCustomerID
-            ) {
-                $bid["is_to_be_deleted"] = true;
-            } else if (
-                $currentBid == $previousBid
-            ) {
-                $bid["is_to_be_deleted"] = true;
-            } else {
-                $bid["is_to_be_deleted"] = false;
-            }
-
-            $previousCustomerID = $currentCustomerID;
-            $previousBid = $currentBid;
-        }
-        $sortedBids = collect($sortedBids)->filter(function ($item) {
-            return $item["is_to_be_deleted"] == false;
-        });
-
-        $descendingSortedBids = $sortedBids->sortByDesc('bid')->values();
-        $highestBid = $descendingSortedBids[0]['bid'];
-        $secondHighestBid = $descendingSortedBids[1]['bid'];
-
+        // For Case 2B(ii) & 3B (ii) Calculations
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
         $incrementRules = $incrementRulesDocument->bidding_increments;
 
-        $nextValidBid = $secondHighestBid;
-        foreach ($incrementRules as $key => $interval) {
-            if (
-                $secondHighestBid >= $interval['from'] && $secondHighestBid < $interval['to']
-            ) {
-                $nextValidBid = $secondHighestBid + $interval['increment'];
+        $maxBidValues = $allBids->sortByDesc('bid')->pluck('bid')->values()->all();
+        $secondHighestBidValue = $maxBidValues[1];
+
+        $incrementalBid = 0;
+        foreach ($incrementRules as $interval) {
+            if ($secondHighestBidValue >= $interval['from'] && $secondHighestBidValue < $interval['to']) {
+                $incrementalBid = $interval['increment'];
+                break;
             }
         }
 
-        return $nextValidBid;
+        // Case 3B (i)
+        if ($isReservedPriceMet) {
+            return max($reservePrice, $secondHighestBidValue + $incrementalBid);
+        } else {
+            // Case 2B (i)
+            return min($maxBidValue, $secondHighestBidValue + $incrementalBid);
+        }
     }
 
     // -----------------------------
