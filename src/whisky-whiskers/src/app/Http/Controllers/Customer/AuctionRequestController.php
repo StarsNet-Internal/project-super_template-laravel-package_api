@@ -3,13 +3,18 @@
 namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Models\ProductVariant;
-use App\Models\Store;
-use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
-use Illuminate\Http\Request;
-use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionRequest;
+
 use App\Constants\Model\Status;
 use App\Constants\Model\StoreType;
+
+use App\Models\ProductVariant;
+use App\Models\Store;
+
+use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
+use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionRequest;
+use StarsNet\Project\WhiskyWhiskers\App\Models\BidHistory;
+
+use Illuminate\Http\Request;
 
 class AuctionRequestController extends Controller
 {
@@ -104,7 +109,13 @@ class AuctionRequestController extends Controller
                 'current_bid' => $form->starting_bid ?? 0,
                 'reserve_price' => $form->reserve_price ?? 0,
             ];
-            AuctionLot::create($auctionLotFields);
+            $auctionLot = AuctionLot::create($auctionLotFields);
+
+            BidHistory::create([
+                'auction_lot_id' => $auctionLot->_id,
+                'current_bid' => $$auctionLot->starting_bid,
+                'histories' => []
+            ]);
         } else {
             // Update Product
             $updateProductFields = [

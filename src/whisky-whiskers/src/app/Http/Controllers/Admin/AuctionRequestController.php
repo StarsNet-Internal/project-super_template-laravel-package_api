@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
 use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionRequest;
+use StarsNet\Project\WhiskyWhiskers\App\Models\BidHistory;
 use StarsNet\Project\WhiskyWhiskers\App\Models\ConsignmentRequest;
 
 class AuctionRequestController extends Controller
@@ -77,6 +78,12 @@ class AuctionRequestController extends Controller
 
             $auctionLot = AuctionLot::create($auctionLotFields);
             $auctionLotId = $auctionLot->_id;
+
+            BidHistory::create([
+                'auction_lot_id' => $auctionLotId,
+                'current_bid' => $$auctionLot->starting_bid,
+                'histories' => []
+            ]);
         } else if ($request->reply_status == ReplyStatus::REJECTED) {
             $product->update(['listing_status' => 'AVAILABLE']);
         }

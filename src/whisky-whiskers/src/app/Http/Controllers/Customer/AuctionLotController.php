@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Http;
 // Validator
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use StarsNet\Project\WhiskyWhiskers\App\Models\BidHistory;
 
 class AuctionLotController extends Controller
 {
@@ -121,75 +122,28 @@ class AuctionLotController extends Controller
             ], 404);
         }
 
-        // Get all bids
-        $bids = $auctionLot->bids()->where("is_hidden", false)->get();
-        $displayBidRecords = new Collection();
+        // Get Bid History
+        $biddingIncrementRules = Configuration::slug('bidding-increments')->latest()->first();
+        $currentBid = $auctionLot->getCurrentBidPrice($biddingIncrementRules);
 
-        // If 0 bids found
-        if ($bids->count() === 0) return $displayBidRecords;
-
-        // If only same customer placed bid
-        if ($bids->unique('customer_id')->count() === 1) {
-            $customerID = $bids->unique('customer_id')->first()->customer_id;
-            $customerMaxBid = $bids->where('customer_id', $customerID)->max('bid');
-
-            $reservePrice = $auctionLot->reserve_price;
-
-            if ($customerMaxBid >= $reservePrice) {
-                $displayBidRecords = $bids->sortBy('bid')
-                    ->filter(function ($item) use ($reservePrice) {
-                        return $item->bid >= $reservePrice;
-                    })
-                    ->take(1)
-                    ->values()
-                    ->all();
-                $displayBidRecords[0]['bid'] = $reservePrice;
-            } else {
-                $displayBidRecords = $bids->sortBy('bid')
-                    ->take(1)
-                    ->values()
-                    ->all();
-                $displayBidRecords[0]['bid'] = $auctionLot->starting_price;
-            }
-        } else {
-            // Get all distinctive bid values per AuctionLot, then sort from highest to lowest
-            $allDistinctBidValues =
-                $bids->pluck('bid')->unique()->sort()->reverse()->values();
-
-            // Only get the first 2 earliest bid per distinctive bid value
-            foreach ($allDistinctBidValues as $value) {
-                // Get the two earliest bids for the current bid value
-                $twoEarliestBids = $bids->where('bid', $value)
-                    ->sortBy('created_at')
-                    ->take(2)
-                    ->all();
-
-                // Merge the two earliest bids to the collection
-                $displayBidRecords = $displayBidRecords->merge($twoEarliestBids);
-            }
-
-            // Calculate the new current bid and override
-            $highestMaximumBid = $allDistinctBidValues->max();
-
-            // Calculate the new highest bid value
-            $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
-            $calculatedCurrentBid = $auctionLot->getCurrentBidPrice($incrementRulesDocument);
-
-            $displayBidRecords->transform(function ($item) use ($highestMaximumBid, $calculatedCurrentBid) {
-                if ($item['bid'] == $highestMaximumBid) $item['bid'] = $calculatedCurrentBid;
-                return $item;
-            });
+        $bidHistory = BidHistory::where('auction_lot_id', $auctionLotId)->first();
+        if ($bidHistory == null) {
+            $bidHistory = BidHistory::create([
+                'auction_lot_id' => $auctionLotId,
+                'current_bid' => $currentBid,
+                'histories' => []
+            ]);
         }
+        $displayBidRecords = $bidHistory['histories'];
 
         // Attach customer and account information to each bid
         foreach ($displayBidRecords as $bid) {
-            $customer = $bid->customer;
-            $account = $customer->account;
+            $winningBidCustomerID = $bid['winning_bid_customer_id'];
+            $winningCustomer = Customer::find($winningBidCustomerID);
+            $account = $winningCustomer->account;
 
             $bid->username = optional($account)->username;
             $bid->avatar = optional($account)->avatar;
-
-            $bid["is_reserve_price"] = $bid['bid'] == $auctionLot->reserve_price;
         }
 
         return $displayBidRecords;
@@ -312,23 +266,6 @@ class AuctionLotController extends Controller
             ], 400);
         }
 
-        // Validate Request
-        // $validator = Validator::make(
-        //     $request->all(),
-        //     [
-        //         'bid' =>
-        //         [
-        //             'required',
-        //             'numeric',
-        //             'gte:' . $minimumBid
-        //         ]
-        //     ]
-        // );
-
-        // if ($validator->fails()) {
-        //     return response()->json($validator->errors(), 400);
-        // }
-
         // Create Bid
         $bid = Bid::create([
             'auction_lot_id' => $auctionLotId,
@@ -338,6 +275,40 @@ class AuctionLotController extends Controller
             'product_variant_id' => $auctionLot->product_variant_id,
             'bid' => $requestedBid
         ]);
+
+        $newCurrentBid = $auctionLot->getCurrentBidPrice($biddingIncrementRules);
+        $auctionLot->update([
+            'is_bid_placed' => true,
+            'current_bid' => $requestedBid,
+            'latest_bid_customer_id' => $customer->_id
+        ]);
+
+        // Create Bid History Record
+        $bidHistory = BidHistory::where('auction_lot_id', $auctionLotId)->first();
+        if ($bidHistory == null) {
+            $bidHistory = BidHistory::create([
+                'auction_lot_id' => $auctionLotId,
+                'current_bid' => $newCurrentBid,
+                'histories' => []
+            ]);
+        }
+
+        $auctionLotMaximumBid = Bid::where('auction_lot_id', $auctionLotId)
+            ->where('is_hidden',  false)
+            ->orderBy('bid', 'desc')
+            ->first();
+
+        $winningCustomerID = null;
+        if (!is_null($auctionLotMaximumBid)) {
+            $winningCustomerID = $auctionLotMaximumBid->customer_id;
+        }
+
+        $bidHistoryItemAttributes = [
+            'winning_bid_customer_id' => $winningCustomerID,
+            'current_bid' => $newCurrentBid
+        ];
+        $bidHistory->histories()->create($bidHistoryItemAttributes);
+        $bidHistory->update(['current_bid' => $newCurrentBid]);
 
         // Extend endDateTime
         $gracePeriodInMins = 15;
@@ -351,16 +322,7 @@ class AuctionLotController extends Controller
             ]);
         }
 
-        if ($auctionLot->is_bid_placed == false) {
-            $auctionLot->update([
-                'is_bid_placed' => true,
-                // 'current_bid' => $requestedBid,
-                'latest_bid_customer_id' => $customer->_id
-            ]);
-        }
-
         // Socket
-        $newCurrentBid = $auctionLot->getCurrentBidPrice($biddingIncrementRules);
         if ($requestedBid == $auctionLot->starting_price || $newCurrentBid > $currentBid) {
             try {
                 $url = 'https://socket.whiskywhiskers.com/api/publish';
