@@ -17,11 +17,13 @@ use Carbon\Carbon;
 use App\Constants\Model\WarehouseInventoryHistoryType;
 use App\Constants\Model\CheckoutType;
 use App\Constants\Model\OrderDeliveryMethod;
+use App\Constants\Model\OrderPaymentMethod;
 use App\Constants\Model\ShipmentDeliveryStatus;
 
 use App\Traits\Utils\RoundingTrait;
 use Illuminate\Support\Str;
 use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
+use StarsNet\Project\WhiskyWhiskers\App\Models\ProductStorageRecord;
 
 // Validator
 use Illuminate\Support\Facades\Validator;
@@ -47,6 +49,12 @@ class AuctionController extends Controller
 
             if ($now >= $startTime && $now < $endTime) {
                 $store->update(['status' => Status::ACTIVE]);
+
+                // Update all AuctionLots as ACTIVE status
+                // $storeID = $store->_id;
+                // AuctionLot::where('store_id', $storeID)
+                //     ->update(['status' => Status::ACTIVE]);
+
                 $archivedStoresUpdateCount++;
             }
         }
@@ -62,6 +70,12 @@ class AuctionController extends Controller
 
             if ($now >= $endTime) {
                 $store->update(['status' => Status::ARCHIVED]);
+
+                // Update all AuctionLots as ACTIVE status
+                // $storeID = $store->_id;
+                // AuctionLot::where('store_id', $storeID)
+                //     ->update(['status' => Status::ARCHIVED]);
+
                 $activeStoresUpdateCount++;
             }
         }
@@ -78,6 +92,7 @@ class AuctionController extends Controller
         $store = Store::find($storeID);
 
         $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
+            ->where('status', Status::ACTIVE)
             ->whereNull('winning_bid_customer_id')
             ->where('is_paid', false)
             ->get();
@@ -412,12 +427,9 @@ class AuctionController extends Controller
     {
         // Validate Request
         $validator = Validator::make($request->all(), [
-            'ids' => [
+            'id' => [
                 'required',
-                'array'
-            ],
-            'ids.*' => [
-                'exists:StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot,_id'
+                'exists:App\Models\Order,_id'
             ],
         ]);
 
@@ -426,43 +438,56 @@ class AuctionController extends Controller
         }
 
         // Extract attributes from $request
-        $auctionLotIDs = $request->input('ids', []);
+        $orderID = $request->input('id');
 
-        // Query
-        $unpaidAuctionLots = AuctionLot::objectIDs($auctionLotIDs)
-            ->with([
-                'product',
-                'store',
-                'winningBidCustomer',
-            ])
-            ->get();
+        // Get Order
+        $order = Order::find($orderID);
+
+        if (is_null($order)) {
+            return response()->json([
+                'message' => 'Order ID ' . $orderID . ' not found.'
+            ]);
+        }
+
+        if ($order->payment_method != OrderPaymentMethod::OFFLINE) {
+            return response()->json([
+                'message' => 'This order ID ' . $orderID . ' is an Online Payment Order, items cannot be returned.'
+            ]);
+        }
+
+        // Get variant IDs
+        $storeID = $order->store_id;
+        $variantIDs = collect($order->cart_items)->pluck('product_variant_id')->all();
+
+        $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
+            ->whereIn('product_variant_id', $variantIDs)
+            ->where('is_paid', false)
+            ->update(["winning_bid_customer_id" => null]);
 
         // Validate AuctionLot(s)
-        foreach ($unpaidAuctionLots as $key => $lot) {
-            $lotID = $lot->_id;
+        // foreach ($unpaidAuctionLots as $key => $lot) {
+        //     $lotID = $lot->_id;
 
-            if (!is_null($lot->winning_bid_customer_id)) {
-                return response()->json([
-                    'message' => 'Auction lot ' . $lotID . ' does not have a winning customer.'
-                ]);
-            }
+        //     if (!is_null($lot->winning_bid_customer_id)) {
+        //         return response()->json([
+        //             'message' => 'Auction lot ' . $lotID . ' does not have a winning customer.'
+        //         ]);
+        //     }
 
-            if ($lot->is_paid === true) {
-                return response()->json([
-                    'message' => 'Auction lot ' . $lotID . ' has already been paid.'
-                ]);
-            }
-        }
+        //     if ($lot->is_paid === true) {
+        //         return response()->json([
+        //             'message' => 'Auction lot ' . $lotID . ' has already been paid.'
+        //         ]);
+        //     }
+        // }
 
         // Update Product status, and reset AuctionLot WinningCustomer
         $productIDs = $unpaidAuctionLots->pluck('product_id');
-
-        AuctionLot::objectIDs($auctionLotIDs)->update(["winning_bid_customer_id" => null]);
         Product::objectIDs($productIDs)->update(['listing_status' => 'AVAILABLE']);
 
         // Return success message
         return response()->json([
-            'message' => 'Updated listing_status for ' . count($auctionLotIDs) . ' Product(s).'
+            'message' => 'Updated listing_status for ' . count($productIDs) . ' Product(s).'
         ], 200);
     }
 }

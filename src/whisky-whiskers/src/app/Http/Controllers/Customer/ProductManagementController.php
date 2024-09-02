@@ -134,9 +134,13 @@ class ProductManagementController extends Controller
 
         // Get Product(s) registered for this auction/store
         $productIDs = AuctionLot::where('store_id', $storeID)
+            ->statuses([Status::ARCHIVED, Status::ACTIVE])
             ->whereNotIn('product_id', $excludedProductIDs)
             ->pluck('product_id')
+            ->unique()
+            ->values()
             ->all();
+
         $parentCategoryCount = count($parentCategoryIDs);
 
         // Create aggregation pipeline stage for matching_score
@@ -146,25 +150,32 @@ class ProductManagementController extends Controller
             ]
         ];
 
+        $originalProduct = Product::find($productID);
+        $originalProductCategories = $originalProduct->categories->pluck('_id')->values()->all();
+
         foreach ($parentCategoryIDs as $key => $parentCategoryID) {
             $childrenCategoryIDs = Category::where('parent_id', $parentCategoryID)->pluck('_id')->all();
+            $intersectedCategoryIDs = array_values(array_intersect($originalProductCategories, $childrenCategoryIDs));
 
             $weightingFactor = 2;
             $weighting = pow(2, $parentCategoryCount - $key - 1) * $weightingFactor;
+
+            if (count($intersectedCategoryIDs) == 0) {
+                continue;
+            }
 
             $aggregateMatchingScore["matching_score"]['$add'][] = [
                 '$multiply' => [
                     [
                         '$size' => [
                             '$setIntersection' =>
-                            ['$category_ids', $childrenCategoryIDs]
+                            ['$category_ids', $intersectedCategoryIDs]
                         ]
                     ],
                     $weighting
                 ]
             ];
         }
-
 
         // Get Products 
         $products = Product::raw(
@@ -205,13 +216,14 @@ class ProductManagementController extends Controller
             ->chunk($itemsPerPage)
             ->all();
 
-
         $urls = [];
         foreach ($productIDsSet as $IDsSet) {
-            $urls[] = route('whiskywhiskers.products.ids', [
+            $url = route('whiskywhiskers.products.ids', [
                 'store_id' => $this->store->_id,
-                'ids' => $IDsSet->all()
+                'ids' => $IDsSet->all(),
+                'sort_by' => 'a'
             ]);
+            $urls[] = $url;
         }
 
         // Return urls

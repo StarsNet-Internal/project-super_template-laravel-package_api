@@ -56,6 +56,18 @@ class AuctionRequestController extends Controller
         // Update reply_status
         $form = AuctionRequest::find($request->route('id'));
         $form->update(['reply_status' => $request->reply_status]);
+        $wasInAuction = $form->is_in_auction;
+
+        // Update form attributes
+        $formAttributes = [
+            "requested_by_account_id" => $request->requested_by_account_id,
+            "starting_bid" => $request->starting_bid,
+            "reserve_price" => $request->reserve_price,
+        ];
+        $formAttributes = array_filter($formAttributes, function ($value) {
+            return !is_null($value);
+        });
+        $form->update($formAttributes);
 
         // Update Product listing_status
         $auctionLotId = null;
@@ -63,6 +75,7 @@ class AuctionRequestController extends Controller
 
         if ($request->reply_status == ReplyStatus::APPROVED) {
             $product->update(['listing_status' => 'LISTED_IN_AUCTION']);
+            $form->update(['is_in_auction' => true]);
 
             // Create auction_lot
             $auctionLotFields = [
@@ -81,17 +94,68 @@ class AuctionRequestController extends Controller
 
             BidHistory::create([
                 'auction_lot_id' => $auctionLotId,
-                'current_bid' => $$auctionLot->starting_bid,
+                'current_bid' => $auctionLot->starting_bid,
                 'histories' => []
             ]);
         } else if ($request->reply_status == ReplyStatus::REJECTED) {
             $product->update(['listing_status' => 'AVAILABLE']);
+            $form->update(['is_in_auction' => false]);
+
+            if ($wasInAuction) {
+                AuctionLot::where('auction_request_id', $form->_id)->update([
+                    'status' => Status::DELETED,
+                    'is_disabled' => true
+                ]);
+            }
         }
 
         return response()->json([
             'message' => 'Updated AuctionRequest successfully',
             '_id' => $form->_id,
             'auction_lot_id' => $auctionLotId
+        ], 200);
+    }
+
+    public function updateAuctionLotDetailsByAuctionRequest(Request $request)
+    {
+        // Auction Request ID
+        $auctionRequestID = $request->route('id');
+        $form = AuctionRequest::find($auctionRequestID);
+
+        if (is_null($form)) {
+            return response()->json([
+                'message' => 'AuctionRequest not found',
+            ], 404);
+        }
+
+        // Tidy up $updateAttributes
+        $updateAttributes = [
+            'starting_bid' => $request->starting_price,
+            'reserve_price' => $request->reserve_price,
+        ];
+        $updateAttributes = array_filter($updateAttributes, function ($value) {
+            return !is_null($value);
+        });
+
+        // Update AuctionRequest
+        $form->update($updateAttributes);
+
+        // Find AuctionLot
+        $auctionLot = AuctionLot::where('auction_request_id', $form->_id)->latest()->first();
+
+        if (is_null($form)) {
+            return response()->json([
+                'message' => 'AuctionLot not found',
+            ], 404);
+        }
+
+        // Update AuctionLot
+        $auctionLot->update($updateAttributes);
+
+        return response()->json([
+            'message' => 'Updated AuctionLot successfully',
+            'auction_request_id' => $auctionRequestID,
+            'auction_lot_id' => $auctionLot->_id
         ], 200);
     }
 }

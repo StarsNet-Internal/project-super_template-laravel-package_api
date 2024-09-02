@@ -6,18 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Models\Store;
 use App\Constants\Model\Status;
 use App\Constants\Model\StoreType;
+use Carbon\Carbon;
 
 class TestingController extends Controller
 {
     public function healthCheck()
     {
         $now = now();
-        $earliestAvailableStore = Store::where('type', StoreType::OFFLINE)
-            ->where('status', Status::ARCHIVED)
-            ->where('start_datetime', '>', $now->toDateString())
+        $upcomingStores = Store::where(
+            'type',
+            StoreType::OFFLINE
+        )
             ->orderBy('start_datetime')
-            ->first();
-        return $earliestAvailableStore;
+            ->get();
+
+        $nearestUpcomingStore = null;
+        foreach ($upcomingStores as $store) {
+            $startTime = $store->start_datetime;
+            $startTime = Carbon::parse($startTime);
+            if ($now < $startTime) {
+                $nearestUpcomingStore = $store;
+                break;
+            }
+        }
+        return $nearestUpcomingStore;
 
         return response()->json([
             'message' => 'OK from package/whisky-whiskers'

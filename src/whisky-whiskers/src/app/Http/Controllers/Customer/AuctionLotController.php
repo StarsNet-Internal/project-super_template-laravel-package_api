@@ -80,6 +80,9 @@ class AuctionLotController extends Controller
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
         foreach ($auctionLots as $auctionLot) {
             $auctionLot->current_bid = $auctionLot->getCurrentBidPrice($incrementRulesDocument);
+            // $auctionLot->passed_auction_count = $auctionLot->passedAuctionRecords()
+            //     ->where('customer_id', $customer->_id)
+            //     ->get();
         }
 
         return $auctionLots;
@@ -90,13 +93,18 @@ class AuctionLotController extends Controller
         $customer = $this->customer();
         $customerId = $customer->_id;
 
-        $auctionLots = AuctionLot::whereHas('bids', function ($query2) use ($customerId) {
-            return $query2->where('customer_id', $customerId);
-        })
+        $auctionLots = AuctionLot::whereHas(
+            'bids',
+            function ($query2) use ($customerId) {
+                return $query2->where('customer_id', $customerId);
+            }
+        )
+            ->where('status', '!=', Status::DELETED)
             ->with([
                 'product',
                 'productVariant',
                 'store',
+                'winningBidCustomer'
             ])
             ->get();
 
@@ -116,6 +124,7 @@ class AuctionLotController extends Controller
 
         // Get Auction Store(s)
         $auctionLot = AuctionLot::find($auctionLotId);
+
         if (is_null($auctionLot)) {
             return response()->json([
                 'message' => 'Auction Lot not found'
@@ -203,18 +212,26 @@ class AuctionLotController extends Controller
             ], 404);
         }
 
-        $nowDateTime = now();
-
-        if ($nowDateTime < $store->start_datetime) {
+        if ($now <= Carbon::parse($store->start_datetime)) {
             return response()->json([
                 'message' => 'Auction has not started'
             ], 404);
+
+            return response()->json([
+                'message' => 'The auction id: ' . $store->_id . ' has not yet started.',
+                'error_status' => 2,
+                'system_time' => now(),
+                'auction_start_datetime' => Carbon::parse($store->start_datetime)
+            ], 400);
         }
 
-        if ($nowDateTime > $store->end_datetime) {
+        if ($now > Carbon::parse($store->end_datetime)) {
             return response()->json([
-                'message' => 'Auction has already ended'
-            ], 404);
+                'message' => 'The auction id: ' . $store->_id . ' has already ended.',
+                'error_status' => 3,
+                'system_time' => now(),
+                'auction_end_datetime' => Carbon::parse($store->end_datetime)
+            ], 400);
         }
 
         // Get current bid
@@ -255,15 +272,15 @@ class AuctionLotController extends Controller
 
         // Determine minimum possible bid for input from Customer
         if (!is_null($userExistingMaximumBid)) {
-            $minimumBid = max($minimumBid, $userExistingMaximumBid->bid ?? 0);
-        }
+            $userMaximumBidValue = $userExistingMaximumBid->bid;
 
-        if ($request->bid < $minimumBid) {
-            return response()->json([
-                'message' => 'Your bid is lower than your maximum bid value of ' .  $minimumBid . '.',
-                'error_status' => 1,
-                'bid' => $minimumBid
-            ], 400);
+            if ($request->bid <= $userMaximumBidValue) {
+                return response()->json([
+                    'message' => 'Your bid cannot be lower than or equal to your maximum bid value of ' . $userMaximumBidValue . '.',
+                    'error_status' => 1,
+                    'bid' => $userMaximumBidValue
+                ], 400);
+            }
         }
 
         // Create Bid
@@ -276,11 +293,22 @@ class AuctionLotController extends Controller
             'bid' => $requestedBid
         ]);
 
+        $auctionLotMaximumBid = Bid::where('auction_lot_id', $auctionLotId)
+            ->where('is_hidden',  false)
+            ->orderBy('bid', 'desc')
+            ->first();
+
+        $winningCustomerID = null;
+        if (!is_null($auctionLotMaximumBid)) {
+            $winningCustomerID = $auctionLotMaximumBid->customer_id;
+        }
+
         $newCurrentBid = $auctionLot->getCurrentBidPrice($biddingIncrementRules);
         $auctionLot->update([
             'is_bid_placed' => true,
             'current_bid' => $requestedBid,
-            'latest_bid_customer_id' => $customer->_id
+            'latest_bid_customer_id' => $customer->_id,
+            'winning_bid_customer_id' => $winningCustomerID
         ]);
 
         // Create Bid History Record
@@ -291,16 +319,6 @@ class AuctionLotController extends Controller
                 'current_bid' => $newCurrentBid,
                 'histories' => []
             ]);
-        }
-
-        $auctionLotMaximumBid = Bid::where('auction_lot_id', $auctionLotId)
-            ->where('is_hidden',  false)
-            ->orderBy('bid', 'desc')
-            ->first();
-
-        $winningCustomerID = null;
-        if (!is_null($auctionLotMaximumBid)) {
-            $winningCustomerID = $auctionLotMaximumBid->customer_id;
         }
 
         $bidHistoryItemAttributes = [
@@ -315,7 +333,7 @@ class AuctionLotController extends Controller
         $currentEndDateTime = Carbon::parse($store->end_datetime);
         $graceEndDateTime = $currentEndDateTime->copy()->subMinutes($gracePeriodInMins);
 
-        if ($now > $graceEndDateTime) {
+        if ($now > $graceEndDateTime && $now < $currentEndDateTime) {
             $newEndDateTime = $currentEndDateTime->copy()->addMinutes($gracePeriodInMins);
             $store->update([
                 'end_datetime' => $newEndDateTime->toISOString()
@@ -340,9 +358,7 @@ class AuctionLotController extends Controller
                     $data
                 );
             } catch (\Exception $e) {
-                // Optionally log the error
                 print($e);
-                // Continue execution without throwing an exception
             }
         }
 

@@ -4,11 +4,13 @@ namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 
+use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\Status;
 use App\Constants\Model\StoreType;
 
 use App\Models\ProductVariant;
 use App\Models\Store;
+use Carbon\Carbon;
 
 use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
 use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionRequest;
@@ -83,16 +85,27 @@ class AuctionRequestController extends Controller
 
         // Check if auto-approve needed
         $now = now();
-        $earliestAvailableStore = Store::where(
+        $upcomingStores = Store::where(
             'type',
             StoreType::OFFLINE
         )
-            ->where('status', Status::ARCHIVED)
-            ->where('start_datetime', '>', $now->toDateString())
+            ->statuses([Status::ARCHIVED, Status::ACTIVE])
             ->orderBy('start_datetime')
-            ->first();
+            ->get();
 
-        if ($earliestAvailableStore->_id == $store->_id) {
+        $nearestUpcomingStore = null;
+        foreach ($upcomingStores as $store) {
+            $startTime = $store->start_datetime;
+            $startTime = Carbon::parse($startTime);
+            if ($now < $startTime) {
+                $nearestUpcomingStore = $store;
+                break;
+            }
+        }
+
+        if (!is_null($nearestUpcomingStore) && $nearestUpcomingStore->_id == $storeId) {
+            $form->update(['reply_status' => ReplyStatus::APPROVED]);
+
             $updateProductFields = [
                 'listing_status' => 'LISTED_IN_AUCTION'
             ];
@@ -113,7 +126,7 @@ class AuctionRequestController extends Controller
 
             BidHistory::create([
                 'auction_lot_id' => $auctionLot->_id,
-                'current_bid' => $$auctionLot->starting_bid,
+                'current_bid' => $auctionLot->starting_bid,
                 'histories' => []
             ]);
         } else {

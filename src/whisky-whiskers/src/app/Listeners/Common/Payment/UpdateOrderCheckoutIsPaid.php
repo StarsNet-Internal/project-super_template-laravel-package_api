@@ -24,6 +24,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
 use StarsNet\Project\WhiskyWhiskers\App\Models\Bid;
+use StarsNet\Project\WhiskyWhiskers\App\Models\ProductStorageRecord;
 
 class UpdateOrderCheckoutIsPaid
 {
@@ -130,9 +131,26 @@ class UpdateOrderCheckoutIsPaid
                 // Update AuctionLot paid status
                 AuctionLot::whereIn('product_id', $productIDs)->update([
                     'winning_bid_customer_id' => $order->customer_id,
-                    'latest_bid_customer_id' => $order->customer_id,
                     'is_paid' => true
                 ]);
+
+                foreach ($productIDs as $productID) {
+                    $winningAuctionLot = AuctionLot::where('product_id', $productID)
+                        ->where('store_id', $store->_id)
+                        ->first();
+                    if (!is_null($winningAuctionLot)) {
+                        $winningBid = $winningAuctionLot->current_bid;
+                        ProductStorageRecord::create([
+                            // Relationships
+                            'customer_id' => $order->customer_id,
+                            'product_id' => $productID,
+
+                            // Default
+                            'start_datetime' => now(),
+                            'winning_bid' => $winningBid
+                        ]);
+                    }
+                }
             }
 
             // Attach relationship with previous system-generated order

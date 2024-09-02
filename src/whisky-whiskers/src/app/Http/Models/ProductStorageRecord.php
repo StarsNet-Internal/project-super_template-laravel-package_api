@@ -54,7 +54,7 @@ class ProductStorageRecord extends Eloquent
         // Default
         'start_datetime' => null,
         'end_datetime' => null,
-        'total_rental_fee' => null,
+        'winning_bid' => null,
         'remarks' => null,
 
         // Booleans

@@ -68,6 +68,7 @@ Route::group(
                 Route::get('/all', [$defaultController, 'getAllAuctionRequests'])->middleware(['pagination']);
                 Route::put('/{id}/edit', [$defaultController, 'updateAuctionRequests']);
                 Route::put('/{id}/approve', [$defaultController, 'approveAuctionRequest']);
+                Route::put('/{id}/auction-lots/edit', [$defaultController, 'updateAuctionLotDetailsByAuctionRequest']);
             }
         );
     }
