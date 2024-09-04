@@ -9,67 +9,73 @@ use App\Models\Store;
 use App\Models\Configuration;
 
 use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
+use StarsNet\Project\WhiskyWhiskers\App\Models\ProductStorageRecord;
 
 
 class TestingController extends Controller
 {
     public function healthCheck()
     {
-        $auctionLot = AuctionLot::find('666a6af54231ff34c107fc97');
+        // ProductStorageRecord::create([
+        //     // Default
+        //     'start_datetime' => now()->toIso8601String(),
+        // ]);
 
-        // Get Bids info
-        $allBids = $auctionLot->bids()
-            ->where('is_hidden', false)
-            ->get()
-            ->groupBy('customer_id')
-            ->map(function ($item) {
-                return $item->sortByDesc('bid')->first();
-            })
-            ->sortByDesc('bid')
-            ->values();
+        // $auctionLot = AuctionLot::find('666a6af54231ff34c107fc97');
 
-        $allBidsCount = $allBids->count();
+        // // Get Bids info
+        // $allBids = $auctionLot->bids()
+        //     ->where('is_hidden', false)
+        //     ->get()
+        //     ->groupBy('customer_id')
+        //     ->map(function ($item) {
+        //         return $item->sortByDesc('bid')->first();
+        //     })
+        //     ->sortByDesc('bid')
+        //     ->values();
 
-        // Case 1: If 0 bids
-        $startingPrice = $auctionLot->starting_price;
-        if ($allBidsCount === 0) return $startingPrice; // Case 1
+        // $allBidsCount = $allBids->count();
 
-        // If 1 bids
-        $maxBidValue = $allBids->max('bid');
-        $reservePrice = $auctionLot->reserve_price;
-        $isReservedPriceMet = $maxBidValue >= $reservePrice;
-        if ($allBidsCount === 1) {
-            return $isReservedPriceMet ?
-                $reservePrice : // Case 3A
-                $startingPrice; // Case 2A
-        }
+        // // Case 1: If 0 bids
+        // $startingPrice = $auctionLot->starting_price;
+        // if ($allBidsCount === 0) return $startingPrice; // Case 1
 
-        // If more than 1 bids
-        $maxBidCount = $allBids->where('bid', $maxBidValue)->count();
-        if ($maxBidCount >= 2) return $maxBidValue; // Case 2B(ii) & 3B (ii)
+        // // If 1 bids
+        // $maxBidValue = $allBids->max('bid');
+        // $reservePrice = $auctionLot->reserve_price;
+        // $isReservedPriceMet = $maxBidValue >= $reservePrice;
+        // if ($allBidsCount === 1) {
+        //     return $isReservedPriceMet ?
+        //         $reservePrice : // Case 3A
+        //         $startingPrice; // Case 2A
+        // }
 
-        // For Case 2B(ii) & 3B (ii) Calculations
-        $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
-        $incrementRules = $incrementRulesDocument->bidding_increments;
+        // // If more than 1 bids
+        // $maxBidCount = $allBids->where('bid', $maxBidValue)->count();
+        // if ($maxBidCount >= 2) return $maxBidValue; // Case 2B(ii) & 3B (ii)
 
-        $maxBidValues = $allBids->sortByDesc('bid')->pluck('bid')->values()->all();
-        $secondHighestBidValue = $maxBidValues[1];
+        // // For Case 2B(ii) & 3B (ii) Calculations
+        // $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
+        // $incrementRules = $incrementRulesDocument->bidding_increments;
 
-        $incrementalBid = 0;
-        foreach ($incrementRules as $interval) {
-            if ($secondHighestBidValue >= $interval['from'] && $secondHighestBidValue < $interval['to']) {
-                $incrementalBid = $interval['increment'];
-                break;
-            }
-        }
+        // $maxBidValues = $allBids->sortByDesc('bid')->pluck('bid')->values()->all();
+        // $secondHighestBidValue = $maxBidValues[1];
 
-        if ($isReservedPriceMet) {
-            // Case 3B (i)
-            return max($reservePrice, $secondHighestBidValue + $incrementalBid);
-        } else {
-            // Case 2B (i)
-            return min($maxBidValue, $secondHighestBidValue + $incrementalBid);
-        }
+        // $incrementalBid = 0;
+        // foreach ($incrementRules as $interval) {
+        //     if ($secondHighestBidValue >= $interval['from'] && $secondHighestBidValue < $interval['to']) {
+        //         $incrementalBid = $interval['increment'];
+        //         break;
+        //     }
+        // }
+
+        // if ($isReservedPriceMet) {
+        //     // Case 3B (i)
+        //     return max($reservePrice, $secondHighestBidValue + $incrementalBid);
+        // } else {
+        //     // Case 2B (i)
+        //     return min($maxBidValue, $secondHighestBidValue + $incrementalBid);
+        // }
 
 
         // return $uniqueCustomerhighestBids;

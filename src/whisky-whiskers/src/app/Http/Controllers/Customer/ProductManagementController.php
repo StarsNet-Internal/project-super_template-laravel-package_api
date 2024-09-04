@@ -373,6 +373,12 @@ class ProductManagementController extends Controller
                                 '$and' => [
                                     ['$eq' => ['$store_id', $storeID]],
                                     ['$eq' => ['$product_id', '$$product_id']],
+                                    [
+                                        '$in' => [
+                                            '$status',
+                                            [Status::ACTIVE, Status::ARCHIVED]
+                                        ]
+                                    ]
                                 ],
                             ],
                         ],
@@ -403,16 +409,10 @@ class ProductManagementController extends Controller
 
             $aggregate[]['$addFields'] = [
                 'starting_price' => [
-                    '$arrayElemAt' => [
-                        '$auction_lots.starting_price',
-                        0
-                    ]
+                    '$last' => '$auction_lots.starting_price'
                 ],
                 'reserve_price' => [
-                    '$arrayElemAt' => [
-                        '$auction_lots.reserve_price',
-                        0
-                    ]
+                    '$last' => '$auction_lots.reserve_price'
                 ],
                 'valid_bid_values' => [
                     '$map' => [
@@ -672,7 +672,7 @@ class ProductManagementController extends Controller
                 //         'else' => false
                 //     ],
                 // ],
-                'is_bid_placed' => ['$first' => '$auction_lots.is_bid_placed'],
+                'is_bid_placed' => ['$last' => '$auction_lots.is_bid_placed'],
                 'auction_lot_id' => [
                     '$cond' => [
                         'if' => [
@@ -681,7 +681,7 @@ class ProductManagementController extends Controller
                                 0
                             ]
                         ],
-                        'then' => ['$first' => '$auction_lots._id'],
+                        'then' => ['$last' => '$auction_lots._id'],
                         'else' => null
                     ],
                 ]

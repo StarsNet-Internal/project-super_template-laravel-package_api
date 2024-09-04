@@ -65,7 +65,7 @@ class AuctionRequestController extends Controller
             "reserve_price" => $request->reserve_price,
         ];
         $formAttributes = array_filter($formAttributes, function ($value) {
-            return !is_null($value);
+            return !is_null($value) && $value != "";
         });
         $form->update($formAttributes);
 
@@ -128,30 +128,36 @@ class AuctionRequestController extends Controller
             ], 404);
         }
 
-        // Tidy up $updateAttributes
-        $updateAttributes = [
-            'starting_bid' => $request->starting_price,
-            'reserve_price' => $request->reserve_price,
-        ];
-        $updateAttributes = array_filter($updateAttributes, function ($value) {
-            return !is_null($value);
-        });
-
-        // Update AuctionRequest
-        $form->update($updateAttributes);
-
         // Find AuctionLot
         $auctionLot = AuctionLot::where('auction_request_id', $form->_id)->latest()->first();
 
-        if (is_null($form)) {
+        if (is_null($auctionLot)) {
             return response()->json([
                 'message' => 'AuctionLot not found',
             ], 404);
         }
 
+        // Update AuctionRequest
+        $updateAttributes = [
+            'starting_bid' => $request->starting_price,
+            'reserve_price' => $request->reserve_price,
+        ];
+        $updateAttributes = array_filter($updateAttributes, function ($value) {
+            return !is_null($value) && $value != "";
+        });
+        $form->update($updateAttributes);
+
         // Update AuctionLot
+        $updateAttributes = [
+            'starting_price' => $request->starting_price,
+            'reserve_price' => $request->reserve_price,
+        ];
+        $updateAttributes = array_filter($updateAttributes, function ($value) {
+            return !is_null($value) && $value != "";
+        });
         $auctionLot->update($updateAttributes);
 
+        // Return
         return response()->json([
             'message' => 'Updated AuctionLot successfully',
             'auction_request_id' => $auctionRequestID,

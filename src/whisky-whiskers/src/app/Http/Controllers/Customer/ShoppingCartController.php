@@ -527,6 +527,7 @@ class ShoppingCartController extends Controller
                 'subtotal' => 0,
                 'total' => 0,
             ],
+            'service_charge' => 0,
             'storage_fee' => $storageFee,
             'shipping_fee' => $shippingFee
         ];

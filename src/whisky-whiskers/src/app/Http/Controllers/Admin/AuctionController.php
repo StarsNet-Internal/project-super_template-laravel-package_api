@@ -51,9 +51,10 @@ class AuctionController extends Controller
                 $store->update(['status' => Status::ACTIVE]);
 
                 // Update all AuctionLots as ACTIVE status
-                // $storeID = $store->_id;
-                // AuctionLot::where('store_id', $storeID)
-                //     ->update(['status' => Status::ACTIVE]);
+                $storeID = $store->_id;
+                AuctionLot::where('store_id', $storeID)
+                    ->where('status', Status::ARCHIVED)
+                    ->update(['status' => Status::ACTIVE]);
 
                 $archivedStoresUpdateCount++;
             }
@@ -71,7 +72,7 @@ class AuctionController extends Controller
             if ($now >= $endTime) {
                 $store->update(['status' => Status::ARCHIVED]);
 
-                // Update all AuctionLots as ACTIVE status
+                // Update all AuctionLots as ARCHIVED status
                 // $storeID = $store->_id;
                 // AuctionLot::where('store_id', $storeID)
                 //     ->update(['status' => Status::ARCHIVED]);
@@ -91,31 +92,28 @@ class AuctionController extends Controller
         $storeID = $request->route('store_id');
         $store = Store::find($storeID);
 
-        $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
+        $allAuctionLots = AuctionLot::where('store_id', $storeID)
             ->where('status', Status::ACTIVE)
-            ->whereNull('winning_bid_customer_id')
-            ->where('is_paid', false)
             ->get();
 
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
-        foreach ($unpaidAuctionLots as $lot) {
+        foreach ($allAuctionLots as $lot) {
             try {
                 $isBidPlaced = $lot->is_bid_placed;
                 $currentBid = $lot->getCurrentBidPrice($incrementRulesDocument);
 
                 $product = Product::find($lot->product_id);
-
-                if (
-                    !$isBidPlaced || $lot->reserve_price >
-                    $currentBid
-                ) {
+                // Reject auction lot
+                if ($isBidPlaced == false || $lot->reserve_price > $currentBid) {
                     // Update Product
                     $product->update(['listing_status' => 'AVAILABLE']);
 
                     // Update Auction Lot
                     $lot->update([
+                        'winning_bid_customer_id' => null,
                         'current_bid' => $currentBid,
-                        'status' => 'ARCHIVED'
+                        'status' => Status::ARCHIVED,
+                        'is_paid' => false
                     ]);
 
                     // Create Passed Auction
@@ -140,10 +138,9 @@ class AuctionController extends Controller
 
                     // Update lot
                     $lot->update([
-                        'latest_bid_customer_id' => $higestBidderCustomerID,
                         'winning_bid_customer_id' => $higestBidderCustomerID,
                         'current_bid' => $currentBid,
-                        'status' => 'ARCHIVED'
+                        'status' => Status::ARCHIVED,
                     ]);
                 }
             } catch (\Throwable $th) {
@@ -154,27 +151,37 @@ class AuctionController extends Controller
         $store->update(["remarks" => "SUCCESS"]);
 
         return response()->json([
-            'message' => 'Archived Store Successfully'
+            'message' => 'Archived Store Successfully, updated ' . $allAuctionLots->count() . ' Auction Lots.'
         ], 200);
     }
 
     public function generateAuctionOrders(Request $request)
     {
+        // Get Store
         $storeID = $request->route('store_id');
         $store = Store::find($storeID);
 
+        // Get Auction Lots
         $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
+            ->where('status', Status::ARCHIVED)
             ->whereNotNull('winning_bid_customer_id')
             ->get();
 
-        $winningCustomerIDs = $unpaidAuctionLots->pluck('winning_bid_customer_id')->values()->all();
+        // Get unique winning_bid_customer_id
+        $winningCustomerIDs = $unpaidAuctionLots->pluck('winning_bid_customer_id')
+            ->unique()
+            ->values()
+            ->all();
 
+        // Generate OFFLINE order by system
         $generatedOrderCount = 0;
         foreach ($winningCustomerIDs as $customerID) {
             try {
+                // Find all winning Auction Lots
                 $winningLots = $unpaidAuctionLots->where('winning_bid_customer_id', $customerID)->all();
-                $customer = Customer::find($customerID);
 
+                // Add item to Customer's Shopping Cart, with calculated winning_bid + storage_fee
+                $customer = Customer::find($customerID);
                 foreach ($winningLots as $lot) {
                     $attributes = [
                         'store_id' => $storeID,
@@ -190,8 +197,8 @@ class AuctionController extends Controller
                 // Get ShoppingCartItem(s)
                 $cartItems = $customer->getAllCartItemsByStore($store);
 
-                // getShoppingCartDetails calculations
-                // get subtotal Price
+                // Start Shopping Cart calculations
+                // Get subtotal Price
                 $subtotalPrice = 0;
                 $storageFee = 0;
 
@@ -204,22 +211,22 @@ class AuctionController extends Controller
                     $item->is_refundable = false;
                     $item->global_discount = null;
 
-                    // Calculations
+                    // Get winning_bid, update subtotal_price
                     $winningBid = $item->winning_bid ?? 0;
                     $subtotalPrice += $winningBid;
 
-                    // Service Charge
+                    // Update total_service_charge
                     $totalServiceCharge += $winningBid *
                         $SERVICE_CHARGE_MULTIPLIER;
                 }
                 $totalPrice = $subtotalPrice +
                     $storageFee + $totalServiceCharge;
 
-                // get shippingFee
+                // Get shipping_fee, then update total_price
                 $shippingFee = 0;
                 $totalPrice += $shippingFee;
 
-                // form calculation data object
+                // Form calculation data object
                 $rawCalculation = [
                     'currency' => 'HKD',
                     'price' => [
@@ -446,13 +453,13 @@ class AuctionController extends Controller
         if (is_null($order)) {
             return response()->json([
                 'message' => 'Order ID ' . $orderID . ' not found.'
-            ]);
+            ], 404);
         }
 
         if ($order->payment_method != OrderPaymentMethod::OFFLINE) {
             return response()->json([
                 'message' => 'This order ID ' . $orderID . ' is an Online Payment Order, items cannot be returned.'
-            ]);
+            ], 404);
         }
 
         // Get variant IDs
@@ -462,7 +469,12 @@ class AuctionController extends Controller
         $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
             ->whereIn('product_variant_id', $variantIDs)
             ->where('is_paid', false)
-            ->update(["winning_bid_customer_id" => null]);
+            ->get();
+
+        foreach ($unpaidAuctionLots as $lot) {
+            $lot->update(["winning_bid_customer_id" => null]);
+        }
+
 
         // Validate AuctionLot(s)
         // foreach ($unpaidAuctionLots as $key => $lot) {

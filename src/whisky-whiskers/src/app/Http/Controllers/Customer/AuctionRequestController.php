@@ -104,7 +104,10 @@ class AuctionRequestController extends Controller
         }
 
         if (!is_null($nearestUpcomingStore) && $nearestUpcomingStore->_id == $storeId) {
-            $form->update(['reply_status' => ReplyStatus::APPROVED]);
+            $form->update([
+                'reply_status' => ReplyStatus::APPROVED,
+                'is_in_auction' => true
+            ]);
 
             $updateProductFields = [
                 'listing_status' => 'LISTED_IN_AUCTION'
@@ -132,7 +135,7 @@ class AuctionRequestController extends Controller
         } else {
             // Update Product
             $updateProductFields = [
-                'listing_status' => 'PENDING_FOR_AUCTION'
+                'listing_status' => 'PENDING_FOR_AUCTION',
             ];
             $product->update($updateProductFields);
         }

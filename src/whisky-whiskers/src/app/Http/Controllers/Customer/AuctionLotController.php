@@ -306,7 +306,7 @@ class AuctionLotController extends Controller
         $newCurrentBid = $auctionLot->getCurrentBidPrice($biddingIncrementRules);
         $auctionLot->update([
             'is_bid_placed' => true,
-            'current_bid' => $requestedBid,
+            'current_bid' => $newCurrentBid,
             'latest_bid_customer_id' => $customer->_id,
             'winning_bid_customer_id' => $winningCustomerID
         ]);

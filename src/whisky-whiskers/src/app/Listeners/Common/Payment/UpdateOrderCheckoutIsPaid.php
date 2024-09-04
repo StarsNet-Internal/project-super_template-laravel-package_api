@@ -140,15 +140,22 @@ class UpdateOrderCheckoutIsPaid
                         ->first();
                     if (!is_null($winningAuctionLot)) {
                         $winningBid = $winningAuctionLot->current_bid;
+                        $nowString = now()->toIso8601String();
                         ProductStorageRecord::create([
                             // Relationships
                             'customer_id' => $order->customer_id,
                             'product_id' => $productID,
 
                             // Default
-                            'start_datetime' => now(),
+                            'start_datetime' => $nowString,
                             'winning_bid' => $winningBid
                         ]);
+
+                        ProductStorageRecord::where('product_id', $productID)
+                            ->whereNull('end_datetime')
+                            ->update([
+                                'end_datetime' => $nowString,
+                            ]);
                     }
                 }
             }

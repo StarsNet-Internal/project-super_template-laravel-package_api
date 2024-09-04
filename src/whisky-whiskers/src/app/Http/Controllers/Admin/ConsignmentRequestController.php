@@ -58,13 +58,19 @@ class ConsignmentRequestController extends Controller
             if (is_null($formItem)) continue;
             unset($item['_id']);
             $formItem->update($item);
-            // if ($formItem->requested_qty <= $item['approved_qty']) $approvedItemCount++;
             if ($item['is_approved'] == true) $approvedItemCount++;
         }
-        $form->update([
-            'approved_items_qty' => $approvedItemCount,
-            'reply_status' => $request->reply_status
-        ]);
+
+        // Update ConsignmentRequest
+        $formAttributes = [
+            "requested_by_account_id" => $request->requested_by_account_id,
+            "approved_items_qty" => $approvedItemCount,
+            "reply_status" => $request->reply_status,
+        ];
+        $formAttributes = array_filter($formAttributes, function ($value) {
+            return !is_null($value) && $value != "";
+        });
+        $form->update($formAttributes);
 
         return response()->json([
             'message' => 'Approved ConsignmentRequest successfully',
