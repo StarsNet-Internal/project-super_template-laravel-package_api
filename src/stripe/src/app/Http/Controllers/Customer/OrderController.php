@@ -74,16 +74,6 @@ class OrderController extends Controller
                 'nullable',
                 Rule::in(OrderDeliveryMethod::$defaultTypes)
             ],
-            // 'delivery_info.warehouse_id' => [
-            //     Rule::requiredIf(fn () => $request->delivery_info['method'] === OrderDeliveryMethod::SELF_PICKUP),
-            //     'exclude_if:delivery_info.method,' . OrderDeliveryMethod::DELIVERY,
-            //     'exists:App\Models\Warehouse,_id'
-            // ],
-            // 'delivery_info.courier_id' => [
-            //     Rule::requiredIf(fn () => $request->delivery_info['method'] === OrderDeliveryMethod::DELIVERY),
-            //     'exclude_if:delivery_info.method,' . OrderDeliveryMethod::SELF_PICKUP,
-            //     'exists:App\Models\Courier,_id'
-            // ],
             'delivery_details.recipient_name' => [
                 'nullable'
             ],
@@ -217,6 +207,7 @@ class OrderController extends Controller
         // Create Checkout
         $checkout = $this->createBasicCheckout($order, $paymentMethod);
 
+        $orderID = $order->id;
         if ($order->getTotalPrice() > 0) {
             switch ($paymentMethod) {
                 case CheckoutType::ONLINE:
@@ -262,7 +253,6 @@ class OrderController extends Controller
                             );
 
                         $transactionID = $response["id"];
-                        $orderID = $order->id;
                         $clientSecret = $response["client_secret"];
 
                         $checkout->updateOnlineTransactionID($transactionID);
