@@ -76,7 +76,7 @@ Route::group(
             Route::get('/{id}/reviews', [$defaultController, 'getPostReviews'])->middleware(['pagination']);
 
             Route::get('/liked/all', [$defaultController, 'getAllLikedPosts'])->middleware(['pagination']);
-            Route::get('/unread', [$defaultController, 'getNumberOfUnreadMessages'])->middleware(['pagination']);
+            Route::get('/unread', [$defaultController, 'getNumberOfUnreadMessages']);
         });
     }
 );
