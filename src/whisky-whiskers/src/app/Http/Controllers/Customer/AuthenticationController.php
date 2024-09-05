@@ -7,6 +7,7 @@ use App\Models\Account;
 use App\Models\Warehouse;
 use App\Traits\Controller\AuthenticationTrait;
 use Illuminate\Http\Request;
+use App\Constants\Model\VerificationCodeType;
 
 use Illuminate\Support\Str;
 
@@ -27,6 +28,10 @@ class AuthenticationController extends Controller
 
         // Update User
         $this->updateUserViaRegistration($user, $request);
+        $user->generateVerificationCodeByType(
+            VerificationCodeType::ACCOUNT_VERIFICATION,
+            60
+        );
 
         // Update Account
         /** @var ?Account $account */
