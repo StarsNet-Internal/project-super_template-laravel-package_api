@@ -21,6 +21,7 @@ use App\Models\Store;
 use App\Traits\Controller\ReviewTrait;
 use App\Traits\Controller\StoreDependentTrait;
 use StarsNet\Project\EnjoyFace\App\Traits\Controller\ProjectOrderTrait;
+use StarsNet\Project\EnjoyFace\App\Traits\Controller\ProjectPostTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
@@ -31,7 +32,7 @@ use Carbon\Carbon;
 
 class OrderManagementController extends AdminOrderManagementController
 {
-    use ReviewTrait, StoreDependentTrait, ProjectOrderTrait;
+    use ReviewTrait, StoreDependentTrait, ProjectOrderTrait, ProjectPostTrait;
 
     public function getAllOrdersByStore(Request $request)
     {
@@ -201,7 +202,7 @@ class OrderManagementController extends AdminOrderManagementController
 
         // Return success message
         return response()->json([
-            'message' => 'Updated booking time successfully',
+            'message' => 'Cancelled booking successfully',
         ], 200);
     }
 }
