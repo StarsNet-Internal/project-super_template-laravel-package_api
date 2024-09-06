@@ -30,13 +30,15 @@ class OfflineStoreManagementController extends AdminOfflineStoreManagementContro
         $stores = Store::whereType(StoreType::OFFLINE)
             ->statusesAllowed(Status::$typesForAdmin, $statuses)
             ->with([
-                'warehouses' => function ($query) {
-                    $query->statuses(Status::$typesForAdmin)->get();
+                // 'warehouses' => function ($query) {
+                //     $query->statuses(Status::$typesForAdmin)->get();
+                // },
+                // 'cashiers' => function ($query) {
+                //     $query->statuses(Status::$typesForAdmin)->get();
+                // },
+                'orders' => function ($query) {
+                    $query->where('current_status', '!=', 'cancelled');
                 },
-                'cashiers' => function ($query) {
-                    $query->statuses(Status::$typesForAdmin)->get();
-                },
-                'orders',
             ])
             ->get();
 

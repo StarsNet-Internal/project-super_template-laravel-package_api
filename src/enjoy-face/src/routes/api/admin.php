@@ -39,6 +39,8 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::put('/delete', [$defaultController, 'deleteCustomers']);
+
                 Route::post('/membership/distribute', [$defaultController, 'distributeMembershipPoint']);
             }
         );
