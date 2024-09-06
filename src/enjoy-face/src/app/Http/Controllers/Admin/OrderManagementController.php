@@ -154,7 +154,7 @@ class OrderManagementController extends AdminOrderManagementController
 
         // Return success message
         return response()->json([
-            'message' => 'Cancelled bookings successfully',
+            'message' => 'Cancelled ' . $orders->count() . ' booking(s) successfully',
         ], 200);
     }
 
