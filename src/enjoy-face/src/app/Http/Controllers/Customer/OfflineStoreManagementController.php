@@ -141,23 +141,39 @@ class OfflineStoreManagementController extends Controller
         $storeIds = array_intersect($storeIdsByStoreCategories, $storeIdsByProductCategories);
 
         if (!is_null($keyword)) {
-            $storeIdsByKeyword = $this->getIDsFromSearch(
+            $locale = $this->getSearchLocale($keyword);
+
+            $storeIdsByStoreTitle = $this->getIDsFromSearch(
                 'https://typesense.client.enjoy-face.tinkleex.com',
                 'client_enjoy_face_stores',
                 $keyword,
-                'title.en,title.zh',
+                "title.$locale",
+                'id'
+            );
+            $storeIdsByStoreDescription = $this->getIDsFromSearch(
+                'https://typesense.client.enjoy-face.tinkleex.com',
+                'client_enjoy_face_stores',
+                $keyword,
+                "short_description.$locale",
                 'id'
             );
 
-            $storeIdsByProduct = $this->getIDsFromSearch(
+            $storeIdsByProductTitle = $this->getIDsFromSearch(
                 'https://typesense.client.enjoy-face.tinkleex.com',
                 'client_enjoy_face_products',
                 $keyword,
-                'title.en,title.zh',
+                "title.$locale",
+                'store_id'
+            );
+            $storeIdsByProductDescription = $this->getIDsFromSearch(
+                'https://typesense.client.enjoy-face.tinkleex.com',
+                'client_enjoy_face_products',
+                $keyword,
+                "short_description.$locale",
                 'store_id'
             );
 
-            $storeIdsFromSearch = array_merge($storeIdsByKeyword, $storeIdsByProduct);
+            $storeIdsFromSearch = array_merge($storeIdsByStoreTitle, $storeIdsByStoreDescription, $storeIdsByProductTitle, $storeIdsByProductDescription);
             $storeIds = array_intersect($storeIds, $storeIdsFromSearch);
         }
         $storeIds = array_values($storeIds);
@@ -304,5 +320,11 @@ class OfflineStoreManagementController extends Controller
         $data = $this->search($baseUrl, $collection, $keyword, $queryBy);
         $IDs = array_map(fn($value): string => $value['document'][$attribute], $data['hits']);
         return $IDs;
+    }
+
+    public function getSearchLocale($string)
+    {
+        // Regular expression to match Chinese characters
+        return preg_match('/[\x{4e00}-\x{9fff}]/u', $string) ? 'zh' : 'en';
     }
 }
