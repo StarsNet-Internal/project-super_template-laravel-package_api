@@ -128,7 +128,9 @@ Route::group(
                 Route::get('/{id}/details', [$defaultController, 'getOrderDetails']);
 
                 Route::put('/{id}/address', [$defaultController, 'updateDeliveryAddress']);
+
                 Route::put('/{id}/cancel', [$defaultController, 'cancelOrder']);
+                Route::put('/cancel-all', [$defaultController, 'cancelAllIdleOrders']);
             }
         );
     }

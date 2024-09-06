@@ -129,6 +129,37 @@ class OrderManagementController extends AdminOrderManagementController
             ], 400);
         }
 
+        $this->updateOrderAsCancelledAndCreateVoucher($order);
+
+        // Return success message
+        return response()->json([
+            'message' => 'Cancelled booking successfully',
+        ], 200);
+    }
+
+    public function cancelAllIdleOrders(Request $request)
+    {
+        $month = Carbon::now()->subDays(30)->toISOString();
+
+        $miniStore = Store::where('slug', 'default-mini-store')->first();
+        $miniStoreId = $miniStore->_id;
+        $orders = Order::where('store_id', '!=', $miniStoreId)
+            ->where('delivery_details.address', '<=', $month)
+            ->whereNotIn('current_status',  ['cancelled', 'completed'])
+            ->get();
+
+        foreach ($orders as $order) {
+            $this->updateOrderAsCancelledAndCreateVoucher($order);
+        }
+
+        // Return success message
+        return response()->json([
+            'message' => 'Cancelled bookings successfully',
+        ], 200);
+    }
+
+    public function updateOrderAsCancelledAndCreateVoucher(Order $order)
+    {
         // Update Order
         $order->updateStatus(ShipmentDeliveryStatus::CANCELLED);
 
@@ -147,9 +178,9 @@ class OrderManagementController extends AdminOrderManagementController
                 'cn' => '取消预约',
             ],
             'description' => [
-                'en' => null,
-                'zh' => null,
-                'cn' => null,
+                'en' => '',
+                'zh' => '',
+                'cn' => '',
             ],
             'images' => ['https://starsnet-production.oss-cn-hongkong.aliyuncs.com/png/4fb86ec5-2b42-4824-8c05-0daa07644edf.png'],
             'status' => 'ACTIVE',
@@ -195,10 +226,5 @@ class OrderManagementController extends AdminOrderManagementController
             ],
         ];
         $this->createInboxPost($inboxAttributes, [$customer->account_id], true);
-
-        // Return success message
-        return response()->json([
-            'message' => 'Cancelled booking successfully',
-        ], 200);
     }
 }
