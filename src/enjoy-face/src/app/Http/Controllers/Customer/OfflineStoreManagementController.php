@@ -169,7 +169,9 @@ class OfflineStoreManagementController extends Controller
                 'categories' => function ($category) {
                     $category->select('item_ids', 'title', 'store_category_type');
                 },
-                'orders',
+                'orders' => function ($query) {
+                    $query->where('current_status', '!=', 'cancelled');
+                },
             ])
             ->get();
 
@@ -300,7 +302,7 @@ class OfflineStoreManagementController extends Controller
         string $sortByOrder = 'desc'
     ): ?array {
         $data = $this->search($baseUrl, $collection, $keyword, $queryBy);
-        $IDs = array_map(fn ($value): string => $value['document'][$attribute], $data['hits']);
+        $IDs = array_map(fn($value): string => $value['document'][$attribute], $data['hits']);
         return $IDs;
     }
 }
