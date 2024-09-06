@@ -132,10 +132,6 @@ class OrderManagementController extends AdminOrderManagementController
         // Update Order
         $order->updateStatus(ShipmentDeliveryStatus::CANCELLED);
 
-        // Add store quota
-        $quota = $store->quota;
-        $store->update(['quota' => $quota + 1]);
-
         // Send voucher to customer
         $customer = $order->customer;
         $personalGroup = $customer->groups()->where('slug', 'personal-customer-group')->first();
