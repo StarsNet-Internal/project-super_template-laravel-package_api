@@ -67,10 +67,10 @@ class PostController extends Controller
     {
         // Get authenticated User information
         $account = $this->account();
+        $user = $this->user();
 
         // Get liked Post(s) by Account
-        $posts = $account
-            ->likedPosts()
+        $posts = Post::where('liked_account_ids', $account->_id)
             ->statusActive()
             ->get();
 
@@ -81,15 +81,20 @@ class PostController extends Controller
         // Get Post(s), and append attributes by MongoDB aggregation
         $posts = $this->getPostsWithLikedAndCommentCount($postIDs);
 
+        $readPostIds = PostReview::where('user_id', $user->id)
+            ->where('comment', 'Inbox read')
+            ->pluck('model_type_id')
+            ->all();
+
         foreach ($posts as $post) {
-            if ($post->comment_count === 0) {
+            if (!in_array($post->_id, $readPostIds)) {
                 $review = PostReview::create([
                     'model_type' => 'Post',
                     'model_type_id' => $post->_id,
                     'rating' => 5,
                     'comment' => 'Inbox read'
                 ]);
-                $review->associateUser($this->user());
+                $review->associateUser($user);
             }
         }
 
@@ -106,24 +111,19 @@ class PostController extends Controller
     {
         // Get authenticated User information
         $account = $this->account();
+        $user = $this->user();
 
         // Get liked Post(s) by Account
-        $posts = $account
-            ->likedPosts()
+        $likedPosts = Post::where('liked_account_ids', $account->_id)
             ->statusActive()
             ->get();
 
-        // Convert _id to MongoDB ObjectId
-        $postIDs = $this->extractIDsFromCollection($posts);
-        $postIDs = $this->toObjectIDs($postIDs);
-
-        // Get Post(s), and append attributes by MongoDB aggregation
-        $posts = $this->getPostsWithLikedAndCommentCount($postIDs);
+        $readPosts = PostReview::where('user_id', $user->id)
+            ->where('comment', 'Inbox read')
+            ->get();
 
         return [
-            'count' => $posts->filter(function ($post) {
-                return $post->comment_count === 0;
-            })->count()
+            'count' => $likedPosts->count() - $readPosts->count()
         ];
     }
 }
