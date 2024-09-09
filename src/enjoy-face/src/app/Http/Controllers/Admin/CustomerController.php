@@ -64,6 +64,9 @@ class CustomerController extends Controller
             'account_ids.*' => [
                 'exists:App\Models\Account,_id'
             ],
+            'title' => [
+                'nullable'
+            ],
             'remarks' => [
                 'nullable'
             ]
@@ -75,6 +78,7 @@ class CustomerController extends Controller
 
         // Extract attributes
         $point = $request->input('point', 1);
+        $title = $request->title;
         $remarks = $request->remarks;
 
         $customers = Customer::find($request->customer_ids);
@@ -96,9 +100,9 @@ class CustomerController extends Controller
         // Inbox
         $inboxAttributes = [
             'title' => [
-                'en' => 'You have received ' . $point . ' membership points from the administrator',
-                'zh' => '您已收到管理員贈送的 ' . $point . ' 會員積分',
-                'cn' => '您已收到管理员赠送的 ' . $point . ' 会员积分',
+                'en' => $title,
+                'zh' => $title,
+                'cn' => $title,
             ],
             'short_description' => [
                 'en' => $remarks,
