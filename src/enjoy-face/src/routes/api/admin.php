@@ -68,6 +68,10 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::post('/', [$defaultController, 'createPost']);
+
+                Route::put('/{id}/details', [$defaultController, 'updatePostDetails']);
+
                 Route::post('/reviews/{review_id}/reply', [$defaultController, 'replyPostReview']);
 
                 Route::put('/reviews/status', [$defaultController, 'updatePostReviewReplyStatus']);
