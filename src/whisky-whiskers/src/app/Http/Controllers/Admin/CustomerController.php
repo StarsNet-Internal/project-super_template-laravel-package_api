@@ -55,7 +55,7 @@ class CustomerController extends Controller
 
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
         foreach ($auctionLots as $auctionLot) {
-            $auctionLot->current_bid = $auctionLot->getCurrentBidPrice($incrementRulesDocument);
+            $auctionLot->current_bid = $auctionLot->getCurrentBidPrice();
         }
 
         return $auctionLots;

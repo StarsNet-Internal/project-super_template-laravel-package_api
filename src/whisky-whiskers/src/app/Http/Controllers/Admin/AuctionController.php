@@ -100,7 +100,7 @@ class AuctionController extends Controller
         foreach ($allAuctionLots as $lot) {
             try {
                 $isBidPlaced = $lot->is_bid_placed;
-                $currentBid = $lot->getCurrentBidPrice($incrementRulesDocument);
+                $currentBid = $lot->getCurrentBidPrice();
 
                 $product = Product::find($lot->product_id);
                 // Reject auction lot
