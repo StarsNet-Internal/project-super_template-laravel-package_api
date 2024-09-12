@@ -16,6 +16,19 @@ class TestingController extends Controller
 {
     public function healthCheck()
     {
+        // $lot = AuctionLot::find("66e29cae450bbb287309d818");
+        // $allBids = $lot->bids()
+        // ->where('is_hidden', false)
+        // ->orderByDesc('bid')
+        // ->orderBy('created_at')
+        // ->get();
+
+        // ->sortBy([
+        //     'bid' => 'desc',
+        //     'created_at' => 'asc',
+        // ])
+
+        // return $allBids;
         // ProductStorageRecord::create([
         //     // Default
         //     'start_datetime' => now()->toIso8601String(),

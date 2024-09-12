@@ -239,11 +239,12 @@ class AuctionLotController extends Controller
         $customer = $this->customer();
         $biddingIncrementRules = Configuration::slug('bidding-increments')->latest()->first();
         $currentBid = $auctionLot->getCurrentBidPrice();
+        $isBidPlaced = $auctionLot->is_bid_placed;
 
         // Get bidding increment, and valid minimum bid 
         $biddingIncrementValue = 0;
 
-        if ($auctionLot->is_bid_placed == true) {
+        if ($isBidPlaced == true) {
             $range = $biddingIncrementRules->bidding_increments;
             foreach ($range as $key => $interval) {
                 if ($currentBid >= $interval['from'] && $currentBid < $interval['to']) {
@@ -303,7 +304,7 @@ class AuctionLotController extends Controller
             $winningCustomerID = $auctionLotMaximumBid->customer_id;
         }
 
-        $newCurrentBid = $auctionLot->getCurrentBidPrice();
+        $newCurrentBid = $auctionLot->getCurrentBidPrice(true);
         $auctionLot->update([
             'is_bid_placed' => true,
             'current_bid' => $newCurrentBid,
@@ -312,7 +313,7 @@ class AuctionLotController extends Controller
         ]);
 
         // Create Bid History Record
-        if ($newCurrentBid > $currentBid) {
+        if ($isBidPlaced == false || $newCurrentBid > $currentBid) {
             $bidHistory = BidHistory::where('auction_lot_id', $auctionLotId)->first();
             if ($bidHistory == null) {
                 $bidHistory = BidHistory::create([
@@ -343,7 +344,7 @@ class AuctionLotController extends Controller
         }
 
         // Socket
-        if ($requestedBid == $auctionLot->starting_price || $newCurrentBid > $currentBid) {
+        if ($isBidPlaced == false || $newCurrentBid > $currentBid) {
             try {
                 $url = 'https://socket.whiskywhiskers.com/api/publish';
                 $data = [
