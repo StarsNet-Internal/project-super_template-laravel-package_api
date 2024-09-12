@@ -198,7 +198,7 @@ class AuctionLot extends Eloquent
 
         // Return price
         if (!$isCalculationNeeded) {
-            if (is_null($this->current_bid)) {
+            if (is_null($this->current_bid) || $this->current_bid == 0) {
                 $this->current_bid = $this->starting_price;
                 $this->save();
             }
