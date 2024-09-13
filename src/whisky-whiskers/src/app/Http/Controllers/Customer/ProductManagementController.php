@@ -101,7 +101,7 @@ class ProductManagementController extends Controller
             $auctionLotID = $product->auction_lot_id;
             $auctionLot = AuctionLot::find($auctionLotID);
 
-            $product->current_bid = $auctionLot->getCurrentBidPrice($incrementRulesDocument);
+            $product->current_bid = $auctionLot->getCurrentBidPrice();
             $product->is_reserve_price_met = $product->current_bid >= $product->reserve_price ?
                 true :
                 false;
@@ -244,7 +244,7 @@ class ProductManagementController extends Controller
         foreach ($products as $product) {
             $auctionLotID = $product->auction_lot_id;
             $auctionLot = AuctionLot::find($auctionLotID);
-            $product->current_bid = $auctionLot->getCurrentBidPrice($incrementRulesDocument);
+            $product->current_bid = $auctionLot->getCurrentBidPrice();
             $product->is_reserve_price_met = $product->current_bid >= $product->reserve_price ? true : false;
 
             unset(
@@ -321,7 +321,7 @@ class ProductManagementController extends Controller
         foreach ($products as $product) {
             $auctionLotID = $product->auction_lot_id;
             $auctionLot = AuctionLot::find($auctionLotID);
-            $product->current_bid = $auctionLot->getCurrentBidPrice($incrementRulesDocument);
+            $product->current_bid = $auctionLot->getCurrentBidPrice();
             $product->is_reserve_price_met = $product->current_bid >= $product->reserve_price ? true : false;
 
             unset($product->bids);

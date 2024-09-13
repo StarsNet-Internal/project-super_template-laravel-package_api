@@ -41,7 +41,7 @@ class BidController extends Controller
             $bid->auction_lot = [
                 '_id' => $bid->auction_lot_id,
                 'starting_price' => $auctionLot->starting_price,
-                'current_bid' => $auctionLot->getCurrentBidPrice($incrementRulesDocument),
+                'current_bid' => $auctionLot->getCurrentBidPrice(),
             ];
         }
 

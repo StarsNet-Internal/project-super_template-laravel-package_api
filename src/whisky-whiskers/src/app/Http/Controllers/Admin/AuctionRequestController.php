@@ -150,6 +150,7 @@ class AuctionRequestController extends Controller
         // Update AuctionLot
         $updateAttributes = [
             'starting_price' => $request->starting_price,
+            'current_bid' => $request->starting_price,
             'reserve_price' => $request->reserve_price,
         ];
         $updateAttributes = array_filter($updateAttributes, function ($value) {
