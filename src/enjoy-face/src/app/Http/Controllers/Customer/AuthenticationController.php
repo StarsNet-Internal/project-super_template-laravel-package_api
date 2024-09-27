@@ -195,6 +195,12 @@ class AuthenticationController extends CustomerAuthenticationController
             ], 403);
         }
 
+        if ($user->isDeleted()) {
+            return response()->json([
+                'message' => 'Account not found'
+            ], 403);
+        }
+
         // Create VerificationCode
         $verificationCode = $this->generatePhoneVerificationCodeByType(
             $user,
