@@ -4,6 +4,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AccountController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionLotController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer\AuctionRequestController;
@@ -111,6 +112,21 @@ Route::group(
         );
     }
 );
+
+Route::group(
+    ['prefix' => 'accounts'],
+    function () {
+        $defaultController = AccountController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::put('/verification', [$defaultController, 'updateAccountVerification']);
+            }
+        );
+    }
+);
+
 
 Route::group(
     ['prefix' => 'bids'],

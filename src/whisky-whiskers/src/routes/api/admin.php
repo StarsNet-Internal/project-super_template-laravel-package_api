@@ -2,6 +2,7 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\AccountController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\AuctionController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\AuctionRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\TestingController;
@@ -37,6 +38,20 @@ Route::group(
 //         Route::post('/', [$defaultController, 'createAuctionStore']);
 //     }
 // );
+
+Route::group(
+    ['prefix' => 'accounts'],
+    function () {
+        $defaultController = AccountController::class;
+        Route::put('/{account_id}/verification', [$defaultController, 'updateAccountVerification']);
+        // Route::group(
+        //     ['middleware' => 'auth:api'],
+        //     function () use ($defaultController) {
+        //         Route::put('/{account_id}/verification', [$defaultController, 'updateAccountVerification']);
+        //     }
+        // );
+    }
+);
 
 Route::group(
     ['prefix' => 'auctions'],
