@@ -512,7 +512,9 @@ class AuctionController extends Controller
         $lots = AuctionLot::where('store_id', $storeId)
             ->statuses(Status::$typesForAdmin)
             ->with([
-                'product'
+                'product',
+                'winningBidCustomer',
+                'winningBidCustomer.account',
             ])
             ->get();
 
