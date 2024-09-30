@@ -9,6 +9,7 @@ use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\TestingController
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\ConsignmentRequestController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\CustomerController;
 use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\ServiceController;
+use StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin\AuctionLotController;
 
 /*
 |--------------------------------------------------------------------------
@@ -67,6 +68,8 @@ Route::group(
             function () use ($defaultController) {
                 Route::get('/{store_id}/auction-lots/unpaid', [$defaultController, 'getAllUnpaidAuctionLots'])->middleware(['pagination']);
                 Route::put('/{store_id}/auction-lots/return', [$defaultController, 'returnAuctionLotToOriginalCustomer']);
+
+                Route::get('/{store_id}/auction-lots/all', [$defaultController, 'getAllAuctionLotsByStore'])->middleware(['pagination']);
             }
         );
     }
@@ -84,6 +87,21 @@ Route::group(
                 Route::put('/{id}/edit', [$defaultController, 'updateAuctionRequests']);
                 Route::put('/{id}/approve', [$defaultController, 'approveAuctionRequest']);
                 Route::put('/{id}/auction-lots/edit', [$defaultController, 'updateAuctionLotDetailsByAuctionRequest']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'auction-lots'],
+    function () {
+        $defaultController = AuctionLotController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/storage/all', [$defaultController, 'getAllAuctionLotsInStorage'])->middleware(['pagination']);
+                Route::get('/{auction_lot_id}/details', [$defaultController, 'getAuctionLotDetails']);
             }
         );
     }

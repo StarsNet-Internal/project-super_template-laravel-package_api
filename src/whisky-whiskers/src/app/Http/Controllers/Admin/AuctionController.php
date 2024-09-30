@@ -502,4 +502,24 @@ class AuctionController extends Controller
             'message' => 'Updated listing_status for ' . count($productIDs) . ' Product(s).'
         ], 200);
     }
+
+    public function getAllAuctionLotsByStore(Request $request)
+    {
+        // Extract attributes from $request
+        $storeId = $request->route('store_id');
+
+        // Get Auction Store(s)
+        $lots = AuctionLot::where('store_id', $storeId)
+            ->statuses(Status::$typesForAdmin)
+            ->with([
+                'product'
+            ])
+            ->get();
+
+        foreach ($lots as $lot) {
+            $lot->current_bid = $lot->getCurrentBidPrice();
+        }
+
+        return $lots;
+    }
 }
