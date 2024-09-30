@@ -27,7 +27,8 @@
       "StarsNet\\Project\\Ops\\": "src/ops/src/",
       "StarsNet\\Project\\SunKwong\\": "src/sun-kwong/src/",
       "StarsNet\\Project\\Stripe\\": "src/stripe/src/",
-      "StarsNet\\Project\\SnoreCircle\\": "src/snore-circle/src/"
+      "StarsNet\\Project\\SnoreCircle\\": "src/snore-circle/src/",
+      "StarsNet\\Project\\Paraqon\\": "src/snore-circle/src/"
     }
   },
   "extra": {

@@ -1,6 +1,6 @@
 <?php
 
-namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Admin;
+namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
@@ -18,14 +18,20 @@ class AccountController extends Controller
 {
     public function updateAccountVerification(Request $request)
     {
+        Address::create(['hello' => 'asdad']);
+        return 'done';
+        // $address = Address::find('655a56be64bcd9e08d02b312');
+        // $address->update(['company_name' => 'Fai company']);
+        // return $address;
+
         $accountID = $request->route('account_id');
         $account = Account::find($accountID);
 
-        $updateFields = $request->all();
-        $account->update($updateFields);
+        $account->timestamps = false;
+        $account->update(['hello' => 'asdas']);
 
         return response()->json([
-            'message' => 'Updated Verification successfully'
+            'message' => 'Updated Verification document successfully'
         ], 200);
     }
 }

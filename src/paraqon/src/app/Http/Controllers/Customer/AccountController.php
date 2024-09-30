@@ -1,6 +1,6 @@
 <?php
 
-namespace StarsNet\Project\WhiskyWhiskers\App\Http\Controllers\Customer;
+namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 
@@ -12,9 +12,9 @@ use App\Models\ProductVariant;
 use App\Models\Store;
 use Carbon\Carbon;
 
-use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionLot;
-use StarsNet\Project\WhiskyWhiskers\App\Models\AuctionRequest;
-use StarsNet\Project\WhiskyWhiskers\App\Models\BidHistory;
+use StarsNet\Project\Paraqon\App\Models\AuctionLot;
+use StarsNet\Project\Paraqon\App\Models\AuctionRequest;
+use StarsNet\Project\Paraqon\App\Models\BidHistory;
 
 use Illuminate\Http\Request;
 
@@ -28,7 +28,7 @@ class AccountController extends Controller
         $account->update($updateFields);
 
         return response()->json([
-            'message' => 'Updated Verification successfully'
+            'message' => 'Updated Verification document successfully'
         ], 200);
     }
 }
