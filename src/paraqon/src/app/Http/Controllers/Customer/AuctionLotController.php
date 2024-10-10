@@ -164,6 +164,7 @@ class AuctionLotController extends Controller
         // Extract attributes from $request
         $auctionLotId = $request->route('auction_lot_id');
         $requestedBid = $request->bid;
+        $bidType = $request->type;
         $now = now();
 
         // Check auction lot
@@ -291,7 +292,8 @@ class AuctionLotController extends Controller
             'store_id' => $auctionLot->store_id,
             'product_id' => $auctionLot->product_id,
             'product_variant_id' => $auctionLot->product_variant_id,
-            'bid' => $requestedBid
+            'bid' => $requestedBid,
+            'type' => $bidType
         ]);
 
         $auctionLotMaximumBid = Bid::where('auction_lot_id', $auctionLotId)
@@ -344,26 +346,26 @@ class AuctionLotController extends Controller
         }
 
         // Socket
-        if ($isBidPlaced == false || $newCurrentBid > $currentBid) {
-            try {
-                $url = 'https://socket.whiskywhiskers.com/api/publish';
-                $data = [
-                    "site" => 'whisky-whiskers',
-                    "room" => $auctionLotId,
-                    "message" => [
-                        "bidPrice" => $newCurrentBid,
-                        "lotId" => $auctionLotId,
-                    ]
-                ];
+        // if ($isBidPlaced == false || $newCurrentBid > $currentBid) {
+        //     try {
+        //         $url = 'https://socket.whiskywhiskers.com/api/publish';
+        //         $data = [
+        //             "site" => 'whisky-whiskers',
+        //             "room" => $auctionLotId,
+        //             "message" => [
+        //                 "bidPrice" => $newCurrentBid,
+        //                 "lotId" => $auctionLotId,
+        //             ]
+        //         ];
 
-                $res = Http::post(
-                    $url,
-                    $data
-                );
-            } catch (\Exception $e) {
-                print($e);
-            }
-        }
+        //         $res = Http::post(
+        //             $url,
+        //             $data
+        //         );
+        //     } catch (\Exception $e) {
+        //         print($e);
+        //     }
+        // }
 
         // Return Auction Store
         return response()->json([

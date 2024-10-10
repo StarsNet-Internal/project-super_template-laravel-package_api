@@ -31,4 +31,16 @@ class AccountController extends Controller
             'message' => 'Updated Verification document successfully'
         ], 200);
     }
+
+    public function getAllCustomerGroups(Request $request)
+    {
+        $customer = $this->customer();
+
+        $groups = $customer->groups()
+            ->statusActive()
+            ->latest()
+            ->get();
+
+        return $groups;
+    }
 }

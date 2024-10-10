@@ -17,6 +17,26 @@ class OrderController extends Controller
 {
     use CheckoutTrait;
 
+    public function getOrdersByStoreID(Request $request)
+    {
+        // Extract attributes from $request
+        $storeID = $request->route('store_id');
+
+        // Get Customer
+        $customer = $this->customer();
+
+        // Get Orders
+        $orders = Order::where('store_id', $storeID)
+            ->where('customer_id', $customer->_id)
+            ->get();
+
+        foreach ($orders as $order) {
+            $order->checkout = $order->checkout()->latest()->first();
+        }
+
+        return $orders;
+    }
+
     public function payPendingOrderByOnlineMethod(Request $request)
     {
         // Extract attributes from $request

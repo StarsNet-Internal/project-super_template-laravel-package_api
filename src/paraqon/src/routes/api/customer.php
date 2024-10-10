@@ -7,17 +7,20 @@ use Illuminate\Support\Facades\Route;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\AccountController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\AuctionController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\AuctionLotController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\AuctionRegistrationRequestController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\AuctionRequestController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\AuthController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\AuthenticationController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\BidController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\ConsignmentRequestController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\DepositController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\OrderController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\PaymentController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\ProductController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\TestingController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\WatchlistItemController;
 
 /*
 |--------------------------------------------------------------------------
@@ -58,8 +61,14 @@ Route::group(
     function () {
         $defaultController = AuctionController::class;
 
-        Route::get('/all', [$defaultController, 'getAllAuctions'])->middleware(['pagination']);
-        Route::get('/{auction_id}/details', [$defaultController, 'getAuctionDetails']);
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllAuctions'])->middleware(['pagination']);
+                Route::get('/{auction_id}/paddles/all', [$defaultController, 'getAllPaddles'])->middleware(['pagination']);
+                Route::get('/{auction_id}/details', [$defaultController, 'getAuctionDetails']);
+            }
+        );
     }
 );
 
@@ -104,10 +113,22 @@ Route::group(
     function () {
         $defaultController = AuthenticationController::class;
 
+        Route::post('/login', [$defaultController, 'login']);
+        Route::post('/2fa-login', [$defaultController, 'twoFactorAuthenticationlogin']);
+
+        Route::post('/change-phone', [$defaultController, 'changePhone']);
+
+        Route::post('/forget-password', [$defaultController, 'forgetPassword']);
+        Route::post('/reset-password', [$defaultController, 'resetPassword']);
+
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::post('/update-password', [$defaultController, 'updatePassword']);
                 Route::post('/migrate', [$defaultController, 'migrateToRegistered']);
+
+                Route::get('/change-email-request', [$defaultController, 'changeEmailRequest']);
+                Route::get('/change-phone-request', [$defaultController, 'changePhoneRequest']);
             }
         );
     }
@@ -122,6 +143,7 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::put('/verification', [$defaultController, 'updateAccountVerification']);
+                Route::get('/customer-groups', [$defaultController, 'getAllCustomerGroups'])->middleware(['pagination']);
             }
         );
     }
@@ -167,6 +189,7 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::get('/stores/{store_id}/all', [$defaultController, 'getOrdersByStoreID'])->middleware(['pagination']);
                 Route::post('/{order_id}/payment', [$defaultController, 'payPendingOrderByOnlineMethod']);
             }
         );
@@ -243,5 +266,57 @@ Route::group(
         $defaultController = PaymentController::class;
 
         Route::post('/callback', [$defaultController, 'onlinePaymentCallback']);
+    }
+);
+
+Route::group(
+    ['prefix' => 'watchlist'],
+    function () {
+        $defaultController = WatchlistItemController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/add-to-watchlist', [$defaultController, 'addAndRemoveItem']);
+                Route::get('/stores', [$defaultController, 'getWatchedStores'])->middleware(['pagination']);
+                Route::get('/auction-lots', [$defaultController, 'getWatchedAuctionLots'])->middleware(['pagination']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'auction-registrations'],
+    function () {
+        $defaultController = AuctionRegistrationRequestController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/register', [$defaultController, 'registerAuction']);
+                Route::get('/all', [$defaultController, 'getAllRegisteredAuctions'])->middleware(['pagination']);
+                Route::post('/{auction_registration_request_id}/register', [$defaultController, 'registerAuctionAgain']);
+                Route::post('/{id}/deposit', [$defaultController, 'createDeposit']);
+                Route::put('/{auction_registration_request_id}/archive', [$defaultController, 'archiveAuctionRegistrationRequest']);
+                Route::get('/details', [$defaultController, 'getRegisteredAuctionDetails']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'deposits'],
+    function () {
+        $defaultController = DepositController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllDeposits'])->middleware(['pagination']);
+                Route::get('/{id}/details', [$defaultController, 'getDepositDetails']);
+                Route::put('/{id}/details', [$defaultController, 'updateDepositDetails']);
+                Route::put('/{deposit_id}/cancel', [$defaultController, 'cancelDeposit']);
+            }
+        );
     }
 );

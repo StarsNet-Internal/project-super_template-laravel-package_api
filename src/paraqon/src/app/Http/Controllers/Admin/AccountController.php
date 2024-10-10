@@ -18,20 +18,29 @@ class AccountController extends Controller
 {
     public function updateAccountVerification(Request $request)
     {
-        Address::create(['hello' => 'asdad']);
-        return 'done';
-        // $address = Address::find('655a56be64bcd9e08d02b312');
-        // $address->update(['company_name' => 'Fai company']);
-        // return $address;
-
-        $accountID = $request->route('account_id');
+        $accountID = $request->route('id');
         $account = Account::find($accountID);
 
-        $account->timestamps = false;
-        $account->update(['hello' => 'asdas']);
+        $attributes = $request->all();
+        $account->update($attributes);
 
         return response()->json([
             'message' => 'Updated Verification document successfully'
         ], 200);
+    }
+
+    public function updateAccountDetails(Request $request)
+    {
+        $accountID = $request->route('id');
+        $account = Account::find($accountID);
+
+        // Update Account
+        $attributes = $request->all();
+        $account->update($attributes);
+
+        // Return success message
+        return response()->json([
+            'message' => 'Updated Account Details successfully'
+        ]);
     }
 }

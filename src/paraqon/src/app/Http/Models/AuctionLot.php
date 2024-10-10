@@ -73,6 +73,8 @@ class AuctionLot extends Eloquent
         'is_paid' => false,
         'is_bid_placed' => false,
 
+        'start_datetime' => null,
+        'end_datetime' => null,
         // Timestamps
         'deleted_at' => null
     ];

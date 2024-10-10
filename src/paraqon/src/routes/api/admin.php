@@ -4,10 +4,13 @@
 use Illuminate\Support\Facades\Route;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AccountController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AuctionController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AuctionLotController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AuctionRequestController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ConsignmentRequestController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\CustomerController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\CustomerGroupController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\DepositController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ServiceController;
 
 /*
@@ -27,6 +30,7 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+        Route::get('/order', [$defaultController, 'createOrder']);
     }
 );
 
@@ -34,7 +38,6 @@ Route::group(
 //     ['prefix' => 'stores'],
 //     function () {
 //         $defaultController = AuctionController::class;
-
 //         Route::post('/', [$defaultController, 'createAuctionStore']);
 //     }
 // );
@@ -43,13 +46,14 @@ Route::group(
     ['prefix' => 'accounts'],
     function () {
         $defaultController = AccountController::class;
-        Route::put('/{account_id}/verification', [$defaultController, 'updateAccountVerification']);
-        // Route::group(
-        //     ['middleware' => 'auth:api'],
-        //     function () use ($defaultController) {
-        //         Route::put('/{account_id}/verification', [$defaultController, 'updateAccountVerification']);
-        //     }
-        // );
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::put('/{id}/verification', [$defaultController, 'updateAccountVerification']);
+                Route::put('/{id}/details', [$defaultController, 'updateAccountDetails']);
+            }
+        );
     }
 );
 
@@ -57,16 +61,35 @@ Route::group(
     ['prefix' => 'auctions'],
     function () {
         $defaultController = AuctionController::class;
+
         Route::put('/statuses', [$defaultController, 'updateAuctionStatuses']);
         Route::get('/{store_id}/archive', [$defaultController, 'archiveAllAuctionLots']);
         Route::get('/{store_id}/orders/create', [$defaultController, 'generateAuctionOrders']);
+        Route::get('/{store_id}/registered-users', [$defaultController, 'getAllRegisteredUsers'])->middleware(['pagination']);
+        Route::get('/{store_id}/registration-records', [$defaultController, 'getAllAuctionRegistrationRecords'])->middleware(['pagination']);
 
+        Route::get('/all', [$defaultController, 'getAllAuctions'])->middleware(['pagination']);
 
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/{store_id}/auction-lots/unpaid', [$defaultController, 'getAllUnpaidAuctionLots'])->middleware(['pagination']);
                 Route::put('/{store_id}/auction-lots/return', [$defaultController, 'returnAuctionLotToOriginalCustomer']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'auction-lots'],
+    function () {
+        $defaultController = AuctionLotController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/', [$defaultController, 'createAuctionLot']);
+                Route::get('/all', [$defaultController, 'getAllAuctionLots'])->middleware(['pagination']);
             }
         );
     }
@@ -113,10 +136,28 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllCustomers'])->middleware(['pagination']);
+                Route::get('/{id}/details', [$defaultController, 'getCustomerDetails']);
                 Route::get('/{customer_id}/products/all', [$defaultController, 'getAllOwnedProducts'])->middleware(['pagination']);
                 Route::get('/{customer_id}/auction-lots/all', [$defaultController, 'getAllOwnedAuctionLots'])->middleware(['pagination']);
                 Route::get('/{customer_id}/bids/all', [$defaultController, 'getAllBids'])->middleware(['pagination']);
                 Route::put('/{customer_id}/bids/{bid_id}/hide', [$defaultController, 'hideBid']);
+            }
+        );
+    }
+);
+
+// CUSTOMER_GROUP
+Route::group(
+    ['prefix' => 'customer-groups'],
+    function () {
+        $defaultController = CustomerGroupController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/{id}/customers/assign', [$defaultController, 'getCustomerGroupAssignedCustomers'])->middleware(['pagination']);
+                Route::get('/{id}/customers/unassign', [$defaultController, 'getCustomerGroupUnassignedCustomers'])->middleware(['pagination']);
             }
         );
     }
@@ -131,6 +172,23 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::put('/stores/archive', [$defaultController, 'archiveStores']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'deposits'],
+    function () {
+        $defaultController = DepositController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllDeposits'])->middleware(['pagination']);
+                Route::get('/{id}/details', [$defaultController, 'getDepositDetails']);
+                Route::put('/{id}/details', [$defaultController, 'updateDepositDetails']);
+                Route::put('/{id}/approve', [$defaultController, 'approveDeposit']);
             }
         );
     }

@@ -18,6 +18,7 @@ use App\Constants\Model\WarehouseInventoryHistoryType;
 use App\Constants\Model\CheckoutType;
 use App\Constants\Model\OrderDeliveryMethod;
 use App\Constants\Model\OrderPaymentMethod;
+use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\ShipmentDeliveryStatus;
 
 use App\Traits\Utils\RoundingTrait;
@@ -28,12 +29,84 @@ use StarsNet\Project\Paraqon\App\Models\ProductStorageRecord;
 // Validator
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
+use StarsNet\Project\Paraqon\App\Models\BidHistory;
 
 class AuctionController extends Controller
 {
     use RoundingTrait;
 
-    public function updateAuctionStatuses(Request $requests)
+    public function getAllRegisteredUsers(Request $request)
+    {
+        $storeID = $request->route('store_id');
+
+        $registeredCustomers = AuctionRegistrationRequest::where('store_id', $storeID)
+            ->where('status', Status::ACTIVE)
+            ->whereNotNull('paddle_id')
+            ->latest()
+            ->get();
+
+        $registeredCustomerIDs = $registeredCustomers
+            ->pluck('requested_by_customer_id')
+            ->all();
+
+        // Define keys for append
+        $appendKeys = [
+            'user',
+            'country',
+            'gender',
+            'last_logged_in_at',
+            'email',
+            'area_code',
+            'phone'
+        ];
+
+        $customers = Customer::objectIDs($registeredCustomerIDs)
+            ->get()
+            ->append($appendKeys);
+
+        foreach ($customers as $customer) {
+            $customerID = $customer->_id;
+            $paddleId = optional($registeredCustomers->first(function ($item) use ($customerID) {
+                return $item->requested_by_customer_id == $customerID;
+            }))->paddle_id;
+            $customer->paddle_id = $paddleId ?? '';
+        }
+
+        return $customers;
+    }
+
+    public function getAllAuctionRegistrationRecords(Request $request)
+    {
+        $storeID = $request->route('store_id');
+
+        $forms = AuctionRegistrationRequest::where('store_id', $storeID)
+            ->with(['deposits'])
+            ->get();
+
+        return $forms;
+    }
+
+    public function getAllAuctions(Request $request)
+    {
+        $auctionType = $request->input('auction_type');
+
+        $stores = Store::where('auction_type', $auctionType)
+            ->latest()
+            ->get();
+
+        foreach ($stores as $store) {
+            $store->auction_lot_count = AuctionLot::where('store_id', $store->_id)->count();
+
+            $store->registered_user_count = AuctionRegistrationRequest::where('store_id', $store->_id)
+                ->where('reply_status', ReplyStatus::APPROVED)
+                ->count();
+        }
+
+        return $stores;
+    }
+
+    public function updateAuctionStatuses(Request $request)
     {
         $now = now();
 
