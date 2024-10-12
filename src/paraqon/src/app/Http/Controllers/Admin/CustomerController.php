@@ -28,6 +28,7 @@ class CustomerController extends Controller
             })
             ->with([
                 'account',
+                'account.user'
             ])
             ->get();
 
@@ -44,6 +45,8 @@ class CustomerController extends Controller
         /** @var Customer $customer */
         $customer = Customer::with([
             'account',
+            'account.user',
+            'account.notificationSetting'
         ])
             ->find($customerID);
 

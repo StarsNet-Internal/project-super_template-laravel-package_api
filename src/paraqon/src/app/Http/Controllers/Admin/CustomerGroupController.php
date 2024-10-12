@@ -54,6 +54,7 @@ class CustomerGroupController extends Controller
         $customers = $category->customers()
             ->with([
                 'account',
+                'account.user'
             ])
             ->get();
 

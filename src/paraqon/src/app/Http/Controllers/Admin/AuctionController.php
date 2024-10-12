@@ -51,19 +51,18 @@ class AuctionController extends Controller
             ->all();
 
         // Define keys for append
-        $appendKeys = [
-            'user',
-            'country',
-            'gender',
-            'last_logged_in_at',
-            'email',
-            'area_code',
-            'phone'
-        ];
+        // $appendKeys = [
+        //     'user',
+        //     'country',
+        //     'gender',
+        //     'last_logged_in_at',
+        //     'email',
+        //     'area_code',
+        //     'phone'
+        // ];
 
         $customers = Customer::objectIDs($registeredCustomerIDs)
-            ->get()
-            ->append($appendKeys);
+            ->with(['account', 'account.user']);
 
         foreach ($customers as $customer) {
             $customerID = $customer->_id;
@@ -85,6 +84,42 @@ class AuctionController extends Controller
             ->get();
 
         return $forms;
+    }
+
+    public function getAllCategories(Request $request)
+    {
+        // Extract attributes from $request
+        $storeID = $request->route('store_id');
+        $statuses = (array) $request->input('status', Status::$typesForAdmin);
+
+        // Store
+        $store = Store::find($storeID);
+
+        // Get all active ProductCategory(s)
+        $categories = $store
+            ->productCategories()
+            ->statusesAllowed(
+                Status::$typesForAdmin,
+                $statuses
+            )
+            ->get();
+
+        // Get all product ids
+        $productIDs = AuctionLot::where('store_id', $storeID)
+            ->get()
+            ->pluck('product_id')
+            ->all();
+
+        foreach ($categories as $category) {
+            $category->lot_count = count(array_intersect(
+                $category->item_ids,
+                $productIDs
+            ));
+            // $category->product_count = count($productIDs);
+            // $category->item_count = count($category->item_ids);
+        }
+
+        return $categories;
     }
 
     public function getAllAuctions(Request $request)

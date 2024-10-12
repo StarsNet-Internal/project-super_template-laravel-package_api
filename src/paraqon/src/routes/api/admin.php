@@ -11,7 +11,9 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ConsignmentRequestContro
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\CustomerController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\CustomerGroupController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\DepositController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\OrderController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ServiceController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ShoppingCartController;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,6 +68,7 @@ Route::group(
         Route::get('/{store_id}/archive', [$defaultController, 'archiveAllAuctionLots']);
         Route::get('/{store_id}/orders/create', [$defaultController, 'generateAuctionOrders']);
         Route::get('/{store_id}/registered-users', [$defaultController, 'getAllRegisteredUsers'])->middleware(['pagination']);
+        Route::get('/{store_id}/categories/all', [$defaultController, 'getAllCategories'])->middleware(['pagination']);
         Route::get('/{store_id}/registration-records', [$defaultController, 'getAllAuctionRegistrationRecords'])->middleware(['pagination']);
 
         Route::get('/all', [$defaultController, 'getAllAuctions'])->middleware(['pagination']);
@@ -90,6 +93,7 @@ Route::group(
             function () use ($defaultController) {
                 Route::post('/', [$defaultController, 'createAuctionLot']);
                 Route::get('/all', [$defaultController, 'getAllAuctionLots'])->middleware(['pagination']);
+                Route::get('/{id}/details', [$defaultController, 'getAuctionLotDetails']);
             }
         );
     }
@@ -189,6 +193,34 @@ Route::group(
                 Route::get('/{id}/details', [$defaultController, 'getDepositDetails']);
                 Route::put('/{id}/details', [$defaultController, 'updateDepositDetails']);
                 Route::put('/{id}/approve', [$defaultController, 'approveDeposit']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'orders'],
+    function () {
+        $defaultController = OrderController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllAuctionOrders'])->middleware(['pagination']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'shopping-cart'],
+    function () {
+        $defaultController = ShoppingCartController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getShoppingCartItems'])->middleware(['pagination']);
             }
         );
     }

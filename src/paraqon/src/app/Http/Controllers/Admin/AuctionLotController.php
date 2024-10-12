@@ -147,4 +147,15 @@ class AuctionLotController extends Controller
 
         return $auctionLots;
     }
+
+    public function getAuctionLotDetails(Request $request)
+    {
+        // Extract attributes from $request
+        $auctionLotID = $request->route('id');
+
+        // Get AuctionLot
+        $auctionLot = AuctionLot::find($auctionLotID);
+
+        return $auctionLot;
+    }
 }
