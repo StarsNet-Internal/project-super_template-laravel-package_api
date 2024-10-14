@@ -39,12 +39,16 @@ class DepositController extends Controller
 
     public function getAllDeposits(Request $request)
     {
-        // Get authenticated User information
-        $customer = $this->customer();
+        // Extract attributes from $request
+        $auctionType = $request->input('auction_type', 'ONLINE');
 
         // Get Items
-        $deposits = Deposit::where('requested_by_customer_id', $customer->_id)
-            ->with(['auctionRegistrationRequest.store'])
+        $deposits = Deposit::with(['auctionRegistrationRequest.store'])
+            ->whereHas('auctionRegistrationRequest', function ($query) use ($auctionType) {
+                $query->whereHas('store', function ($query2) use ($auctionType) {
+                    $query2->where('auction_type', $auctionType);
+                });
+            })
             ->latest()
             ->get();
 
@@ -153,7 +157,7 @@ class DepositController extends Controller
                     'reply_status' => ReplyStatus::APPROVED
                 ];
                 $deposit->update($depositUpdateAttributes);
-                $deposit->updateStatus('approved');
+                $deposit->updateStatus('on-hold');
 
                 // Update AuctionRegistrationRequest
                 $storeID = $auctionRegistrationRequest->store_id;
@@ -165,7 +169,7 @@ class DepositController extends Controller
                         ->first())
                         ->paddle_id
                         ?? 0;
-                    $assignedPaddleID = $highestPaddleID++;
+                    $assignedPaddleID = $highestPaddleID + 1;
                 }
 
                 $requestUpdateAttributes = [
@@ -196,6 +200,44 @@ class DepositController extends Controller
             default:
                 break;
         }
+
+        return response()->json([
+            'message' => 'Deposit updated successfully'
+        ], 200);
+    }
+
+    public function cancelDeposit(Request $request)
+    {
+        // Extract attributes from $request
+        $depositID = $request->route('id');
+
+        // Get Deposit
+        $deposit = Deposit::objectID($depositID)->first();
+
+        if (is_null($deposit)) {
+            return response()->json([
+                'message' => 'Deposit not found'
+            ], 404);
+        }
+
+        if ($deposit->status != Status::ACTIVE) {
+            return response()->json([
+                'message' => 'Deposit not found'
+            ], 404);
+        }
+
+        if ($deposit->reply_status != ReplyStatus::PENDING) {
+            return response()->json([
+                'message' => 'This Deposit has already been APPROVED/REJECTED.'
+            ], 404);
+        }
+
+        // Update Deposit
+        $depositAttributes = [
+            'status' => Status::ARCHIVED,
+            'reply_status' => ReplyStatus::REJECTED
+        ];
+        $deposit->update($depositAttributes);
 
         return response()->json([
             'message' => 'Deposit updated successfully'

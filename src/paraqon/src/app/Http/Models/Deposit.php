@@ -175,7 +175,7 @@ class Deposit extends Eloquent
     // Action Begins
     // -----------------------------
 
-    public function updateStatus(string $slug, string $remarks): DepositStatus
+    public function updateStatus(string $slug, ?string $remarks = ""): DepositStatus
     {
         $slug = Str::slug($slug);
 

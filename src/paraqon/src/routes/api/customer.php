@@ -315,7 +315,7 @@ Route::group(
                 Route::get('/all', [$defaultController, 'getAllDeposits'])->middleware(['pagination']);
                 Route::get('/{id}/details', [$defaultController, 'getDepositDetails']);
                 Route::put('/{id}/details', [$defaultController, 'updateDepositDetails']);
-                Route::put('/{deposit_id}/cancel', [$defaultController, 'cancelDeposit']);
+                Route::put('/{id}/cancel', [$defaultController, 'cancelDeposit']);
             }
         );
     }

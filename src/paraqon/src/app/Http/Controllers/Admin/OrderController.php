@@ -20,7 +20,7 @@ class OrderController extends Controller
         // Extract attributes from $request
         $storeID = $request->store_id;
         $customerID = $request->customer_id;
-        $isSystem = $request->input('is_system', true);
+        $isSystem = $request->boolean('is_system', true);
 
         // Get Order
         $orders = Order::where('is_system', $isSystem)

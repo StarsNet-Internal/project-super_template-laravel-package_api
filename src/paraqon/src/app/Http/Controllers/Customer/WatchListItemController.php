@@ -100,27 +100,26 @@ class WatchlistItemController extends Controller
     public function getWatchedAuctionLots(Request $request)
     {
         // Extract attributes from $request
-        // $keyword = $request->input('keyword');
-        // if ($keyword === "") $keyword = "*";
+        $keyword = $request->input('keyword');
+        if ($keyword === "") $keyword = "*";
 
         // Get authenticated User information
         $customer = $this->customer();
 
         // Get Items
-        $auctionLotIDs = WatchlistItem::where('customer_id', $customer->_id)
+        $watchingAuctionLotIDs = WatchlistItem::where('customer_id', $customer->_id)
             ->where('item_type', 'auction-lot')
             ->pluck('item_id')
             ->all();
 
-
-        $productIDs = AuctionLot::objectIDs($auctionLotIDs)->get()
+        $productIDs = AuctionLot::objectIDs($watchingAuctionLotIDs)
+            ->get()
             ->pluck('product_id')
             ->all();
 
         // Get Products
         $products = $this->getProductsInfoByAggregation($productIDs);
 
-        return $products;
         foreach ($products as $product) {
             $auctionLotID = $product->auction_lot_id;
             $auctionLot = AuctionLot::find($auctionLotID);
@@ -465,10 +464,24 @@ class WatchlistItemController extends Controller
                         ],
                         'else' => '0'
                     ],
-                ]
+                ],
+                'store_id' => [
+                    '$cond' => [
+                        'if' => [
+                            '$gt' => [
+                                ['$size' => '$auction_lots'],
+                                0
+                            ]
+                        ],
+                        'then' => [
+                            '$toString' => ['$last' => '$auction_lots.store_id']
+                        ],
+                        'else' => '0'
+                    ],
+                ],
             ];
 
-            // Get WishlistItem(s)
+            // Get watchlist_items(s)
             $aggregate[]['$lookup'] = [
                 'from' => 'watchlist_items',
                 'localField' => 'auction_lot_id',
@@ -498,6 +511,27 @@ class WatchlistItemController extends Controller
                 ];
             }
 
+            // Get store(s)
+            $aggregate[]['$lookup'] = [
+                'from' => 'stores',
+                'let' => ['store_id' => '$store_id'],
+                'pipeline' => [
+                    [
+                        '$match' => [
+                            '$expr' => [
+                                '$eq' => [['$toString' => '$_id'], '$$store_id']
+                            ]
+                        ]
+                    ]
+                ],
+                'as' => 'store',
+            ];
+
+            $aggregate[]['$unwind'] = [
+                'path' => '$store',
+                'preserveNullAndEmptyArrays' => true
+            ];
+
             // Hide attributes
             $hiddenKeys = [
                 'discount',
@@ -517,6 +551,7 @@ class WatchlistItemController extends Controller
                 // 'auction_lots',
                 'listing_status',
                 // 'owned_by_customer_id',
+                'store_id'
             ];
             $aggregate[]['$project'] = array_merge(...array_map(function ($item) {
                 return [$item => false];

@@ -50,19 +50,9 @@ class AuctionController extends Controller
             ->pluck('requested_by_customer_id')
             ->all();
 
-        // Define keys for append
-        // $appendKeys = [
-        //     'user',
-        //     'country',
-        //     'gender',
-        //     'last_logged_in_at',
-        //     'email',
-        //     'area_code',
-        //     'phone'
-        // ];
-
         $customers = Customer::objectIDs($registeredCustomerIDs)
-            ->with(['account', 'account.user']);
+            ->with(['account', 'account.user'])
+            ->get();
 
         foreach ($customers as $customer) {
             $customerID = $customer->_id;

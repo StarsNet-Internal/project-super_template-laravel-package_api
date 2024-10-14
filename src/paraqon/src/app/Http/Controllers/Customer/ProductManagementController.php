@@ -103,10 +103,18 @@ class ProductManagementController extends Controller
         if (count($productIDs) === 0) return new Collection();
 
         // Filter Product(s)
-        $products = $this->getProductsInfoByAggregation($productIDs);
+        $products = $this->getProductsInfoByAggregation($productIDs, $this->store->_id);
 
         // Re-calculate current_bid value
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
+
+        // Get WatchlistItem 
+        $customer = $this->customer();
+        $watchingAuctionIDs = WatchlistItem::where('customer_id', $customer->id)
+            ->where('item_type', 'auction-lot')
+            ->get()
+            ->pluck('item_id')
+            ->all();
 
         foreach ($products as $product) {
             $auctionLotID = $product->auction_lot_id;
@@ -122,6 +130,9 @@ class ProductManagementController extends Controller
             $product->start_datetime = $auctionLot->start_datetime;
             $product->end_datetime = $auctionLot->end_datetime;
             $product->lot_number = $auctionLot->lot_number;
+
+            // is_watching
+            $auctionLot->is_watching = in_array($auctionLotID, $watchingAuctionIDs);
 
             unset(
                 $product->bids,
@@ -260,7 +271,7 @@ class ProductManagementController extends Controller
         $productIDs = $request->ids;
 
         // Append attributes to each Product
-        $products = $this->getProductsInfoByAggregation($productIDs);
+        $products = $this->getProductsInfoByAggregation($productIDs, $this->store->_id);
 
         // Re-calculate current_bid value
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
@@ -346,7 +357,7 @@ class ProductManagementController extends Controller
         if (count($productIDs) == 0) {
             return new Collection();
         }
-        $products = $this->getProductsInfoByAggregation($productIDs);
+        $products = $this->getProductsInfoByAggregation($productIDs, $this->store->_id);
 
         // Re-calculate current_bid value
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
@@ -369,14 +380,14 @@ class ProductManagementController extends Controller
         return $products;
     }
 
-    private function getProductsInfoByAggregation(array $productIDs, ?Store $store = null)
+    private function getProductsInfoByAggregation(array $productIDs, ?string $storeID = null)
     {
         $productIDs = array_values($productIDs);
 
         // Get Products 
         if (count($productIDs) == 0) return new Collection();
 
-        $products = Product::raw(function ($collection) use ($productIDs) {
+        $products = Product::raw(function ($collection) use ($productIDs, $storeID) {
             $aggregate = [];
 
             // Convert ObjectIDs to String
@@ -404,7 +415,7 @@ class ProductManagementController extends Controller
                         '$match' => [
                             '$expr' => [
                                 '$and' => [
-                                    // ['$eq' => ['$store_id', $storeID]],
+                                    !is_null($storeID) ? ['$eq' => ['$store_id', $storeID]] : [],
                                     ['$eq' => ['$product_id', '$$product_id']],
                                     [
                                         '$in' => [
@@ -685,7 +696,21 @@ class ProductManagementController extends Controller
                         ],
                         'else' => '0'
                     ],
-                ]
+                ],
+                'store_id' => [
+                    '$cond' => [
+                        'if' => [
+                            '$gt' => [
+                                ['$size' => '$auction_lots'],
+                                0
+                            ]
+                        ],
+                        'then' => [
+                            '$toString' => ['$last' => '$auction_lots.store_id']
+                        ],
+                        'else' => '0'
+                    ],
+                ],
             ];
 
             // Get WishlistItem(s)
@@ -718,6 +743,27 @@ class ProductManagementController extends Controller
                 ];
             }
 
+            // Get store(s)
+            $aggregate[]['$lookup'] = [
+                'from' => 'stores',
+                'let' => ['store_id' => '$store_id'],
+                'pipeline' => [
+                    [
+                        '$match' => [
+                            '$expr' => [
+                                '$eq' => [['$toString' => '$_id'], '$$store_id']
+                            ]
+                        ]
+                    ]
+                ],
+                'as' => 'store',
+            ];
+
+            $aggregate[]['$unwind'] = [
+                'path' => '$store',
+                'preserveNullAndEmptyArrays' => true
+            ];
+
             // Hide attributes
             $hiddenKeys = [
                 'discount',
@@ -731,12 +777,13 @@ class ProductManagementController extends Controller
                 'global_discounts',
                 'reviews',
                 'inventories',
-                'watchlist_items',
+                // 'watchlist_items',
                 'valid_bid_values',
                 'bids',
-                'auction_lots',
+                // 'auction_lots',
                 'listing_status',
                 // 'owned_by_customer_id',
+                'store_id'
             ];
             $aggregate[]['$project'] = array_merge(...array_map(function ($item) {
                 return [$item => false];

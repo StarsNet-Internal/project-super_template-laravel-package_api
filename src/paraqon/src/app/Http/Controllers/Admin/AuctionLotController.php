@@ -74,7 +74,11 @@ class AuctionLotController extends Controller
             'start_datetime' => $request->start_datetime,
             'end_datetime' => $request->end_datetime,
 
-            'status' => $request->status
+            'status' => $request->status,
+
+            'documents' => $request->documents ?? [],
+            'attributes' => $request->attributes ?? [],
+            'shipping_costs' => $request->shipping_costs ?? [],
         ];
 
         $auctionLot = AuctionLot::create($auctionLotAttributes);
@@ -111,12 +115,15 @@ class AuctionLotController extends Controller
                 ->whereNotNull('lot_number')
                 ->get();
         } else if (!is_null($categoryID)) {
+            $storeID = Category::find($categoryID)->model_type_id;
+
             $auctionLots = AuctionLot::with(['bids'])
                 ->whereHas('product', function ($query) use ($categoryID) {
                     $query->whereHas('categories', function ($query2) use ($categoryID) {
                         $query2->where('_id', $categoryID);
                     });
                 })
+                ->where('store_id', $storeID)
                 ->where('status', '!=', Status::DELETED)
                 ->whereNotNull('lot_number')
                 ->get();

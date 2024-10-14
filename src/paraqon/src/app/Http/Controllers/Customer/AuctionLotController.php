@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use StarsNet\Project\Paraqon\App\Models\BidHistory;
+use StarsNet\Project\Paraqon\App\Models\WatchlistItem;
 
 class AuctionLotController extends Controller
 {
@@ -59,6 +60,15 @@ class AuctionLotController extends Controller
         // Check is_reserve_met
         $auctionLot->is_reserve_price_met = $auctionLot->current_bid >= $auctionLot->reserve_price;
         $auctionLot->setHidden(['reserve_price']);
+
+        // Get Watching Lots
+        $watchingAuctionIDs = WatchlistItem::where('customer_id', $customer->id)
+            ->where('item_type', 'auction-lot')
+            ->get()
+            ->pluck('item_id')
+            ->all();
+
+        $auctionLot->is_watching = in_array($auctionLotId, $watchingAuctionIDs);
 
         // Return Auction Store
         return $auctionLot;

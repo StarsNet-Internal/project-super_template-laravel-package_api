@@ -31,6 +31,14 @@ class AuctionRegistrationRequestController extends Controller
         // Extract attributes from $request
         $storeID = $request->store_id;
 
+        // Check CustomerGroup for reply_status value
+        $hasWaivedAuctionRegistrationGroup = $customer->groups()
+            ->where('is_waived_auction_registration_deposit', true)
+            ->exists();
+        $replyStatus = $hasWaivedAuctionRegistrationGroup ?
+            ReplyStatus::APPROVED :
+            ReplyStatus::PENDING;
+
         // Check if there's existing AuctionRegistrationRequest
         $oldForm =
             AuctionRegistrationRequest::where('requested_by_customer_id', $customer->_id)
@@ -41,7 +49,7 @@ class AuctionRegistrationRequestController extends Controller
             $oldFormAttributes = [
                 'approved_by_account_id' => null,
                 'status' => Status::ACTIVE,
-                'reply_status' => ReplyStatus::PENDING,
+                'reply_status' => $replyStatus,
             ];
             $oldForm->update($oldFormAttributes);
 
@@ -55,6 +63,8 @@ class AuctionRegistrationRequestController extends Controller
         $newFormAttributes = [
             'requested_by_customer_id' => $customer->_id,
             'store_id' => $storeID,
+            'status' => Status::ACTIVE,
+            'reply_status' => $replyStatus,
         ];
         $newForm = AuctionRegistrationRequest::create($newFormAttributes);
 
@@ -129,6 +139,8 @@ class AuctionRegistrationRequestController extends Controller
                     ],
                 ];
                 $deposit = Deposit::create($depositAttributes);
+                $deposit->updateStatus('submitted');
+
                 // Return Auction Store
                 return response()->json([
                     'message' => 'Created New Deposit successfully',
@@ -148,6 +160,7 @@ class AuctionRegistrationRequestController extends Controller
                     ],
                 ];
                 $deposit = Deposit::create($depositAttributes);
+                $deposit->updateStatus('submitted');
 
                 return response()->json([
                     'message' => 'Created New Deposit successfully',

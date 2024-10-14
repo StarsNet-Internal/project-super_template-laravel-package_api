@@ -49,43 +49,26 @@ class ShoppingCartController extends Controller
         // Get authenticated User information
         $customer = $this->customer();
 
-        // Clear Store first
-        $customer->clearCartByStore($store);
-
-        // Winning auction lots by Customer
-        $wonLots = AuctionLot::where('store_id', $store->_id)
-            ->where('winning_bid_customer_id', $customer->_id)
-            ->get();
-
-        foreach ($wonLots as $key => $lot) {
-            $attributes = [
-                'store_id' => $store->_id,
-                'product_id' => $lot->product_id,
-                'product_variant_id' => $lot->product_variant_id,
-                'qty' => 1,
-                'winning_bid' => $lot->current_bid,
-                'storage_fee' => $lot->current_bid * 0.03
-            ];
-            $customer->shoppingCartItems()->create($attributes);
-        }
-
         // Get ShoppingCartItem(s)
         $cartItems = $customer->getAllCartItemsByStore($store);
 
         // Extract attributes from $request
-        $isStorage = $request->boolean('is_storage', false);
+        $currency = $request->currency;
         $deliveryInfo = $request->delivery_info;
 
         $courierID = $deliveryInfo['method'] === OrderDeliveryMethod::DELIVERY ?
             $deliveryInfo['courier_id'] :
             null;
 
+        $countryCode = $deliveryInfo['country_code'] ?? 'HK';
+        $countryCode = strtoupper($countryCode);
+
         // getShoppingCartDetails calculations
         // get subtotal Price
         $subtotalPrice = 0;
-        $storageFee = 0;
+        $shippingFee = 0;
 
-        $SERVICE_CHARGE_MULTIPLIER = 0.1;
+        // $SERVICE_CHARGE_MULTIPLIER = 0.1;
         $totalServiceCharge = 0;
 
         foreach ($cartItems as $item) {
@@ -94,23 +77,39 @@ class ShoppingCartController extends Controller
             $item->is_refundable = false;
             $item->global_discount = null;
 
+            // Find AuctionLot
+            $lot = AuctionLot::where('store_id', $storeID)
+                ->where('product_id', $item->product_id)
+                ->first();
+
             // Calculations
-            $winningBid = $item->winning_bid ?? 0;
+            // $winningBid = (float) $item->winning_bid ?? 0;
+            $winningBid = (float) optional($lot)->current_bid ?? 0;
+            $item->winning_bid = $winningBid;
             $subtotalPrice += $winningBid;
 
             // Service Charge
-            $totalServiceCharge += $winningBid *
-                $SERVICE_CHARGE_MULTIPLIER;
+            // $totalServiceCharge += $winningBid *
+            //     $SERVICE_CHARGE_MULTIPLIER;
 
-            if ($isStorage == true) {
-                $storageFee += $item->storage_fee ?? 0;
+            // Shipping Fee
+            $item->shipping_fee = 0;
+            $shippingCosts = $lot->shipping_costs;
+            $matchingShippingCostElement = collect($shippingCosts)
+                ->firstWhere('area', $countryCode);
+
+            if (!is_null($matchingShippingCostElement)) {
+                $item->shipping_fee =
+                    (float) $matchingShippingCostElement['cost'];
+                $shippingFee +=
+                    (float) $matchingShippingCostElement['cost'];
             }
         }
-        $totalPrice = $subtotalPrice + $storageFee + $totalServiceCharge;
+        $totalPrice = $subtotalPrice + $totalServiceCharge;
 
         // get shippingFee
         $courier = Courier::find($courierID);
-        $shippingFee =
+        $shippingFee +=
             !is_null($courier) ?
             $courier->getShippingFeeByTotalFee($totalPrice) :
             0;
@@ -132,7 +131,6 @@ class ShoppingCartController extends Controller
                 'total' => 0,
             ],
             'service_charge' => $totalServiceCharge,
-            'storage_fee' => $storageFee,
             'shipping_fee' => $shippingFee
         ];
 
@@ -268,6 +266,8 @@ class ShoppingCartController extends Controller
         $cartItems = $customer->getAllCartItemsByStore($store);
 
         // Extract attributes from $request
+        $currency = $request->currency;
+
         $checkoutVariantIDs = $request->checkout_product_variant_ids;
         $voucherCode = $request->voucher_code;
         $deliveryInfo = $request->delivery_info;
@@ -276,21 +276,22 @@ class ShoppingCartController extends Controller
         $successUrl = $request->success_url;
         $cancelUrl = $request->cancel_url;
 
-        $isStorage = $request->boolean('is_storage', false);
-
         $courierID = $deliveryInfo['method'] === OrderDeliveryMethod::DELIVERY ?
             $deliveryInfo['courier_id'] :
             null;
-        $warehouseID = $deliveryInfo['method'] === OrderDeliveryMethod::SELF_PICKUP ?
-            $deliveryInfo['warehouse_id'] :
-            null;
+        // $warehouseID = $deliveryInfo['method'] === OrderDeliveryMethod::SELF_PICKUP ?
+        //     $deliveryInfo['warehouse_id'] :
+        //     null;
+
+        $countryCode = $deliveryInfo['country_code'] ?? 'HK';
+        $countryCode = strtoupper($countryCode);
 
         // getShoppingCartDetails calculations
         // get subtotal Price
         $subtotalPrice = 0;
-        $storageFee = 0;
+        $shippingFee = 0;
 
-        $SERVICE_CHARGE_MULTIPLIER = 0.1;
+        // $SERVICE_CHARGE_MULTIPLIER = 0.1;
         $totalServiceCharge = 0;
 
         foreach ($cartItems as $item) {
@@ -299,22 +300,38 @@ class ShoppingCartController extends Controller
             $item->is_refundable = false;
             $item->global_discount = null;
 
+            // Find AuctionLot
+            $lot = AuctionLot::where('store_id', $storeID)
+                ->where('product_id', $item->product_id)
+                ->first();
+
             // Calculations
-            $winningBid = $item->winning_bid ?? 0;
+            // $winningBid = (float) $item->winning_bid ?? 0;
+            $winningBid = (float) optional($lot)->current_bid ?? 0;
+            $item->winning_bid = $winningBid;
             $subtotalPrice += $winningBid;
 
             // Service Charge
-            $totalServiceCharge += $winningBid *
-                $SERVICE_CHARGE_MULTIPLIER;
+            // $totalServiceCharge += $winningBid *
+            //     $SERVICE_CHARGE_MULTIPLIER;
 
-            if ($isStorage == true) {
-                $storageFee += $item->storage_fee ?? 0;
-            } else {
-                $item->storage_fee == 0;
+            // Shipping Fee
+            $item->shipping_fee = 0;
+            $shippingCosts = $lot->shipping_costs;
+            $matchingShippingCostElement = collect($shippingCosts)
+                ->firstWhere(
+                    'area',
+                    $countryCode
+                );
+
+            if (!is_null($matchingShippingCostElement)) {
+                $item->shipping_fee =
+                    (float) $matchingShippingCostElement['cost'];
+                $shippingFee +=
+                    (float) $matchingShippingCostElement['cost'];
             }
         }
-        $totalPrice = $subtotalPrice +
-            $storageFee + $totalServiceCharge;
+        $totalPrice = $subtotalPrice + $totalServiceCharge;
 
         // get shippingFee
         $courier = Courier::find($courierID);
@@ -340,7 +357,6 @@ class ShoppingCartController extends Controller
                 'total' => 0,
             ],
             'service_charge' => $totalServiceCharge,
-            'storage_fee' => $storageFee,
             'shipping_fee' => $shippingFee
         ];
 
@@ -374,9 +390,6 @@ class ShoppingCartController extends Controller
             'delivery_info' => $this->getDeliveryInfo($deliveryInfo),
             'delivery_details' => $deliveryDetails,
             'is_voucher_applied' => $checkoutDetails['is_voucher_applied'],
-
-            'paid_order_id' => null,
-            'is_storage' => $isStorage
         ];
         $order = $customer->createOrder($orderAttributes, $store);
 
@@ -432,21 +445,6 @@ class ShoppingCartController extends Controller
                     ], 404);
             }
         }
-
-        // if ($paymentMethod === CheckoutType::OFFLINE) {
-        //     // Delete ShoppingCartItem(s)
-        //     $variants = ProductVariant::objectIDs($request->checkout_product_variant_ids)->get();
-        //     $customer->clearCartByStore($store, $variants);
-
-        //     // Update product
-        //     foreach ($variants as $variant) {
-        //         $product = $variant->product;
-        //         $product->update([
-        //             'owned_by_customer_id' => $this->customer()->_id,
-        //             'listing_status' => 'AVAILABLE'
-        //         ]);
-        //     }
-        // }
 
         // Return data
         $data = [
@@ -660,7 +658,6 @@ class ShoppingCartController extends Controller
             ],
             'service_charge' => max(0, $rawCalculation['service_charge']),
             'shipping_fee' => max(0, $rawCalculation['shipping_fee']),
-            'storage_fee' => max(0, $rawCalculation['storage_fee'])
         ];
     }
 

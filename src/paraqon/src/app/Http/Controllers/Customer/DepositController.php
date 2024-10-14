@@ -40,10 +40,10 @@ class DepositController extends Controller
     public function getDepositDetails(Request $request)
     {
         // Extract attributes from $request
-        $depositID = $request->route('deposit_id');
+        $depositID = $request->route('id');
 
         // Get Deposit
-        $deposit = Deposit::with(['auctionRegistrationRequest.store'])
+        $deposit = Deposit::with(['auctionRegistrationRequest.store', 'depositStatuses'])
             ->find($depositID);
 
         if (is_null($deposit)) {
@@ -66,7 +66,7 @@ class DepositController extends Controller
     public function updateDepositDetails(Request $request)
     {
         // Extract attributes from $request
-        $depositID = $request->route('deposit_id');
+        $depositID = $request->route('id');
 
         // Get authenticated User information
         $customer = $this->customer();
@@ -104,7 +104,7 @@ class DepositController extends Controller
     public function cancelDeposit(Request $request)
     {
         // Extract attributes from $request
-        $depositID = $request->route('deposit_id');
+        $depositID = $request->route('id');
 
         // Get authenticated User information
         $customer = $this->customer();

@@ -5,13 +5,14 @@ use Illuminate\Support\Facades\Route;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AccountController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AuctionController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AuctionLotController;
-use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AuctionRequestController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AuctionRegistrationRequestController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ConsignmentRequestController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\CustomerController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\CustomerGroupController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\DepositController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\OrderController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\SeederController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ServiceController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ShoppingCartController;
 
@@ -33,6 +34,16 @@ Route::group(
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
         Route::get('/order', [$defaultController, 'createOrder']);
+    }
+);
+
+Route::group(
+    ['prefix' => 'seeder'],
+    function () {
+        $defaultController = SeederController::class;
+
+        Route::get('/health-check', [$defaultController, 'healthCheck']);
+        Route::get('/from-store-to-orders', [$defaultController, 'fromStoreToOrders']);
     }
 );
 
@@ -100,17 +111,17 @@ Route::group(
 );
 
 Route::group(
-    ['prefix' => 'auction-requests'],
+    ['prefix' => 'auction-registrations'],
     function () {
-        $defaultController = AuctionRequestController::class;
+        $defaultController = AuctionRegistrationRequestController::class;
 
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
-                Route::get('/all', [$defaultController, 'getAllAuctionRequests'])->middleware(['pagination']);
-                Route::put('/{id}/edit', [$defaultController, 'updateAuctionRequests']);
-                Route::put('/{id}/approve', [$defaultController, 'approveAuctionRequest']);
-                Route::put('/{id}/auction-lots/edit', [$defaultController, 'updateAuctionLotDetailsByAuctionRequest']);
+                Route::post('/register', [$defaultController, 'registerAuction']);
+                Route::get('/all', [$defaultController, 'getAllRegisteredAuctions'])->middleware(['pagination']);
+                Route::post('/{id}/deposit', [$defaultController, 'createDeposit']);
+                Route::put('/{auction_registration_request_id}/archive', [$defaultController, 'archiveAuctionRegistrationRequest']);
             }
         );
     }
@@ -193,6 +204,7 @@ Route::group(
                 Route::get('/{id}/details', [$defaultController, 'getDepositDetails']);
                 Route::put('/{id}/details', [$defaultController, 'updateDepositDetails']);
                 Route::put('/{id}/approve', [$defaultController, 'approveDeposit']);
+                Route::put('/{id}/cancel', [$defaultController, 'cancelDeposit']);
             }
         );
     }

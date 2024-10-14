@@ -94,7 +94,7 @@ class AuctionController extends Controller
             ->first();
         $auction->is_registered = optional($auction->auction_registration_request)->reply_status === ReplyStatus::APPROVED;
 
-        // Get Watching Status
+        // Get Watching Stores
         $watchingAuctionIDs = WatchlistItem::where('customer_id', $customer->id)
             ->where('item_type', 'store')
             ->get()

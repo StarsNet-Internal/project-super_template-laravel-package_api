@@ -110,7 +110,7 @@ class CustomerController extends Controller
     {
         $customerId = $request->route('customer_id');
 
-        $products = Bid::where('customer_id', $customerId)
+        $bids = Bid::where('customer_id', $customerId)
             ->where('is_hidden', false)
             ->with([
                 'product',
@@ -119,7 +119,7 @@ class CustomerController extends Controller
             ])
             ->get();
 
-        return $products;
+        return $bids;
     }
 
     public function hideBid(Request $request)
