@@ -90,7 +90,8 @@ class AuthenticationController extends Controller
         $code =  $this->generateVerificationCodeByType(
             'LOGIN',
             15,
-            $user
+            $user,
+            $loginType
         );
 
         // Return response
@@ -620,7 +621,8 @@ class AuthenticationController extends Controller
     private function generateVerificationCodeByType(
         string $codeType,
         int $minutesAllowed = 15,
-        User $user
+        User $user,
+        ?string $notificationType = 'EMAIL'
     ) {
         $code = (string) mt_rand(100000, 999999);;
         $expiryDate = now()->addMinutes($minutesAllowed);
@@ -628,7 +630,8 @@ class AuthenticationController extends Controller
         $verificationCodeAttributes = [
             'type' => $codeType,
             'code' => $code,
-            'expires_at' => $expiryDate
+            'expires_at' => $expiryDate,
+            'notification_type' => $notificationType
         ];
         $user->verificationCodes()
             ->create($verificationCodeAttributes);

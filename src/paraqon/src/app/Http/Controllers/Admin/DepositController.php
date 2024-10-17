@@ -43,7 +43,10 @@ class DepositController extends Controller
         $auctionType = $request->input('auction_type', 'ONLINE');
 
         // Get Items
-        $deposits = Deposit::with(['auctionRegistrationRequest.store'])
+        $deposits = Deposit::with([
+            'auctionRegistrationRequest.store',
+            'depositStatuses'
+        ])
             ->whereHas('auctionRegistrationRequest', function ($query) use ($auctionType) {
                 $query->whereHas('store', function ($query2) use ($auctionType) {
                     $query2->where('auction_type', $auctionType);
@@ -64,7 +67,8 @@ class DepositController extends Controller
         $deposit = Deposit::with([
             'auctionRegistrationRequest.store',
             'requestedCustomer',
-            'approvedAccount'
+            'approvedAccount',
+            'depositStatuses'
         ])
             ->find($depositID);
 

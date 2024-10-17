@@ -167,6 +167,15 @@ class AuctionLot extends Eloquent
         );
     }
 
+
+    public function bidHistory(): HasOne
+    {
+        return $this->hasOne(
+            BidHistory::class,
+            'auction_lot_id'
+        );
+    }
+
     // -----------------------------
     // Relationship Ends
     // -----------------------------

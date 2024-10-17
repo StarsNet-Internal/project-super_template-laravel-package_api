@@ -115,8 +115,10 @@ class AuctionController extends Controller
     public function getAllAuctions(Request $request)
     {
         $auctionType = $request->input('auction_type');
+        $statuses = (array) $request->input('status', Status::$typesForAdmin);
 
         $stores = Store::where('auction_type', $auctionType)
+            ->statusesAllowed(Status::$typesForAdmin, $statuses)
             ->latest()
             ->get();
 

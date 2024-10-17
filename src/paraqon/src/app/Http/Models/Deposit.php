@@ -70,6 +70,10 @@ class Deposit extends Eloquent
             'uploaded_at' => null,
             'api_response' => null
         ],
+        'payment_information' => [
+            'currency' => 'HKD',
+            'conversion_rate' => '100'
+        ],
         'current_deposit_status' => null,
         'deposit_statuses' => [],
         'status' => Status::ACTIVE,

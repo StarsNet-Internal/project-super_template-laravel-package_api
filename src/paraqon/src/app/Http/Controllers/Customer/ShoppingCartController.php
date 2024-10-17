@@ -24,6 +24,7 @@ use App\Traits\StarsNet\PinkiePay;
 use Illuminate\Http\Request;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 
 class ShoppingCartController extends Controller
 {
@@ -43,8 +44,10 @@ class ShoppingCartController extends Controller
 
     public function getAllAuctionCartItems(Request $request)
     {
+        // Extract attributes from $request
         $storeID = $request->route('store_id');
         $store = self::getStore($storeID);
+        $checkoutVariantIDs = $request->checkout_product_variant_ids;
 
         // Get authenticated User information
         $customer = $this->customer();
@@ -53,7 +56,7 @@ class ShoppingCartController extends Controller
         $cartItems = $customer->getAllCartItemsByStore($store);
 
         // Extract attributes from $request
-        $currency = $request->currency;
+        $currency = $request->input('currency', 'HKD');
         $deliveryInfo = $request->delivery_info;
 
         $courierID = $deliveryInfo['method'] === OrderDeliveryMethod::DELIVERY ?
@@ -73,7 +76,10 @@ class ShoppingCartController extends Controller
 
         foreach ($cartItems as $item) {
             // Add keys
-            $item->is_checkout = true;
+            $item->is_checkout = in_array(
+                $item->product_variant_id,
+                $checkoutVariantIDs
+            );
             $item->is_refundable = false;
             $item->global_discount = null;
 
@@ -86,7 +92,10 @@ class ShoppingCartController extends Controller
             // $winningBid = (float) $item->winning_bid ?? 0;
             $winningBid = (float) optional($lot)->current_bid ?? 0;
             $item->winning_bid = $winningBid;
-            $subtotalPrice += $winningBid;
+
+            if ($item->is_checkout) {
+                $subtotalPrice += $winningBid;
+            }
 
             // Service Charge
             // $totalServiceCharge += $winningBid *
@@ -101,8 +110,11 @@ class ShoppingCartController extends Controller
             if (!is_null($matchingShippingCostElement)) {
                 $item->shipping_fee =
                     (float) $matchingShippingCostElement['cost'];
-                $shippingFee +=
-                    (float) $matchingShippingCostElement['cost'];
+
+                if ($item->is_checkout) {
+                    $shippingFee +=
+                        (float) $matchingShippingCostElement['cost'];
+                }
             }
         }
         $totalPrice = $subtotalPrice + $totalServiceCharge;
@@ -117,7 +129,7 @@ class ShoppingCartController extends Controller
 
         // form calculation data object
         $rawCalculation = [
-            'currency' => 'HKD',
+            'currency' => $currency,
             'price' => [
                 'subtotal' => $subtotalPrice,
                 'total' => $totalPrice, // Deduct price_discount.local and .global
@@ -256,6 +268,7 @@ class ShoppingCartController extends Controller
 
     public function checkOutAuctionStore(Request $request)
     {
+        // Extract attributes from $request
         $storeID = $request->route('store_id');
         $store = self::getStore($storeID);
 
@@ -266,7 +279,8 @@ class ShoppingCartController extends Controller
         $cartItems = $customer->getAllCartItemsByStore($store);
 
         // Extract attributes from $request
-        $currency = $request->currency;
+        $currency = $request->input('currency', 'HKD');
+        $conversion_rate = $request->input('conversion_rate', '1.00');
 
         $checkoutVariantIDs = $request->checkout_product_variant_ids;
         $voucherCode = $request->voucher_code;
@@ -296,7 +310,10 @@ class ShoppingCartController extends Controller
 
         foreach ($cartItems as $item) {
             // Add keys
-            $item->is_checkout = true;
+            $item->is_checkout = in_array(
+                $item->product_variant_id,
+                $checkoutVariantIDs
+            );
             $item->is_refundable = false;
             $item->global_discount = null;
 
@@ -309,7 +326,10 @@ class ShoppingCartController extends Controller
             // $winningBid = (float) $item->winning_bid ?? 0;
             $winningBid = (float) optional($lot)->current_bid ?? 0;
             $item->winning_bid = $winningBid;
-            $subtotalPrice += $winningBid;
+
+            if ($item->is_checkout) {
+                $subtotalPrice += $winningBid;
+            }
 
             // Service Charge
             // $totalServiceCharge += $winningBid *
@@ -327,8 +347,11 @@ class ShoppingCartController extends Controller
             if (!is_null($matchingShippingCostElement)) {
                 $item->shipping_fee =
                     (float) $matchingShippingCostElement['cost'];
-                $shippingFee +=
-                    (float) $matchingShippingCostElement['cost'];
+
+                if ($item->is_checkout) {
+                    $shippingFee +=
+                        (float) $matchingShippingCostElement['cost'];
+                }
             }
         }
         $totalPrice = $subtotalPrice + $totalServiceCharge;
@@ -390,6 +413,10 @@ class ShoppingCartController extends Controller
             'delivery_info' => $this->getDeliveryInfo($deliveryInfo),
             'delivery_details' => $deliveryDetails,
             'is_voucher_applied' => $checkoutDetails['is_voucher_applied'],
+            'payment_information' => [
+                'currency' => $currency,
+                'conversion_rate' => $conversion_rate
+            ]
         ];
         $order = $customer->createOrder($orderAttributes, $store);
 
@@ -429,31 +456,56 @@ class ShoppingCartController extends Controller
         if ($order->getTotalPrice() > 0) {
             switch ($paymentMethod) {
                 case CheckoutType::ONLINE:
-                    $returnUrl = $this->updateAsOnlineCheckout(
-                        $checkout,
-                        $successUrl,
-                        $cancelUrl
+                    $stripeAmount = (int) $totalPrice * 100;
+
+                    $data = [
+                        "amount" => $stripeAmount,
+                        "currency" => 'HKD',
+                        "captureMethod" => "automatic_async",
+                        "callbackUrl" => "backend.paraqon.hk/api/customer/stripe/payments/callback"
+                    ];
+
+                    $url = 'http://192.168.0.105:3002/payment-intents';
+                    $res = Http::post(
+                        $url,
+                        $data
                     );
-                    break;
+
+                    $paymentIntentID = $res['id'];
+                    $clientSecret = $res['clientSecret'];
+
+                    $checkout->update([
+                        'amount' => $totalPrice,
+                        'currency' => $currency,
+                        'online' => [
+                            'payment_intent_id' => $paymentIntentID,
+                            'client_secret' => $clientSecret,
+                            'api_response' => null
+                        ],
+                    ]);
+                    // Return data
+                    $data = [
+                        'message' => 'Submitted Order successfully',
+                        'checkout' => $checkout,
+                        'order_id' => $order->_id
+                    ];
+                    return response()->json($data);
                 case CheckoutType::OFFLINE:
                     $imageUrl = $request->input('image');
                     $this->updateAsOfflineCheckout($checkout, $imageUrl);
-                    break;
+                    // Return data
+                    $data = [
+                        'message' => 'Submitted Order successfully',
+                        'checkout' => $checkout,
+                        'order_id' => $order->_id
+                    ];
+                    return response()->json($data);
                 default:
                     return response()->json([
                         'message' => 'Invalid payment_method'
                     ], 404);
             }
         }
-
-        // Return data
-        $data = [
-            'message' => 'Submitted Order successfully',
-            'return_url' => $returnUrl ?? null,
-            'order_id' => $order->_id
-        ];
-
-        return response()->json($data);
     }
 
     public function checkOutMainStore(Request $request)

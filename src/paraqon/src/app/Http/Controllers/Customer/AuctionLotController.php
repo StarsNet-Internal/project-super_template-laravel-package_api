@@ -174,8 +174,16 @@ class AuctionLotController extends Controller
         // Extract attributes from $request
         $auctionLotId = $request->route('auction_lot_id');
         $requestedBid = $request->bid;
-        $bidType = $request->type;
-        $now = now();
+        $bidType = $request->input('type', 'MAX');
+
+        if (in_array(
+            $bidType,
+            ['MAX', 'DIRECT', 'ADVANCED']
+        )) {
+            return response()->json([
+                'message' => 'Invalid bid type'
+            ], 400);
+        }
 
         // Check auction lot
         /** @var AuctionLot $auctionLot */
@@ -224,26 +232,29 @@ class AuctionLotController extends Controller
             ], 404);
         }
 
-        if ($now <= Carbon::parse($store->start_datetime)) {
-            return response()->json([
-                'message' => 'Auction has not started'
-            ], 404);
+        $now = now();
+        if (in_array($bidType, ['MAX', 'DIRECT'])) {
+            if ($now <= Carbon::parse($store->start_datetime)) {
+                return response()->json([
+                    'message' => 'Auction has not started'
+                ], 404);
 
-            return response()->json([
-                'message' => 'The auction id: ' . $store->_id . ' has not yet started.',
-                'error_status' => 2,
-                'system_time' => now(),
-                'auction_start_datetime' => Carbon::parse($store->start_datetime)
-            ], 400);
-        }
+                return response()->json([
+                    'message' => 'The auction id: ' . $store->_id . ' has not yet started.',
+                    'error_status' => 2,
+                    'system_time' => now(),
+                    'auction_start_datetime' => Carbon::parse($store->start_datetime)
+                ], 400);
+            }
 
-        if ($now > Carbon::parse($store->end_datetime)) {
-            return response()->json([
-                'message' => 'The auction id: ' . $store->_id . ' has already ended.',
-                'error_status' => 3,
-                'system_time' => now(),
-                'auction_end_datetime' => Carbon::parse($store->end_datetime)
-            ], 400);
+            if ($now > Carbon::parse($store->end_datetime)) {
+                return response()->json([
+                    'message' => 'The auction id: ' . $store->_id . ' has already ended.',
+                    'error_status' => 3,
+                    'system_time' => now(),
+                    'auction_end_datetime' => Carbon::parse($store->end_datetime)
+                ], 400);
+            }
         }
 
         // Get current bid
@@ -306,6 +317,7 @@ class AuctionLotController extends Controller
             'type' => $bidType
         ]);
 
+        // Get winning_bid_customer_id
         $auctionLotMaximumBid = Bid::where('auction_lot_id', $auctionLotId)
             ->where('is_hidden',  false)
             ->orderBy('bid', 'desc')
@@ -316,12 +328,46 @@ class AuctionLotController extends Controller
             $winningCustomerID = $auctionLotMaximumBid->customer_id;
         }
 
+        // Extend AuctionLot endDateTime
+        $currentLotEndDateTime = Carbon::parse($auctionLot->end_datetime);
+
+        $addExtendDays = $auctionLot->auction_time_settings['extension']['days'];
+        $addExtendHours = $auctionLot->auction_time_settings['extension']['hours'];
+        $addExtendMins = $auctionLot->auction_time_settings['extension']['mins'];
+
+        $extendLotDeadline = $currentLotEndDateTime->copy()
+            ->subDays($addExtendDays)
+            ->subHours($addExtendHours)
+            ->subMinutes($addExtendMins);
+
+        $newLotEndDateTime = $currentLotEndDateTime;
+        if ($now >= $extendLotDeadline && $now < $currentLotEndDateTime) {
+            $addMaxDays = $auctionLot->auction_time_settings['allow_duration']['days'];
+            $addMaxHours = $auctionLot->auction_time_settings['allow_duration']['hours'];
+            $addMaxMins = $auctionLot->auction_time_settings['allow_duration']['mins'];
+
+            $newEndDateTime = $now->copy()
+                ->addDays($addExtendDays)
+                ->addHours($addExtendHours)
+                ->addMinutes($addExtendMins);
+
+            $maxEndDateTime = $currentLotEndDateTime->copy()
+                ->addDays($addMaxDays)
+                ->addHours($addMaxHours)
+                ->addMinutes($addMaxMins);
+
+            $newLotEndDateTime = $newEndDateTime >= $maxEndDateTime
+                ? $maxEndDateTime :
+                $newEndDateTime;
+        }
+
         $newCurrentBid = $auctionLot->getCurrentBidPrice(true);
         $auctionLot->update([
             'is_bid_placed' => true,
             'current_bid' => $newCurrentBid,
             'latest_bid_customer_id' => $customer->_id,
-            'winning_bid_customer_id' => $winningCustomerID
+            'winning_bid_customer_id' => $winningCustomerID,
+            'end_datetime' => $newLotEndDateTime->toISOString()
         ]);
 
         // Create Bid History Record
@@ -343,15 +389,11 @@ class AuctionLotController extends Controller
             $bidHistory->update(['current_bid' => $newCurrentBid]);
         }
 
-        // Extend endDateTime
-        $gracePeriodInMins = 15;
-        $currentEndDateTime = Carbon::parse($store->end_datetime);
-        $graceEndDateTime = $currentEndDateTime->copy()->subMinutes($gracePeriodInMins);
-
-        if ($now > $graceEndDateTime && $now < $currentEndDateTime) {
-            $newEndDateTime = $currentEndDateTime->copy()->addMinutes($gracePeriodInMins);
+        // Extend Store endDateTime
+        $currentStoreEndDateTime = Carbon::parse($store->end_datetime);
+        if ($newLotEndDateTime > $currentStoreEndDateTime) {
             $store->update([
-                'end_datetime' => $newEndDateTime->toISOString()
+                'end_datetime' => $newLotEndDateTime->toISOString()
             ]);
         }
 

@@ -44,6 +44,7 @@ Route::group(
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
         Route::get('/from-store-to-orders', [$defaultController, 'fromStoreToOrders']);
+        Route::get('/stores/{store_id}/generate-orders', [$defaultController, 'generateAuctionOrders']);
     }
 );
 
@@ -105,6 +106,8 @@ Route::group(
                 Route::post('/', [$defaultController, 'createAuctionLot']);
                 Route::get('/all', [$defaultController, 'getAllAuctionLots'])->middleware(['pagination']);
                 Route::get('/{id}/details', [$defaultController, 'getAuctionLotDetails']);
+                Route::put('/{id}/details', [$defaultController, 'updateAuctionLotDetails']);
+                Route::put('/delete', [$defaultController, 'deleteAuctionLots']);
             }
         );
     }
@@ -120,7 +123,7 @@ Route::group(
             function () use ($defaultController) {
                 Route::post('/register', [$defaultController, 'registerAuction']);
                 Route::get('/all', [$defaultController, 'getAllRegisteredAuctions'])->middleware(['pagination']);
-                Route::post('/{id}/deposit', [$defaultController, 'createDeposit']);
+                // Route::post('/{id}/deposit', [$defaultController, 'createDeposit']);
                 Route::put('/{auction_registration_request_id}/archive', [$defaultController, 'archiveAuctionRegistrationRequest']);
             }
         );
@@ -186,7 +189,12 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
-                Route::put('/stores/archive', [$defaultController, 'archiveStores']);
+                Route::put('/auctions/statuses', [$defaultController, 'updateAuctionStatuses']);
+                Route::put('/auction-lots/statuses', [$defaultController, 'updateAuctionLotStatuses']);
+                Route::get('/auctions/{store_id}/orders/create', [$defaultController, 'generateAuctionOrdersAndRefundDeposits']);
+
+                Route::post('/deposits/return', [$defaultController, 'returnDeposit']);
+                Route::post('/orders/paid', [$defaultController, 'confirmOrderPaid']);
             }
         );
     }

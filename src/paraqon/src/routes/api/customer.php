@@ -39,6 +39,7 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+        Route::get('/callback', [$defaultController, 'callbackTest']);
     }
 );
 
@@ -191,6 +192,7 @@ Route::group(
             function () use ($defaultController) {
                 Route::get('/stores/{store_id}/all', [$defaultController, 'getOrdersByStoreID'])->middleware(['pagination']);
                 Route::post('/{order_id}/payment', [$defaultController, 'payPendingOrderByOnlineMethod']);
+                Route::get('/all/offline', [$defaultController, 'getAllOfflineOrders'])->middleware(['pagination']);
             }
         );
     }

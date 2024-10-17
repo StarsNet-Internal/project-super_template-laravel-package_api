@@ -75,4 +75,24 @@ class OrderController extends Controller
 
         return response()->json($data);
     }
+
+    public function getAllOfflineOrders(Request $request)
+    {
+        // Get Store(s)
+        /** @var Store $store */
+        $stores = Store::whereType(StoreType::OFFLINE)
+            ->get();
+
+        // Get authenticated User information
+        $customer = $this->customer();
+
+        // Get Order(s)
+        /** @var Collection $orders */
+        $orders = Order::byStores($stores)
+            ->byCustomer($customer)
+            ->get();
+
+        // Return data
+        return $orders;
+    }
 }

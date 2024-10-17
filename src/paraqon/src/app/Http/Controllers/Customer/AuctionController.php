@@ -45,12 +45,24 @@ class AuctionController extends Controller
             $storeID = $auction->id;
             $auction->is_watching = in_array($storeID, $watchingAuctionIDs);
 
-            $auction->auction_registration_request = AuctionRegistrationRequest::where(
+            $auctionRegistrationRequest = AuctionRegistrationRequest::where(
                 'requested_by_customer_id',
                 $customer->id
-            )->where('store_id', $storeID)
+            )
+                ->where('store_id', $auction->id)
                 ->first();
-            $auction->is_registered = optional($auction->auction_registration_request)->reply_status === ReplyStatus::APPROVED;
+
+            $auction->auction_registration_request = null;
+            $auction->is_registered = false;
+
+            if (
+                !is_null($auctionRegistrationRequest)
+                && in_array($auctionRegistrationRequest->reply_status, [ReplyStatus::APPROVED, ReplyStatus::PENDING])
+                && $auctionRegistrationRequest->status === Status::ACTIVE
+            ) {
+                $auction->is_registered = $auctionRegistrationRequest->reply_status == ReplyStatus::APPROVED;
+                $auction->auction_registration_request = $auctionRegistrationRequest;
+            }
 
             $auction->deposits = Deposit::where('customer_id', $customer->id)
                 ->where('status', '!=', Status::DELETED)
@@ -87,12 +99,24 @@ class AuctionController extends Controller
         // get Registration Status
         $customer = $this->customer();
 
-        $auction->auction_registration_request = AuctionRegistrationRequest::where(
+        $auctionRegistrationRequest = AuctionRegistrationRequest::where(
             'requested_by_customer_id',
             $customer->id
-        )->where('store_id', $auction->id)
+        )
+            ->where('store_id', $auction->id)
             ->first();
-        $auction->is_registered = optional($auction->auction_registration_request)->reply_status === ReplyStatus::APPROVED;
+
+        $auction->auction_registration_request = null;
+        $auction->is_registered = false;
+
+        if (
+            !is_null($auctionRegistrationRequest)
+            && in_array($auctionRegistrationRequest->reply_status, [ReplyStatus::APPROVED, ReplyStatus::PENDING])
+            && $auctionRegistrationRequest->status === Status::ACTIVE
+        ) {
+            $auction->is_registered = $auctionRegistrationRequest->reply_status == ReplyStatus::APPROVED;
+            $auction->auction_registration_request = $auctionRegistrationRequest;
+        }
 
         // Get Watching Stores
         $watchingAuctionIDs = WatchlistItem::where('customer_id', $customer->id)

@@ -52,6 +52,13 @@ class AuctionLotController extends Controller
             ], 404);
         }
 
+        $highestLotNumber =
+            AuctionLot::where('store_id', $request->store_id)
+            ->get()
+            ->max('lot_number')
+            ?? 0;
+        $lotNumber = $highestLotNumber + 1;
+
         // Create AuctionLot
         $auctionLotAttributes = [
             'lot_number' => $request->lot_number,
@@ -79,6 +86,8 @@ class AuctionLotController extends Controller
             'documents' => $request->documents ?? [],
             'attributes' => $request->attributes ?? [],
             'shipping_costs' => $request->shipping_costs ?? [],
+
+            'lot_number' => $lotNumber
         ];
 
         $auctionLot = AuctionLot::create($auctionLotAttributes);
@@ -96,6 +105,43 @@ class AuctionLotController extends Controller
         return response()->json([
             'message' => 'Created AuctionLot successfully',
             '_id' => $auctionLotID,
+        ], 200);
+    }
+
+    public function updateAuctionLotDetails(Request $request)
+    {
+        // Extract attributes from $request
+        $auctionLotID = $request->route('id');
+
+        // Get AuctionLot
+        $auctionLot = AuctionLot::find($auctionLotID);
+
+        // Update AuctionLot
+        $auctionLot->update($request->all());
+
+        return response()->json([
+            'message' => 'Updated AuctionLot successfully',
+        ], 200);
+    }
+
+    public function deleteAuctionLots(Request $request)
+    {
+        // Extract attributes from $request
+        $auctionLotIDs = $request->input('ids', []);
+
+        // Get Courier(s)
+        /** @var Collection $lots */
+        $lots = AuctionLot::find($auctionLotIDs);
+
+        // Update Courier(s)
+        /** @var Courier $courier */
+        foreach ($lots as $lot) {
+            $lot->statusDeletes();
+        }
+
+        // Return success message
+        return response()->json([
+            'message' => 'Deleted ' . $lots->count() . ' Lot(s) successfully'
         ], 200);
     }
 

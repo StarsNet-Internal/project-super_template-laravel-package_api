@@ -81,7 +81,8 @@ class AuctionRegistrationRequestController extends Controller
         $formID = $request->route('id');
         $paymentMethod = $request->payment_method;
         $amount = $request->amount;
-        $currency = $request->currency;
+        $currency = $request->input('currency', 'HKD');
+        $conversion_rate = $request->input('conversion_rate', '1.00');
 
         // Get authenticated User information
         $customer = $this->customer();
@@ -112,7 +113,7 @@ class AuctionRegistrationRequestController extends Controller
                 $stripeAmount = (int) $amount * 100;
                 $data = [
                     "amount" => $stripeAmount,
-                    "currency" => $currency,
+                    "currency" => 'HKD',
                     "captureMethod" => "manual",
                     "callbackUrl" => "backend.paraqon.hk/api/customer/stripe/payments/callback"
                 ];
@@ -131,12 +132,16 @@ class AuctionRegistrationRequestController extends Controller
                     'auction_registration_request_id' => $form->_id,
                     'payment_method' => 'ONLINE',
                     'amount' => $amount,
-                    'currency' => $currency,
+                    'currency' => 'HKD',
                     'online' => [
                         'payment_intent_id' => $paymentIntentID,
                         'client_secret' => $clientSecret,
                         'api_response' => null
                     ],
+                    'payment_information' => [
+                        'currency' => $currency,
+                        'conversion_rate' => $conversion_rate
+                    ]
                 ];
                 $deposit = Deposit::create($depositAttributes);
                 $deposit->updateStatus('submitted');
@@ -211,7 +216,7 @@ class AuctionRegistrationRequestController extends Controller
         $stripeAmount = (int) $amount * 100;
         $data = [
             "amount" => $stripeAmount,
-            "currency" => $currency,
+            "currency" => 'HKD',
             "captureMethod" => "manual",
             "callbackUrl" => "backend.paraqon.hk/api/customer/stripe/payments/callback"
         ];
