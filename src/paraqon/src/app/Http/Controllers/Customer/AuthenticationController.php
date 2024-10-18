@@ -226,7 +226,8 @@ class AuthenticationController extends Controller
         }
 
         // Find if user exists
-        $ifAccountExists = Account::where('email', $request->email)->exists();
+        $ifAccountExists = Account::where('email', $request->email)
+            ->exists();
 
         if ($ifAccountExists) {
             return response()->json([
@@ -278,24 +279,42 @@ class AuthenticationController extends Controller
         $account->update($accountUpdateAttributes);
 
         // Create Warehouse
-        $warehouseTitle = 'account_warehouse_' . $account->_id;
-        $warehouse = Warehouse::create([
-            'type' => 'PERSONAL',
-            'slug' => Str::slug($warehouseTitle),
-            'title' => [
-                'en' => $warehouseTitle,
-                'zh' => $warehouseTitle,
-                'cn' => $warehouseTitle
+        // $warehouseTitle = 'account_warehouse_' . $account->_id;
+        // $warehouse = Warehouse::create([
+        //     'type' => 'PERSONAL',
+        //     'slug' => Str::slug($warehouseTitle),
+        //     'title' => [
+        //         'en' => $warehouseTitle,
+        //         'zh' => $warehouseTitle,
+        //         'cn' => $warehouseTitle
+        //     ],
+        //     'account_id' => $account->_id,
+        //     'is_system' => true,
+        // ]);
+
+        // Update Notification Settings
+        $setting = $account->notificationSetting;
+        $setting->update([
+            "channels" => ["EMAIL", "SMS"],
+            "language" => "EN",
+            "is_accept" => [
+                "marketing_info" => true,
+                "delivery_update" => true,
+                "wishlist_product_update" => true,
+                "special_offers" => true,
+                "auction_notifications" => true,
+                "bid_notifications" => true,
+                "monthly_newsletter" => true,
+                "sales_support" => true
             ],
-            'account_id' => $account->_id,
-            'is_system' => true,
+            "is_notifiable" => true,
         ]);
 
         // Return success message
         return response()->json([
             'message' => 'Registered as new Customer successfully',
             'id' => $user->id,
-            'warehouse_id' => $warehouse->_id
+            'warehouse_id' => null
         ], 200);
     }
 

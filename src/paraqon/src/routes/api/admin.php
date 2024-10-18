@@ -186,10 +186,13 @@ Route::group(
     function () {
         $defaultController = ServiceController::class;
 
+        Route::put('/auctions/statuses', [$defaultController, 'updateAuctionStatuses']);
+        Route::post('/payment/callback', [$defaultController, 'paymentCallback']);
+
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
-                Route::put('/auctions/statuses', [$defaultController, 'updateAuctionStatuses']);
+
                 Route::put('/auction-lots/statuses', [$defaultController, 'updateAuctionLotStatuses']);
                 Route::get('/auctions/{store_id}/orders/create', [$defaultController, 'generateAuctionOrdersAndRefundDeposits']);
 

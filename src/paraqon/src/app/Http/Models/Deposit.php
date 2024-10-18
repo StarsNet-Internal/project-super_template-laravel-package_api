@@ -27,14 +27,15 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
-
+use App\Traits\Model\NestedAttributeTrait;
 use StarsNet\Project\Paraqon\App\Models\Bid;
 use Illuminate\Support\Str;
 
 class Deposit extends Eloquent
 {
     use ObjectIDTrait,
-        StatusFieldTrait;
+        StatusFieldTrait,
+        NestedAttributeTrait;
 
     /**
      * Define database connection.
@@ -59,6 +60,8 @@ class Deposit extends Eloquent
         // Default
         'payment_method' => 'OFFLINE',
         'amount' => null,
+        'amount_captured' => null,
+        'amount_refunded' => null,
         'currency' => null,
         'online' => [
             'payment_intent_id' => null,
@@ -201,6 +204,14 @@ class Deposit extends Eloquent
         $slug = Str::slug($slug);
         $this->current_deposit_status = $slug;
         return $this->save();
+    }
+
+    public function updateOnlineResponse($response): bool
+    {
+        $attributes = [
+            'online.api_response' => $response
+        ];
+        return $this->updateNestedAttributes($attributes);
     }
 
     // -----------------------------

@@ -4,6 +4,7 @@ namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
 use App\Constants\Model\CheckoutApprovalStatus;
 use App\Constants\Model\CheckoutType;
+use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\ShipmentDeliveryStatus;
 use App\Constants\Model\Status;
 use App\Http\Controllers\Controller;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
+use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
 use StarsNet\Project\Paraqon\App\Models\AuctionRequest;
 use StarsNet\Project\Paraqon\App\Models\Bid;
 use StarsNet\Project\Paraqon\App\Models\ConsignmentRequest;
@@ -29,9 +31,206 @@ use StarsNet\Project\Paraqon\App\Models\PassedAuctionRecord;
 
 class ServiceController extends Controller
 {
+    public function paymentCallback(Request $request)
+    {
+        // Extract attributes from $request
+        $eventType = $request->type;
+
+        // Validation
+        $acceptableEventTypes = [
+            'charge.succeeded',
+            'charge.refunded',
+            'charge.captured'
+        ];
+
+        if (!in_array($eventType, $acceptableEventTypes)) {
+            return response()->json(
+                [
+                    'message' => 'Callback success, but event type does not belong to any of the acceptable values',
+                    'acceptable_values' => $acceptableEventTypes
+                ],
+                200
+            );
+        }
+
+        // Extract attributes from $request
+        $model = $request->data['object']['metadata']['model_type'] ?? null;
+        $modelID = $request->data['object']['metadata']['model_id'] ?? null;
+
+        if (is_null($model) || is_null($modelID)) {
+            return response()->json(
+                ['message' => 'Callback success, but metadata contains null value for either model_type or model_id.'],
+                400
+            );
+        }
+
+        // Find Model and Update
+        switch ($model) {
+            case 'deposit':
+                // Get Deposit
+                $deposit = Deposit::find($modelID);
+
+                if (is_null($deposit)) {
+                    return response()->json(
+                        ['message' => 'Deposit not found'],
+                        404
+                    );
+                }
+
+                // Update AuctionRegistrationRequest
+                $auctionRegistrationRequest = $deposit->auctionRegistrationRequest;
+
+                // Update Deposit
+                if ($eventType == 'charge.succeeded') {
+                    $deposit->updateStatus('on-hold');
+                    $deposit->updateOnlineResponse($request->all());
+                    $deposit->update([
+                        'reply_status' => ReplyStatus::APPROVED
+                    ]);
+
+
+                    if (
+                        $auctionRegistrationRequest->reply_status == ReplyStatus::PENDING
+                    ) {
+                        // get Paddle ID
+                        $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
+
+                        if (is_null($assignedPaddleID)) {
+                            $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
+                                ->get()
+                                ->max('paddle_id')
+                                ?? 0;
+                            $assignedPaddleID = $highestPaddleID + 1;
+                        }
+
+                        $requestUpdateAttributes = [
+                            'paddle_id' => $assignedPaddleID,
+                            'status' => Status::ACTIVE,
+                            'reply_status' => ReplyStatus::APPROVED
+                        ];
+                        $auctionRegistrationRequest->update($requestUpdateAttributes);
+                    }
+
+                    return response()->json(
+                        [
+                            'message' => 'Deposit status updated as on-hold',
+                            'deposit_id' => $deposit->_id
+                        ],
+                        200
+                    );
+                } else if ($eventType == 'charge.refunded') {
+                    $deposit->updateStatus('cancelled');
+
+                    $amountCaptured = $request->data['object']['amount_captured'] ?? null;
+                    $amountRefunded = $request->data['object']['amount_refunded'] ?? null;
+                    $deposit->update([
+                        'amount_captured' => $amountCaptured,
+                        'amount_refunded' => $amountRefunded,
+                        // 'reply_status' => 'CANCELLED'
+                    ]);
+
+                    return response()->json(
+                        [
+                            'message' => 'Deposit status updated as cancelled',
+                            'deposit_id' => $deposit->_id
+                        ],
+                        200
+                    );
+                } else if ($eventType == 'charge.captured') {
+                    $deposit->updateStatus('returned');
+
+                    $amountCaptured = $request->data['object']['amount_captured'] ?? null;
+                    $amountRefunded = $request->data['object']['amount_refunded'] ?? null;
+
+                    $deposit->update([
+                        'amount_captured' => $amountCaptured,
+                        'amount_refunded' => $amountRefunded,
+                    ]);
+
+                    return response()->json(
+                        [
+                            'message' => 'Deposit status updated as returned',
+                            'deposit_id' => $deposit->_id
+                        ],
+                        200
+                    );
+                }
+
+                return response()->json(
+                    [
+                        'message' => 'Invalid Stripe event type',
+                        'deposit_id' => null
+                    ],
+                    400
+                );
+            case 'checkout':
+                // Get Checkout
+                $checkout = Checkout::find($modelID);
+
+                if (is_null($checkout)) {
+                    return response()->json(
+                        ['message' => 'Checkout not found'],
+                        200
+                    );
+                }
+
+                // Get Order
+                $order = $checkout->order;
+
+                if (is_null($order)) {
+                    return response()->json(
+                        ['message' => 'Order not found'],
+                        200
+                    );
+                }
+
+                // Update Checkout and Order
+                if ($eventType == 'charge.succeeded') {
+                    // Update Checkout
+                    $checkout->updateOnlineResponse((object) $request->all());
+                    $checkout->createApproval(
+                        CheckoutApprovalStatus::APPROVED,
+                        'Payment verified by Stripe'
+                    );
+
+                    // Update Order
+                    if ($order->current_status !== ShipmentDeliveryStatus::PROCESSING) {
+                        $order->updateStatus(ShipmentDeliveryStatus::PROCESSING);
+                    }
+
+                    return response()->json(
+                        [
+                            'message' => 'Checkout approved, and Order status updated',
+                            'order_id' => $order->_id
+                        ],
+                        200
+                    );
+                }
+
+                return response()->json(
+                    [
+                        'message' => 'Invalid Stripe event type',
+                        'order_id' => null
+                    ],
+                    400
+                );
+            default:
+                return response()->json(
+                    [
+                        'message' => 'Invalid model_type for metadata',
+                    ],
+                    400
+                );
+        }
+    }
+
     public function updateAuctionStatuses(Request $requests)
     {
         $now = now();
+
+        // ----------------------
+        // Auction (Store) Starts
+        // ----------------------
 
         // Make stores ACTIVE
         $archivedStores = Store::where('type', 'OFFLINE')
@@ -64,9 +263,56 @@ class ServiceController extends Controller
             }
         }
 
+        // ----------------------
+        // Auction (Store) Ends
+        // ----------------------
+
+        // ----------------------
+        // Auction Lot Starts
+        // ----------------------
+
+        // Make lots ACTIVE
+        $archivedLots = AuctionLot::where('status', Status::ARCHIVED)
+            ->whereHas('store', function ($query) {
+                return $query->where('status', Status::ACTIVE);
+            })
+            ->get();
+
+        $archivedLotsUpdateCount = 0;
+        foreach ($archivedLots as $lot) {
+            $startTime = Carbon::parse($lot->start_datetime);
+            $endTime = Carbon::parse($lot->end_datetime);
+
+            if ($now >= $startTime && $now < $endTime) {
+                $lot->update(['status' => Status::ACTIVE]);
+                $archivedLotsUpdateCount++;
+            }
+        }
+
+        // Make lots ARCHIVED
+        $activeLots = AuctionLot::where('status', Status::ACTIVE)->get();
+
+        $activeLotsUpdateCount = 0;
+        foreach ($activeLots as $lot) {
+            $endTime = Carbon::parse($lot->end_datetime);
+
+            if ($now >= $endTime) {
+                $lot->update(['status' => Status::ARCHIVED]);
+                $activeLotsUpdateCount++;
+            }
+        }
+
+        // ----------------------
+        // Auction Lot Ends
+        // ----------------------
+
         return response()->json([
             'now_time' => $now,
-            'message' => "Updated {$archivedStoresUpdateCount} Auction(s) as ACTIVE, and {$activeStoresUpdateCount} Auction(s) as ARCHIVED"
+            'activated_store_count' => $archivedStoresUpdateCount,
+            'archived_store_count' => $activeStoresUpdateCount,
+            'activated_lot_count' => $archivedLotsUpdateCount,
+            'archived_lot_count' => $activeLotsUpdateCount,
+            'message' => "Updated Successfully"
         ], 200);
     }
 
@@ -110,7 +356,6 @@ class ServiceController extends Controller
             'message' => "Updated {$archivedLotsUpdateCount} AuctionLot(s) as ACTIVE, and {$activeLotsUpdateCount} AuctionLot(s) as ARCHIVED"
         ], 200);
     }
-
 
     public function generateAuctionOrdersAndRefundDeposits(Request $request)
     {
@@ -299,7 +544,7 @@ class ServiceController extends Controller
             ->get();
 
         // Full Refund
-        $refundUrl = 'http://192.168.0.105:3002/refunds';
+        $refundUrl = 'https://payment.paraqon.starsnet.hk/refunds';
         foreach ($allFullRefundDeposits as $deposit) {
             try {
                 $data = [
@@ -379,7 +624,7 @@ class ServiceController extends Controller
             ->first();
 
         $checkout->updateOnlineResponse(
-            $request->all()
+            (object) $request->all()
         );
 
         // Update Checkout and Order

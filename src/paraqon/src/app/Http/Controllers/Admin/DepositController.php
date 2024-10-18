@@ -168,10 +168,9 @@ class DepositController extends Controller
                 $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
 
                 if (is_null($assignedPaddleID)) {
-                    $highestPaddleID = optional(AuctionRegistrationRequest::where('store_id', $storeID)
-                        ->orderByDesc('paddle_id')
-                        ->first())
-                        ->paddle_id
+                    $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
+                        ->get()
+                        ->max('paddle_id')
                         ?? 0;
                     $assignedPaddleID = $highestPaddleID + 1;
                 }

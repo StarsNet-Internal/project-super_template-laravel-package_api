@@ -46,6 +46,15 @@ class AuctionRegistrationRequestController extends Controller
             ->first();
 
         if (!is_null($oldForm)) {
+            $assignedPaddleID = $oldForm->paddle_id;
+            if ($replyStatus == ReplyStatus::APPROVED) {
+                $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
+                    ->get()
+                    ->max('paddle_id')
+                    ?? 0;
+                $assignedPaddleID = $highestPaddleID + 1;
+            }
+
             $oldFormAttributes = [
                 'approved_by_account_id' => null,
                 'status' => Status::ACTIVE,
@@ -60,9 +69,19 @@ class AuctionRegistrationRequestController extends Controller
         }
 
         // Create AuctionRegistrationRequest
+        $assignedPaddleID = null;
+        if ($replyStatus == ReplyStatus::APPROVED) {
+            $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
+                ->get()
+                ->max('paddle_id')
+                ?? 0;
+            $assignedPaddleID = $highestPaddleID + 1;
+        }
+
         $newFormAttributes = [
             'requested_by_customer_id' => $customer->_id,
             'store_id' => $storeID,
+            'paddle_id' => $assignedPaddleID,
             'status' => Status::ACTIVE,
             'reply_status' => $replyStatus,
         ];
@@ -96,11 +115,11 @@ class AuctionRegistrationRequestController extends Controller
             ], 200);
         }
 
-        if ($form->status != Status::ACTIVE) {
-            return response()->json([
-                'message' => 'AuctionRegistrationRequest not found'
-            ], 404);
-        }
+        // if ($form->status != Status::ACTIVE) {
+        //     return response()->json([
+        //         'message' => 'AuctionRegistrationRequest Status is not ACTIVE'
+        //     ], 404);
+        // }
 
         if ($form->requested_by_customer_id != $customer->_id) {
             return response()->json([
@@ -110,34 +129,13 @@ class AuctionRegistrationRequestController extends Controller
 
         switch ($paymentMethod) {
             case 'ONLINE':
-                $stripeAmount = (int) $amount * 100;
-                $data = [
-                    "amount" => $stripeAmount,
-                    "currency" => 'HKD',
-                    "captureMethod" => "manual",
-                    "callbackUrl" => "backend.paraqon.hk/api/customer/stripe/payments/callback"
-                ];
-
-                $url = 'http://192.168.0.105:3002/payment-intents';
-                $res = Http::post(
-                    $url,
-                    $data
-                );
-
-                $paymentIntentID = $res['id'];
-                $clientSecret = $res['clientSecret'];
-
+                // Create Deposit
                 $depositAttributes = [
                     'requested_by_customer_id' => $customer->_id,
                     'auction_registration_request_id' => $form->_id,
                     'payment_method' => 'ONLINE',
                     'amount' => $amount,
                     'currency' => 'HKD',
-                    'online' => [
-                        'payment_intent_id' => $paymentIntentID,
-                        'client_secret' => $clientSecret,
-                        'api_response' => null
-                    ],
                     'payment_information' => [
                         'currency' => $currency,
                         'conversion_rate' => $conversion_rate
@@ -145,6 +143,43 @@ class AuctionRegistrationRequestController extends Controller
                 ];
                 $deposit = Deposit::create($depositAttributes);
                 $deposit->updateStatus('submitted');
+
+                // Create Stripe payment intent
+                $stripeAmount = (int) $amount * 100;
+                $data = [
+                    "amount" => $stripeAmount,
+                    "currency" => 'HKD',
+                    "captureMethod" => "manual",
+                    "metadata" => [
+                        "model_type" => "deposit",
+                        "model_id" => $deposit->_id
+                    ]
+                ];
+
+                try {
+                    $url = 'https://payment.paraqon.starsnet.hk/payment-intents';
+                    $res = Http::post(
+                        $url,
+                        $data
+                    );
+
+                    // Update Deposit
+                    $paymentIntentID = $res['id'];
+                    $clientSecret = $res['clientSecret'];
+
+                    $deposit->update([
+                        'online' => [
+                            'payment_intent_id' => $paymentIntentID,
+                            'client_secret' => $clientSecret,
+                            'api_response' => null
+                        ]
+                    ]);
+                } catch (\Throwable $th) {
+                    return response()->json([
+                        'message' => 'Connection to Payment API Failed',
+                        'deposit' => null
+                    ], 404);
+                }
 
                 // Return Auction Store
                 return response()->json([
@@ -157,12 +192,16 @@ class AuctionRegistrationRequestController extends Controller
                     'auction_registration_request_id' => $form->_id,
                     'payment_method' => 'OFFLINE',
                     'amount' => $amount,
-                    'currency' => $currency,
+                    'currency' => 'HKD',
                     'offline' => [
                         'image' => $request->image,
                         'uploaded_at' => now(),
                         'api_response' => null
                     ],
+                    'payment_information' => [
+                        'currency' => $currency,
+                        'conversion_rate' => $conversion_rate
+                    ]
                 ];
                 $deposit = Deposit::create($depositAttributes);
                 $deposit->updateStatus('submitted');
@@ -187,6 +226,7 @@ class AuctionRegistrationRequestController extends Controller
         $storeID = $request->store_id;
         $amount = $request->amount;
         $currency = $request->currency;
+        $conversionRate = $request->conversion_rate;
         $formID = $request->route('auction_registration_request_id');
 
         // Check if there's existing AuctionRegistrationRequest
@@ -213,36 +253,49 @@ class AuctionRegistrationRequestController extends Controller
         }
 
         // Create Deposit
-        $stripeAmount = (int) $amount * 100;
-        $data = [
-            "amount" => $stripeAmount,
-            "currency" => 'HKD',
-            "captureMethod" => "manual",
-            "callbackUrl" => "backend.paraqon.hk/api/customer/stripe/payments/callback"
-        ];
-
-        $url = 'http://192.168.0.105:3002/payment-intents';
-        $res = Http::post(
-            $url,
-            $data
-        );
-
-        $paymentIntentID = $res['id'];
-        $clientSecret = $res['clientSecret'];
-
         $depositAttributes = [
             'customer_id' => $customer->_id,
             'auction_registration_request_id' => $form->_id,
             'payment_method' => 'ONLINE',
             'amount' => $amount,
-            'currency' => $currency,
+            'currency' => 'HKD',
+            'payment_information' => [
+                'currency' => $currency,
+                'conversion_rate' => $conversionRate
+            ]
+        ];
+        $deposit = Deposit::create($depositAttributes);
+        $deposit->updateStatus('submitted');
+
+        // Create payment-intent
+        $stripeAmount = (int) $amount * 100;
+        $data = [
+            "amount" => $stripeAmount,
+            "currency" => 'HKD',
+            "captureMethod" => "manual",
+            "metadata" => [
+                "model_type" => "checkout",
+                "model_id" => $deposit->_id
+            ]
+        ];
+
+        $url = 'https://payment.paraqon.starsnet.hk/payment-intents';
+        $res = Http::post(
+            $url,
+            $data
+        );
+
+        // Update Deposit
+        $paymentIntentID = $res['id'];
+        $clientSecret = $res['clientSecret'];
+
+        $deposit->update([
             'online' => [
                 'payment_intent_id' => $paymentIntentID,
                 'client_secret' => $clientSecret,
                 'api_response' => null
-            ],
-        ];
-        $deposit = Deposit::create($depositAttributes);
+            ]
+        ]);
 
         // Return Auction Store
         return response()->json([

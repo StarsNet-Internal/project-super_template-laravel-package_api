@@ -462,10 +462,13 @@ class ShoppingCartController extends Controller
                         "amount" => $stripeAmount,
                         "currency" => 'HKD',
                         "captureMethod" => "automatic_async",
-                        "callbackUrl" => "backend.paraqon.hk/api/customer/stripe/payments/callback"
+                        "metadata" => [
+                            "model_type" => "checkout",
+                            "model_id" => $checkout->_id
+                        ]
                     ];
 
-                    $url = 'http://192.168.0.105:3002/payment-intents';
+                    $url = 'https://payment.paraqon.starsnet.hk/payment-intents';
                     $res = Http::post(
                         $url,
                         $data
