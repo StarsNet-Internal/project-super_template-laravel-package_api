@@ -130,6 +130,7 @@ class ProductManagementController extends Controller
             $product->start_datetime = $auctionLot->start_datetime;
             $product->end_datetime = $auctionLot->end_datetime;
             $product->lot_number = $auctionLot->lot_number;
+            $product->status = $auctionLot->status;
 
             // is_watching
             $auctionLot->is_watching = in_array($auctionLotID, $watchingAuctionIDs);

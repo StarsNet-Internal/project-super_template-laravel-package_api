@@ -176,7 +176,7 @@ class AuctionLotController extends Controller
         $requestedBid = $request->bid;
         $bidType = $request->input('type', 'MAX');
 
-        if (in_array(
+        if (!in_array(
             $bidType,
             ['MAX', 'DIRECT', 'ADVANCED']
         )) {
