@@ -94,6 +94,7 @@ class ServiceController extends Controller
                     ) {
                         // get Paddle ID
                         $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
+                        $storeID = $auctionRegistrationRequest->store_id;
 
                         if (is_null($assignedPaddleID)) {
                             $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)

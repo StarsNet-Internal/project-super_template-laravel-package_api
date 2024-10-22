@@ -254,7 +254,7 @@ class ProductManagementController extends Controller
 
         $urls = [];
         foreach ($productIDsSet as $IDsSet) {
-            $url = route('whiskywhiskers.products.ids', [
+            $url = route('paraqon.products.ids', [
                 'store_id' => $this->store->_id,
                 'ids' => $IDsSet->all(),
                 'sort_by' => 'a'
@@ -277,6 +277,14 @@ class ProductManagementController extends Controller
         // Re-calculate current_bid value
         $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
 
+        // Get WatchlistItem 
+        $customer = $this->customer();
+        $watchingAuctionLotIDs = WatchlistItem::where('customer_id', $customer->id)
+            ->where('item_type', 'auction-lot')
+            ->get()
+            ->pluck('item_id')
+            ->all();
+
         foreach ($products as $product) {
             $auctionLotID = $product->auction_lot_id;
             $auctionLot = AuctionLot::find($auctionLotID);
@@ -291,6 +299,10 @@ class ProductManagementController extends Controller
             $product->start_datetime = $auctionLot->start_datetime;
             $product->end_datetime = $auctionLot->end_datetime;
             $product->lot_number = $auctionLot->lot_number;
+            $product->status = $auctionLot->status;
+
+            // is_watching
+            $product->is_watching = in_array($auctionLotID, $watchingAuctionLotIDs);
 
             unset(
                 $product->bids,

@@ -18,6 +18,7 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\OrderController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\PaymentController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\ProductController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\ProductManagementController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\ServiceController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\TestingController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\WatchlistItemController;
@@ -227,9 +228,9 @@ Route::group(
 
                 Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
                     Route::get('/products/filter', [$defaultController, 'filterAuctionProductsByCategories'])->middleware(['pagination']);
+                    Route::get('/related-products-urls', [$defaultController, 'getRelatedAuctionProductsUrls'])->middleware(['pagination']);
+                    Route::get('/products/ids', [$defaultController, 'getAuctionProductsByIDs'])->name('paraqon.products.ids')->middleware(['pagination']);
                 });
-                Route::get('/related-products-urls', [$defaultController, 'getRelatedAuctionProductsUrls'])->middleware(['pagination']);
-                Route::get('/products/ids', [$defaultController, 'getAuctionProductsByIDs'])->name('whiskywhiskers.products.ids')->middleware(['pagination']);
             }
         );
 
@@ -320,5 +321,15 @@ Route::group(
                 Route::put('/{id}/cancel', [$defaultController, 'cancelDeposit']);
             }
         );
+    }
+);
+
+Route::group(
+    ['prefix' => 'services'],
+    function () {
+        $defaultController = ServiceController::class;
+
+        Route::get('/time/now', [$defaultController, 'checkCurrentTime']);
+        Route::get('/timezone/now', [$defaultController, 'checkOtherTimeZone']);
     }
 );

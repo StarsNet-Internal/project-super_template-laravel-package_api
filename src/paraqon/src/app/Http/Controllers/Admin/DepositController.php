@@ -23,6 +23,7 @@ use App\Constants\Model\ShipmentDeliveryStatus;
 
 use App\Traits\Utils\RoundingTrait;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use StarsNet\Project\Paraqon\App\Models\ProductStorageRecord;
 
@@ -242,8 +243,32 @@ class DepositController extends Controller
         ];
         $deposit->update($depositAttributes);
 
+        // Return Deposit
+        if ($deposit->payment_method == OrderPaymentMethod::ONLINE) {
+
+            try {
+                $paymentIntentID = $deposit->online['payment_intent_id'];
+                $refundUrl = "https://payment.paraqon.starsnet.hk/payment-intents/" + $paymentIntentID + "/cancel";
+
+                $response = Http::post(
+                    $refundUrl,
+                );
+
+                if ($response->status() === 200) {
+                    $deposit->update([
+                        'refund_id' => $response['id']
+                    ]);
+                    $deposit->updateStatus('cancelled');
+                } else {
+                    $deposit->updateStatus('return-failed');
+                }
+            } catch (\Throwable $th) {
+                $deposit->updateStatus('return-failed');
+            }
+        }
+
         return response()->json([
-            'message' => 'Deposit updated successfully'
+            'message' => 'Deposit cancelled successfully'
         ], 200);
     }
 }
