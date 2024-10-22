@@ -34,30 +34,32 @@
   "extra": {
     "laravel": {
       "providers": [
-        "StarsNet\\Project\\Capi\\ProjectServiceProvider",
-        "StarsNet\\Project\\Capi\\EventServiceProvider",
-        "StarsNet\\Project\\TuenSir\\ProjectServiceProvider",
-        "StarsNet\\Project\\TripleGaga\\ProjectServiceProvider",
         "StarsNet\\Project\\Auction\\ProjectServiceProvider",
+        "StarsNet\\Project\\Capi\\EventServiceProvider",
+        "StarsNet\\Project\\Capi\\ProjectServiceProvider",
         "StarsNet\\Project\\CasaModernism\\ProjectServiceProvider",
+        "StarsNet\\Project\\CateringMan\\ProjectServiceProvider",
+        "StarsNet\\Project\\ClsPackaging\\ProjectServiceProvider",
         "StarsNet\\Project\\Commads\\ProjectServiceProvider",
         "StarsNet\\Project\\Course\\ProjectServiceProvider",
-        "StarsNet\\Project\\WhiskyWhiskers\\ProjectServiceProvider",
-        "StarsNet\\Project\\WhiskyWhiskers\\EventServiceProvider",
-        "StarsNet\\Project\\HeiFei\\ProjectServiceProvider",
-        "StarsNet\\Project\\ShoppingCart\\ProjectServiceProvider",
-        "StarsNet\\Project\\Splitwise\\ProjectServiceProvider",
-        "StarsNet\\Project\\ClsPackaging\\ProjectServiceProvider",
-        "StarsNet\\Project\\CateringMan\\ProjectServiceProvider",
         "StarsNet\\Project\\DemyArt\\ProjectServiceProvider",
         "StarsNet\\Project\\Easeca\\ProjectServiceProvider",
         "StarsNet\\Project\\EnjoyFace\\ProjectServiceProvider",
         "StarsNet\\Project\\Esgone\\ProjectServiceProvider",
+        "StarsNet\\Project\\HeiFei\\ProjectServiceProvider",
         "StarsNet\\Project\\Ops\\ProjectServiceProvider",
-        "StarsNet\\Project\\SunKwong\\ProjectServiceProvider",
-        "StarsNet\\Project\\Stripe\\ProjectServiceProvider",
+        "StarsNet\\Project\\Paraqon\\ProjectServiceProvider",
+        "StarsNet\\Project\\Paraqon\\EventServiceProvider",
+        "StarsNet\\Project\\ShoppingCart\\ProjectServiceProvider",
+        "StarsNet\\Project\\SnoreCircle\\ProjectServiceProvider",
+        "StarsNet\\Project\\Splitwise\\ProjectServiceProvider",
         "StarsNet\\Project\\Stripe\\EventServiceProvider",
-        "StarsNet\\Project\\SnoreCircle\\ProjectServiceProvider"
+        "StarsNet\\Project\\Stripe\\ProjectServiceProvider",
+        "StarsNet\\Project\\SunKwong\\ProjectServiceProvider",
+        "StarsNet\\Project\\TripleGaga\\ProjectServiceProvider",
+        "StarsNet\\Project\\TuenSir\\ProjectServiceProvider",
+        "StarsNet\\Project\\WhiskyWhiskers\\EventServiceProvider",
+        "StarsNet\\Project\\WhiskyWhiskers\\ProjectServiceProvider"
       ]
     }
   }
