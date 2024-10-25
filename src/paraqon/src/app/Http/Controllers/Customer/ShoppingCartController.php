@@ -322,6 +322,9 @@ class ShoppingCartController extends Controller
                 ->where('product_id', $item->product_id)
                 ->first();
 
+            // Add keys
+            $item->lot_number = $lot->lot_number;
+
             // Calculations
             // $winningBid = (float) $item->winning_bid ?? 0;
             $winningBid = (float) optional($lot)->current_bid ?? 0;
@@ -413,6 +416,7 @@ class ShoppingCartController extends Controller
             'delivery_info' => $this->getDeliveryInfo($deliveryInfo),
             'delivery_details' => $deliveryDetails,
             'is_voucher_applied' => $checkoutDetails['is_voucher_applied'],
+            'is_system' => false,
             'payment_information' => [
                 'currency' => $currency,
                 'conversion_rate' => $conversion_rate
@@ -428,7 +432,10 @@ class ShoppingCartController extends Controller
 
         foreach ($checkoutItems as $item) {
             $attributes = $item->toArray();
-            unset($attributes['_id'], $attributes['is_checkout']);
+            unset(
+                $attributes['_id'],
+                $attributes['is_checkout']
+            );
 
             // Update WarehouseInventory(s)
             $variantID = $attributes['product_variant_id'];
@@ -625,7 +632,10 @@ class ShoppingCartController extends Controller
 
         foreach ($checkoutItems as $item) {
             $attributes = $item->toArray();
-            unset($attributes['_id'], $attributes['is_checkout']);
+            unset(
+                $attributes['_id'],
+                $attributes['is_checkout']
+            );
 
             // Update WarehouseInventory(s)
             $variantID = $attributes['product_variant_id'];

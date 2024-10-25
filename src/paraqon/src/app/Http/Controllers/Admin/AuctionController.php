@@ -20,7 +20,7 @@ use App\Constants\Model\OrderDeliveryMethod;
 use App\Constants\Model\OrderPaymentMethod;
 use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\ShipmentDeliveryStatus;
-
+use App\Models\ProductCategory;
 use App\Traits\Utils\RoundingTrait;
 use Illuminate\Support\Str;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
@@ -35,6 +35,47 @@ use StarsNet\Project\Paraqon\App\Models\BidHistory;
 class AuctionController extends Controller
 {
     use RoundingTrait;
+
+    public function syncCategoriesToProduct(Request $request)
+    {
+        // Extract attributes from $request
+        $productID = $request->route('product_id');
+        $categoryIDs = $request->input('ids', []);
+
+        // Get Product, then validate
+        /** @var Product $product */
+        $product = Product::find($productID);
+
+        if (is_null($product)) {
+            return response()->json([
+                'message' => 'Product not found'
+            ], 404);
+        }
+
+        $existingAssignedCategoryIDs = $product->category_ids;
+
+        // Find all Categories
+        $existingAssignedCategories = ProductCategory::objectIDs($existingAssignedCategoryIDs)
+            ->get();
+
+        // Detach relationships
+        foreach ($existingAssignedCategories as $category) {
+            $category->products()->detach([$product->_id]);
+        }
+
+        $newCategories = ProductCategory::objectIDs($categoryIDs)
+            ->get();
+
+        // Attach relationships
+        foreach ($newCategories as $category) {
+            $category->products()->attach([$product->_id]);
+        }
+
+        // Return success message
+        return response()->json([
+            'message' => 'Sync'
+        ], 200);
+    }
 
     public function getAllRegisteredUsers(Request $request)
     {

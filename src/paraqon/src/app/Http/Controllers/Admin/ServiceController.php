@@ -83,11 +83,10 @@ class ServiceController extends Controller
                 // Update Deposit
                 if ($eventType == 'charge.succeeded') {
                     $deposit->updateStatus('on-hold');
-                    $deposit->updateOnlineResponse($request->all());
                     $deposit->update([
                         'reply_status' => ReplyStatus::APPROVED
                     ]);
-
+                    $deposit->updateOnlineResponse($request->all());
 
                     if (
                         $auctionRegistrationRequest->reply_status == ReplyStatus::PENDING
@@ -391,8 +390,9 @@ class ServiceController extends Controller
                         'product_id' => $lot->product_id,
                         'product_variant_id' => $lot->product_variant_id,
                         'qty' => 1,
+                        'lot_number' => $lot->lot_number,
                         'winning_bid' => $lot->current_bid,
-                        'storage_fee' => $lot->current_bid * 0.03
+                        // 'storage_fee' => $lot->current_bid * 0.03
                     ];
                     $customer->shoppingCartItems()->create($attributes);
                 }

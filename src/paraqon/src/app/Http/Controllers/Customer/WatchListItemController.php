@@ -155,7 +155,13 @@ class WatchlistItemController extends Controller
         // Get Products 
         if (count($productIDs) == 0) return new Collection();
 
-        $products = Product::raw(function ($collection) use ($productIDs) {
+        // Get StoreIDs
+        $validStoreIDs = Store::whereIn('status', [Status::ACTIVE, Status::ARCHIVED])
+            ->get()
+            ->pluck('_id')
+            ->all();
+
+        $products = Product::raw(function ($collection) use ($productIDs, $validStoreIDs) {
             $aggregate = [];
 
             // Convert ObjectIDs to String
@@ -183,12 +189,21 @@ class WatchlistItemController extends Controller
                         '$match' => [
                             '$expr' => [
                                 '$and' => [
-                                    // ['$eq' => ['$store_id', $storeID]],
+                                    [
+                                        '$in' => [
+                                            '$store_id',
+                                            $validStoreIDs
+                                        ]
+                                    ],
                                     ['$eq' => ['$product_id', '$$product_id']],
                                     [
                                         '$in' => [
                                             '$status',
-                                            [Status::ACTIVE, Status::ARCHIVED]
+                                            [
+                                                Status::DRAFT,
+                                                Status::ACTIVE,
+                                                Status::ARCHIVED
+                                            ]
                                         ]
                                     ]
                                 ],

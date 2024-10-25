@@ -27,7 +27,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
-
+use Illuminate\Support\Facades\Log;
 use StarsNet\Project\Paraqon\App\Models\Bid;
 
 class AuctionLot extends Eloquent
@@ -266,17 +266,23 @@ class AuctionLot extends Eloquent
         if ($maxBidCount >= 2) return $maxBidValue; // Case 2B(ii) & 3B (ii)
 
         // For Case 2B(ii) & 3B (ii) Calculations
-        $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
-        $incrementRules = $incrementRulesDocument->bidding_increments;
+        // $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
+        // $incrementRules = $incrementRulesDocument->bidding_increments;
+        $incrementRules = optional($this->bid_incremental_settings)['increments'];
+        Log::info('hello');
+        Log::info($incrementRules);
+        Log::info('bye');
 
         $maxBidValues = $allCustomerHighestBids->sortByDesc('bid')->pluck('bid')->values()->all();
         $secondHighestBidValue = $maxBidValues[1];
 
         $incrementalBid = 0;
-        foreach ($incrementRules as $interval) {
-            if ($secondHighestBidValue >= $interval['from'] && $secondHighestBidValue < $interval['to']) {
-                $incrementalBid = $interval['increment'];
-                break;
+        if (!is_null($incrementRules)) {
+            foreach ($incrementRules as $interval) {
+                if ($secondHighestBidValue >= $interval['from'] && $secondHighestBidValue < $interval['to']) {
+                    $incrementalBid = $interval['increment'];
+                    break;
+                }
             }
         }
 

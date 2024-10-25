@@ -87,7 +87,7 @@ class AuthenticationController extends Controller
             ->update(['is_used' => true]);
 
         // Generate new VerificationCode
-        $code =  $this->generateVerificationCodeByType(
+        $code = $this->generateVerificationCodeByType(
             'LOGIN',
             15,
             $user,
@@ -252,10 +252,10 @@ class AuthenticationController extends Controller
 
         // Update User
         $this->updateUserViaRegistration($user, $request);
-        $user->generateVerificationCodeByType(
-            VerificationCodeType::ACCOUNT_VERIFICATION,
-            60
-        );
+        // $user->generateVerificationCodeByType(
+        //     VerificationCodeType::ACCOUNT_VERIFICATION,
+        //     60
+        // );
 
         // Update Account
         /** @var ?Account $account */
@@ -357,8 +357,9 @@ class AuthenticationController extends Controller
         // Generate new VerificationCode
         $code = $this->generateVerificationCodeByType(
             VerificationCodeType::CHANGE_EMAIL,
-            60,
-            $user
+            15,
+            $user,
+            'EMAIL'
         );
 
         // Return success message
@@ -403,11 +404,12 @@ class AuthenticationController extends Controller
             ], 404);
         }
 
-        // Create VerificationCode
+        // Generate new VerificationCode
         $code = $this->generateVerificationCodeByType(
             VerificationCodeType::CHANGE_PHONE,
-            60,
-            $user
+            15,
+            $user,
+            'PHONE'
         );
 
         // Return success message
@@ -548,7 +550,8 @@ class AuthenticationController extends Controller
         $code = $this->generateVerificationCodeByType(
             VerificationCodeType::FORGET_PASSWORD,
             30,
-            $user
+            $user,
+            $loginType
         );
 
         // Get Account, then validate

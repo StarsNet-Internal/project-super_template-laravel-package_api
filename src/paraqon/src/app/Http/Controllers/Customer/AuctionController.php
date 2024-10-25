@@ -18,7 +18,7 @@ class AuctionController extends Controller
     {
         // Extract attributes from $request
         $statuses = (array) $request->input('status', [
-            Status::DRAFT,
+            // Status::DRAFT,
             Status::ACTIVE,
             Status::ARCHIVED
         ]);

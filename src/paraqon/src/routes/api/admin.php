@@ -82,7 +82,7 @@ Route::group(
         Route::get('/{store_id}/registered-users', [$defaultController, 'getAllRegisteredUsers'])->middleware(['pagination']);
         Route::get('/{store_id}/categories/all', [$defaultController, 'getAllCategories'])->middleware(['pagination']);
         Route::get('/{store_id}/registration-records', [$defaultController, 'getAllAuctionRegistrationRecords'])->middleware(['pagination']);
-
+        Route::put('/products/{product_id}/categories/assign', [$defaultController, 'syncCategoriesToProduct']);
         Route::get('/all', [$defaultController, 'getAllAuctions'])->middleware(['pagination']);
 
         Route::group(
@@ -187,19 +187,18 @@ Route::group(
         $defaultController = ServiceController::class;
 
         Route::put('/auctions/statuses', [$defaultController, 'updateAuctionStatuses']);
+        Route::put('/auction-lots/statuses', [$defaultController, 'updateAuctionLotStatuses']);
+
         Route::post('/payment/callback', [$defaultController, 'paymentCallback']);
+        Route::get('/auctions/{store_id}/orders/create', [$defaultController, 'generateAuctionOrdersAndRefundDeposits']);
 
-        Route::group(
-            ['middleware' => 'auth:api'],
-            function () use ($defaultController) {
+        Route::post('/deposits/return', [$defaultController, 'returnDeposit']);
+        Route::post('/orders/paid', [$defaultController, 'confirmOrderPaid']);
 
-                Route::put('/auction-lots/statuses', [$defaultController, 'updateAuctionLotStatuses']);
-                Route::get('/auctions/{store_id}/orders/create', [$defaultController, 'generateAuctionOrdersAndRefundDeposits']);
-
-                Route::post('/deposits/return', [$defaultController, 'returnDeposit']);
-                Route::post('/orders/paid', [$defaultController, 'confirmOrderPaid']);
-            }
-        );
+        // Route::group(
+        //     ['middleware' => 'auth:api'],
+        //     function () use ($defaultController) {}
+        // );
     }
 );
 
@@ -230,6 +229,7 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getAllAuctionOrders'])->middleware(['pagination']);
+                Route::put('/{order_id}/details', [$defaultController, 'updateOrderDetails']);
             }
         );
     }

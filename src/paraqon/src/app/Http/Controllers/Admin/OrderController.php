@@ -34,6 +34,32 @@ class OrderController extends Controller
             })
             ->get();
 
+        foreach ($orders as $order) {
+            $order->checkout = $order->checkout()->latest()->first();
+        }
+
         return $orders;
+    }
+
+    public function updateOrderDetails(Request $request)
+    {
+        // Extract attributes from $request
+        $orderID = $request->route('order_id');
+
+        // Get Order
+        $order = Order::find($orderID);
+
+        if (is_null($order)) {
+            return response()->json([
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        // Update Order
+        $order->update($request->all());
+
+        return response()->json([
+            'message' => "Updated Order Successfully"
+        ], 200);
     }
 }
