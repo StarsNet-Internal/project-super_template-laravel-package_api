@@ -181,8 +181,11 @@ class AuctionLot extends Eloquent
     // Action Begins
     // -----------------------------
 
-    public function getCurrentBidPrice($isCalculationNeeded = false)
-    {
+    public function getCurrentBidPrice(
+        $isCalculationNeeded = false,
+        $newBidCustomerID = null,
+        $newBidValue = null
+    ) {
         // Ensure BidHistory exists
         $auctionLotId = $this->id;
         $bidHistory = BidHistory::where('auction_lot_id', $auctionLotId)->first();
@@ -210,14 +213,13 @@ class AuctionLot extends Eloquent
             ->get();
         $reservePrice = $this->reserve_price;
 
-        if (count($allBids) > 2) {
-            $highestBid = $allBids[0];
-            $secondHighestBid = $allBids[1];
+        if (count($allBids) > 2 && !is_null($newBidCustomerID)) {
+            $winningBid = $bidHistory->histories()->last();
 
-            if ($highestBid->customer_id == $secondHighestBid->customer_id) {
+            if ($winningBid->winning_bid_customer_id == $newBidCustomerID) {
                 if (
-                    max($reservePrice, $highestBid->bid, $secondHighestBid->bid) == $reservePrice // Case A
-                    || min($reservePrice, $highestBid->bid, $secondHighestBid->bid) == $reservePrice // Case C
+                    max($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case A
+                    || min($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case C
                 ) {
                     return $bidHistory->current_bid;
                 }
