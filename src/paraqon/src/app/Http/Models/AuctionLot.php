@@ -192,10 +192,86 @@ class AuctionLot extends Eloquent
     // Action Begins
     // -----------------------------
 
+    public function getCurrentMaximumBidValue(
+        $allBids,
+        $bidHistory,
+        $newBidCustomerID = null,
+        $newBidValue = null
+    ) {
+        $startingPrice = $this->starting_price;
+        $reservePrice = $this->reserve_price;
+
+        if (count($allBids) > 2 && !is_null($newBidCustomerID)) {
+            $winningBid = $bidHistory->histories()->last();
+
+            if ($winningBid->winning_bid_customer_id == $newBidCustomerID) {
+                if (
+                    max($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case 0A
+                    || min($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case 0C
+                ) {
+                    return $bidHistory->current_bid;
+                }
+            }
+        }
+
+        // Get all highest maximum bids per customer_id
+        $allCustomerHighestBids = $allBids
+            ->groupBy('customer_id')
+            ->map(function ($item) {
+                return $item->sortByDesc('bid')->first();
+            })
+            ->sortByDesc('bid')
+            ->values();
+
+        // Case 1: If 0 bids
+        $allCustomerHighestBidsCount = $allCustomerHighestBids->count();
+
+        if ($allCustomerHighestBidsCount === 0) return $startingPrice; // Case 1
+
+        // If 1 bids
+        $maxBidValue = $allCustomerHighestBids->max('bid');
+        $isReservedPriceMet = $maxBidValue >= $reservePrice;
+
+        if ($allCustomerHighestBidsCount === 1) {
+            return $isReservedPriceMet ?
+                $reservePrice : // Case 3A
+                $startingPrice; // Case 2A
+        }
+
+        // If more than 1 bids
+        $maxBidCount = $allCustomerHighestBids->where('bid', $maxBidValue)->count();
+        if ($maxBidCount >= 2) return $maxBidValue; // Case 2B (ii) & 3B (ii)
+
+        // For Case 2B(i) & 3B (i) Calculations
+        $incrementRules = optional($this->bid_incremental_settings)['increments'];
+
+        $maxBidValues = $allCustomerHighestBids->sortByDesc('bid')->pluck('bid')->values()->all();
+        $secondHighestBidValue = $maxBidValues[1];
+
+        $incrementalBid = 0;
+        if (!is_null($incrementRules)) {
+            foreach ($incrementRules as $interval) {
+                if ($secondHighestBidValue >= $interval['from'] && $secondHighestBidValue < $interval['to']) {
+                    $incrementalBid = $interval['increment'];
+                    break;
+                }
+            }
+        }
+
+        if ($isReservedPriceMet) {
+            // Case 3B (i)
+            return max($reservePrice, min($maxBidValue, $secondHighestBidValue + $incrementalBid));
+        } else {
+            // Case 2B (i)
+            return min($maxBidValue, $secondHighestBidValue + $incrementalBid);
+        }
+    }
+
     public function getCurrentBidPrice(
         $isCalculationNeeded = false,
         $newBidCustomerID = null,
-        $newBidValue = null
+        $newBidValue = null,
+        $bidType = null
     ) {
         // Ensure BidHistory exists
         $auctionLotId = $this->id;
@@ -222,76 +298,50 @@ class AuctionLot extends Eloquent
             ->orderByDesc('bid')
             ->orderBy('created_at')
             ->get();
-        $reservePrice = $this->reserve_price;
 
-        if (count($allBids) > 2 && !is_null($newBidCustomerID)) {
+        if ($bidType == 'MAX') {
+            $maximumMaxBidValue = $this->getCurrentMaximumBidValue(
+                $allBids,
+                $bidHistory,
+                $newBidCustomerID,
+                $newBidValue,
+            );
+            return $maximumMaxBidValue;
+        }
+
+        // get maximum Bids value
+        $maximumDirectBid = $allBids
+            ->first(function ($value) {
+                return $value->type == 'DIRECT';
+            });
+        $maximumDirectBidValue = optional($maximumDirectBid)->bid;
+
+        $maximumMaxBid = $allBids
+            ->first(function ($value) {
+                return $value->type == 'MAX';
+            });
+        $maximumMaxBidValue = optional($maximumMaxBid)->bid;
+
+        // Validations
+        if (is_null($maximumDirectBidValue) && is_null($maximumMaxBidValue)) return $this->starting_price;
+        if (is_null($maximumMaxBidValue)) return $maximumDirectBidValue;
+        if ($maximumDirectBidValue > $maximumMaxBidValue) return $maximumDirectBidValue; // Case 5
+
+        if ($maximumDirectBidValue < $maximumMaxBidValue) {
             $winningBid = $bidHistory->histories()->last();
+            $winningCustomerID = $winningBid->winning_bid_customer_id;
 
-            if ($winningBid->winning_bid_customer_id == $newBidCustomerID) {
-                if (
-                    max($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case A
-                    || min($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case C
-                ) {
-                    return $bidHistory->current_bid;
-                }
-            }
+            if ($winningCustomerID == $newBidCustomerID) return $maximumDirectBidValue; // Case 6A
         }
 
-        // Get all highest maximum bids per customer_id
-        $allCustomerHighestBids = $this->bids()
-            ->where('is_hidden', false)
-            ->get()
-            ->groupBy('customer_id')
-            ->map(function ($item) {
-                return $item->sortByDesc('bid')->first();
-            })
-            ->sortByDesc('bid')
-            ->values();
-
-        // Case 1: If 0 bids
-        $allCustomerHighestBidsCount = $allCustomerHighestBids->count();
-
-        if ($allCustomerHighestBidsCount === 0) return $startingPrice; // Case 1
-
-        // If 1 bids
-        $maxBidValue = $allCustomerHighestBids->max('bid');
-        $isReservedPriceMet = $maxBidValue >= $reservePrice;
-
-        if ($allCustomerHighestBidsCount === 1) {
-            return $isReservedPriceMet ?
-                $reservePrice : // Case 3A
-                $startingPrice; // Case 2A
-        }
-
-        // If more than 1 bids
-        $maxBidCount = $allCustomerHighestBids->where('bid', $maxBidValue)->count();
-        if ($maxBidCount >= 2) return $maxBidValue; // Case 2B(ii) & 3B (ii)
-
-        // For Case 2B(ii) & 3B (ii) Calculations
-        // $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
-        // $incrementRules = $incrementRulesDocument->bidding_increments;
-        $incrementRules = optional($this->bid_incremental_settings)['increments'];
-
-        $maxBidValues = $allCustomerHighestBids->sortByDesc('bid')->pluck('bid')->values()->all();
-        $secondHighestBidValue = $maxBidValues[1];
-
-        $incrementalBid = 0;
-        if (!is_null($incrementRules)) {
-            foreach ($incrementRules as $interval) {
-                if ($secondHighestBidValue >= $interval['from'] && $secondHighestBidValue < $interval['to']) {
-                    $incrementalBid = $interval['increment'];
-                    break;
-                }
-            }
-        }
-
-        // Case 3B (i)
-        if ($isReservedPriceMet) {
-            return max($reservePrice, $secondHighestBidValue + $incrementalBid);
-        } else {
-            // Case 2B (i)
-            return min($maxBidValue, $secondHighestBidValue + $incrementalBid);
-        }
+        // Case 4, Case 6B
+        $maximumMaxBidValue = $this->getCurrentMaximumBidValue(
+            $allBids,
+            $bidHistory,
+            $newBidCustomerID,
+            $newBidValue,
+        );
+        return $maximumMaxBidValue;
     }
 
     // -----------------------------

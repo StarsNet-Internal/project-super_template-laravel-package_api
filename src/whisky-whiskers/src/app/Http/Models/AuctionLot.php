@@ -27,7 +27,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
-
+use Illuminate\Support\Facades\Log;
 use StarsNet\Project\WhiskyWhiskers\App\Models\Bid;
 
 class AuctionLot extends Eloquent
@@ -218,8 +218,8 @@ class AuctionLot extends Eloquent
 
             if ($winningBid->winning_bid_customer_id == $newBidCustomerID) {
                 if (
-                    max($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case A
-                    || min($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case C
+                    max($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case 0A
+                    || min($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case 0C
                 ) {
                     return $bidHistory->current_bid;
                 }
@@ -227,9 +227,7 @@ class AuctionLot extends Eloquent
         }
 
         // Get all highest maximum bids per customer_id
-        $allCustomerHighestBids = $this->bids()
-            ->where('is_hidden', false)
-            ->get()
+        $allCustomerHighestBids = $allBids
             ->groupBy('customer_id')
             ->map(function ($item) {
                 return $item->sortByDesc('bid')->first();

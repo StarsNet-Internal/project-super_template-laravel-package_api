@@ -361,7 +361,13 @@ class AuctionLotController extends Controller
                 $newEndDateTime;
         }
 
-        $newCurrentBid = $auctionLot->getCurrentBidPrice(true);
+        $newCurrentBid = $auctionLot->getCurrentBidPrice(
+            true,
+            $bid->customer_id,
+            $bid->bid,
+            $bid->type
+        );
+
         $auctionLot->update([
             'is_bid_placed' => true,
             'current_bid' => $newCurrentBid,
