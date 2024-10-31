@@ -259,7 +259,8 @@ class AuctionLotController extends Controller
 
         // Get current bid
         $customer = $this->customer();
-        $biddingIncrementRules = Configuration::slug('bidding-increments')->latest()->first();
+        // $biddingIncrementRules = Configuration::slug('bidding-increments')->latest()->first();
+        $biddingIncrementRules = optional($auctionLot->bid_incremental_settings)['increments'];
         $currentBid = $auctionLot->getCurrentBidPrice();
         $isBidPlaced = $auctionLot->is_bid_placed;
 
