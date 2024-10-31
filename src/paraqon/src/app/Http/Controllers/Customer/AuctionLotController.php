@@ -260,7 +260,7 @@ class AuctionLotController extends Controller
         // Get current bid
         $customer = $this->customer();
         // $biddingIncrementRules = Configuration::slug('bidding-increments')->latest()->first();
-        $biddingIncrementRules = optional($auctionLot->bid_incremental_settings)['increments'];
+        $incrementRules = optional($auctionLot->bid_incremental_settings)['increments'];
         $currentBid = $auctionLot->getCurrentBidPrice();
         $isBidPlaced = $auctionLot->is_bid_placed;
 
@@ -268,8 +268,7 @@ class AuctionLotController extends Controller
         $biddingIncrementValue = 0;
 
         if ($isBidPlaced == true) {
-            $range = $biddingIncrementRules->bidding_increments;
-            foreach ($range as $key => $interval) {
+            foreach ($incrementRules as $interval) {
                 if ($currentBid >= $interval['from'] && $currentBid < $interval['to']) {
                     $biddingIncrementValue = $interval['increment'];
                     break;
