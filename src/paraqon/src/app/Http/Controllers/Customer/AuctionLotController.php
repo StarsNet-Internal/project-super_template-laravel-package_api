@@ -232,10 +232,6 @@ class AuctionLotController extends Controller
             // Check if this MAX or DIRECT bid place after start_datetime
             if ($now <= Carbon::parse($store->start_datetime)) {
                 return response()->json([
-                    'message' => 'Auction has not started'
-                ], 404);
-
-                return response()->json([
                     'message' => 'The auction id: ' . $store->_id . ' has not yet started.',
                     'error_status' => 2,
                     'system_time' => now(),
@@ -300,6 +296,19 @@ class AuctionLotController extends Controller
 
         // Hide previous placed ADVANCED bid, if there's any
         if ($bidType == 'ADVANCED') {
+            if ($auctionLot->status == Status::ACTIVE) {
+                return response()->json([
+                    'message' => 'Auction Lot is now active, no longer accept any ADVANCED bids'
+                ], 404);
+            }
+
+            // Check if this MAX or DIRECT bid place after start_datetime
+            if ($now >= Carbon::parse($store->start_datetime)) {
+                return response()->json([
+                    'message' => 'Auction has started, no longer accept any ADVANCED bids'
+                ], 404);
+            }
+
             Bid::where('auction_lot_id', $auctionLotId)
                 ->where('customer_id', $customer->_id)
                 ->where('is_hidden', false)
