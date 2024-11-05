@@ -169,7 +169,7 @@ class ProductManagementController extends Controller
         if (!is_null($systemCategory)) {
             // Get Product(s)
             $recommendedProducts = $systemCategory->products()
-                ->statusActive()
+                ->whereNotIn('status', [Status::DRAFT, Status::DELETED])
                 ->excludeIDs($excludedProductIDs)
                 ->get();
 
@@ -191,8 +191,8 @@ class ProductManagementController extends Controller
         if (!is_null($product)) {
             // Get related ProductCategory(s) by Product and within Store
             $relatedCategories = $product->categories()
-                ->storeID($store)
                 ->statusActive()
+                ->storeID($store)
                 ->get();
 
             $relatedCategoryIDs = $relatedCategories->pluck('_id')->all();
@@ -201,7 +201,7 @@ class ProductManagementController extends Controller
             $relatedProducts = Product::whereHas('categories', function ($query) use ($relatedCategoryIDs) {
                 $query->whereIn('_id', $relatedCategoryIDs);
             })
-                ->statusActive()
+                ->whereNotIn('status', [Status::DRAFT, Status::DELETED])
                 ->excludeIDs($excludedProductIDs)
                 ->get();
 
@@ -221,7 +221,7 @@ class ProductManagementController extends Controller
         if (!isset($relatedCategoryIDs)) $relatedCategoryIDs = [];
         $otherCategories = $this->store
             ->productCategories()
-            ->statusActive()
+            ->whereNotIn('status', [Status::DRAFT, Status::DELETED])
             ->excludeIDs($relatedCategoryIDs)
             ->get();
 
@@ -232,7 +232,7 @@ class ProductManagementController extends Controller
             $otherProducts = Product::whereHas('categories', function ($query) use ($otherCategoryIDs) {
                 $query->whereIn('_id', $otherCategoryIDs);
             })
-                ->statusActive()
+                ->whereNotIn('status', [Status::DRAFT, Status::DELETED])
                 ->excludeIDs($excludedProductIDs)
                 ->get();
 

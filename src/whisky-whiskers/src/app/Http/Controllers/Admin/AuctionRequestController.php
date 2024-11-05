@@ -94,7 +94,7 @@ class AuctionRequestController extends Controller
 
             BidHistory::create([
                 'auction_lot_id' => $auctionLotId,
-                'current_bid' => $auctionLot->starting_bid,
+                'current_bid' => $auctionLot->starting_price,
                 'histories' => []
             ]);
         } else if ($request->reply_status == ReplyStatus::REJECTED) {

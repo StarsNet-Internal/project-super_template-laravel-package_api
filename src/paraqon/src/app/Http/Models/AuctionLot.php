@@ -327,14 +327,14 @@ class AuctionLot extends Eloquent
         if (is_null($maximumMaxBidValue)) return $maximumDirectBidValue;
         if ($maximumDirectBidValue > $maximumMaxBidValue) return $maximumDirectBidValue; // Case 5
 
-        if ($maximumDirectBidValue < $maximumMaxBidValue) {
+        if ($maximumDirectBidValue <= $maximumMaxBidValue) {
             $winningBid = $bidHistory->histories()->last();
             $winningCustomerID = $winningBid->winning_bid_customer_id;
 
-            if ($winningCustomerID == $newBidCustomerID) return $maximumDirectBidValue; // Case 6A
+            if ($winningCustomerID == $newBidCustomerID) return $maximumDirectBidValue; // Case 4A, 6A
         }
 
-        // Case 4, Case 6B
+        // Case 4B, 6B
         $maximumMaxBidValue = $this->getCurrentMaximumBidValue(
             $allBids,
             $bidHistory,

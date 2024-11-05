@@ -97,7 +97,7 @@ class AuctionLotController extends Controller
 
         $bidHistoryAttributes = [
             'auction_lot_id' => $auctionLotID,
-            'current_bid' => $auctionLot->starting_bid,
+            'current_bid' => $auctionLot->starting_price,
             'histories' => []
         ];
         BidHistory::create($bidHistoryAttributes);
