@@ -421,16 +421,16 @@ class AuctionLotController extends Controller
             if ($bidHistory == null) {
                 $bidHistory = BidHistory::create([
                     'auction_lot_id' => $auctionLotId,
-                    'current_bid' => $newCurrentBid,
+                    'current_bid' => $auctionLot->starting_price,
+                    'histories' => []
+                ]);
+            } else {
+                // Clear all histories items
+                $bidHistory->update([
+                    'current_bid' => $auctionLot->starting_price,
                     'histories' => []
                 ]);
             }
-
-            // Clear all histories items
-            $bidHistory->update([
-                'current_bid' => $auctionLot->starting_price,
-                'histories' => []
-            ]);
 
             // Get all ADVANCED bids
             $allAdvancedBids = $auctionLot->bids()

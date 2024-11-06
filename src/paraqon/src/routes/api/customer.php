@@ -161,7 +161,7 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getAllBids']);
-                // Route::get('/all', [$defaultController, 'getAllBids'])->middleware(['pagination']);
+                Route::put('/{id}/cancel', [$defaultController, 'cancelBid']);
             }
         );
     }

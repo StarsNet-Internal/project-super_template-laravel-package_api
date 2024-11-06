@@ -15,6 +15,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
+use App\Traits\Utils\RoundingTrait;
 use Carbon\Carbon;
 
 use Illuminate\Http\Request;
@@ -31,6 +32,8 @@ use StarsNet\Project\Paraqon\App\Models\PassedAuctionRecord;
 
 class ServiceController extends Controller
 {
+    use RoundingTrait;
+
     public function paymentCallback(Request $request)
     {
         // Extract attributes from $request
@@ -365,9 +368,12 @@ class ServiceController extends Controller
 
         // Get Auction Lots
         $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
-            ->where('status', Status::ARCHIVED)
+            // ->where('status', Status::ARCHIVED)
             ->whereNotNull('winning_bid_customer_id')
             ->get();
+        $unpaidAuctionLots = $unpaidAuctionLots->filter(function ($item) {
+            return $item->current_bid >= $item->reserve_price;
+        });
 
         // Get unique winning_bid_customer_id
         $winningCustomerIDs = $unpaidAuctionLots->pluck('winning_bid_customer_id')
@@ -419,8 +425,8 @@ class ServiceController extends Controller
                     $subtotalPrice += $winningBid;
 
                     // Update total_service_charge
-                    $totalServiceCharge += $winningBid *
-                        $SERVICE_CHARGE_MULTIPLIER;
+                    // $totalServiceCharge += $winningBid *
+                    //     $SERVICE_CHARGE_MULTIPLIER;
                 }
                 $totalPrice = $subtotalPrice +
                     $storageFee + $totalServiceCharge;
@@ -590,7 +596,7 @@ class ServiceController extends Controller
         // }
 
         return response()->json([
-            'message' => "Generated All {$generatedOrderCount} Auction Store Orders Successfully"
+            'message' => "Generated {$generatedOrderCount} Auction Store Orders Successfully"
         ], 200);
     }
 
