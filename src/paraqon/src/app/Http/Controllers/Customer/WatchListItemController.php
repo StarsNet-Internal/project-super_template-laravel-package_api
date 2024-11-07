@@ -119,6 +119,9 @@ class WatchlistItemController extends Controller
 
         // Get Products
         $products = $this->getProductsInfoByAggregation($productIDs);
+        $products = $products->filter(function ($item) {
+            return $item->auction_lot_id != '0';
+        })->values();
 
         foreach ($products as $product) {
             $auctionLotID = $product->auction_lot_id;

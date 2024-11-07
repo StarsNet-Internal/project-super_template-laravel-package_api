@@ -366,6 +366,19 @@ class ServiceController extends Controller
         $storeID = $request->route('store_id');
         $store = Store::find($storeID);
 
+        // Check Store status
+        if ($store->status === Status::ACTIVE) {
+            return response()->json([
+                'message' => "Store is still ACTIVE. Skipping generating auction order sequences."
+            ], 200);
+        }
+
+        if ($store->status === Status::DELETED) {
+            return response()->json([
+                'message' => "Store is DELETED. Skipping generating auction order sequences."
+            ], 200);
+        }
+
         // Get Auction Lots
         $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
             // ->where('status', Status::ARCHIVED)
