@@ -104,6 +104,8 @@ Route::group(
                 Route::get('/owned/all', [$defaultController, 'getAllOwnedAuctionLots'])->middleware(['pagination']);
                 Route::get('/participated/all', [$defaultController, 'getAllParticipatedAuctionLots'])->middleware(['pagination']);
                 Route::post('/{auction_lot_id}/bids', [$defaultController, 'createMaximumBid']);
+
+                Route::post('/{auction_lot_id}/live-bids', [$defaultController, 'createLiveBid']);
             }
         );
     }
