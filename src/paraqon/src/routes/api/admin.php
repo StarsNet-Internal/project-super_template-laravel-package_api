@@ -15,6 +15,7 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\OrderController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\SeederController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ServiceController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ShoppingCartController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\LiveBiddingEventController;
 
 /*
 |--------------------------------------------------------------------------
@@ -244,6 +245,20 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getShoppingCartItems'])->middleware(['pagination']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'live-bidding'],
+    function () {
+        $defaultController = LiveBiddingEventController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/{store_id}/events', [$defaultController, 'createEvent']);
             }
         );
     }
