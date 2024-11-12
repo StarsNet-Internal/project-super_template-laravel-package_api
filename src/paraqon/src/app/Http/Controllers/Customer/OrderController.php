@@ -92,6 +92,10 @@ class OrderController extends Controller
             ->byCustomer($customer)
             ->get();
 
+        foreach ($orders as $order) {
+            $order->checkout = $order->checkout()->latest()->first();
+        }
+
         // Return data
         return $orders;
     }

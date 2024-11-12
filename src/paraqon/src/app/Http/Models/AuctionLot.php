@@ -299,7 +299,8 @@ class AuctionLot extends Eloquent
             ->orderBy('created_at')
             ->get();
 
-        if ($bidType == 'MAX') {
+
+        if (in_array($bidType, ['MAX', 'ADVANCED'])) {
             $maximumMaxBidValue = $this->getCurrentMaximumBidValue(
                 $allBids,
                 $bidHistory,

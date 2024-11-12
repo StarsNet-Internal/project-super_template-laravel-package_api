@@ -28,7 +28,7 @@ class TestingController extends Controller
         $addMaxHours = $lot->auction_time_settings['allow_duration']['hours'];
         $addMaxMins = $lot->auction_time_settings['allow_duration']['mins'];
 
-        $newEndDateTime = $now->copy()
+        $newEndDateTime = $currentEndDateTime->copy()
             ->addDays($addExtendDays)
             ->addHours($addExtendHours)
             ->addMinutes($addExtendMins);

@@ -236,7 +236,7 @@ class ServiceController extends Controller
         // ----------------------
 
         // Make stores ACTIVE
-        $archivedStores = Store::where('type', 'OFFLINE')
+        $archivedStores = Store::where('auction_type', 'ONLINE')
             ->where('status', Status::ARCHIVED)
             ->get();
 
@@ -252,7 +252,7 @@ class ServiceController extends Controller
         }
 
         // Make stores ARCHIVED
-        $activeStores = Store::where('type', 'OFFLINE')
+        $activeStores = Store::where('auction_type', 'ONLINE')
             ->where('status', Status::ACTIVE)
             ->get();
 
@@ -277,7 +277,8 @@ class ServiceController extends Controller
         // Make lots ACTIVE
         $archivedLots = AuctionLot::where('status', Status::ARCHIVED)
             ->whereHas('store', function ($query) {
-                return $query->where('status', Status::ACTIVE);
+                return $query->where('status', Status::ACTIVE)
+                    ->where('auction_type', 'ONLINE');
             })
             ->get();
 
@@ -293,7 +294,10 @@ class ServiceController extends Controller
         }
 
         // Make lots ARCHIVED
-        $activeLots = AuctionLot::where('status', Status::ACTIVE)->get();
+        $activeLots = AuctionLot::where('status', Status::ACTIVE)
+            ->whereHas('store', function ($query) {
+                return $query->where('auction_type', 'ONLINE');
+            })->get();
 
         $activeLotsUpdateCount = 0;
         foreach ($activeLots as $lot) {

@@ -106,6 +106,86 @@ class AuctionController extends Controller
         return $customers;
     }
 
+
+    public function removeRegisteredUser(Request $request)
+    {
+        $storeID = $request->route('store_id');
+        $customerID = $request->route('customer_id');
+
+        $registeredCustomerRequest = AuctionRegistrationRequest::where('store_id', $storeID)
+            ->where('customer_id', $customerID)
+            ->where('status', Status::ACTIVE)
+            ->latest()
+            ->first();
+
+        if (is_null($registeredCustomerRequest)) {
+            return response()->json([
+                'message' => 'Customer is not successfully registered to this Auction'
+            ], 404);
+        }
+
+        $updateAttributes = [
+            'reply_status' => ReplyStatus::REJECTED
+        ];
+        $registeredCustomerRequest->update($updateAttributes);
+
+        return response()->json([
+            'message' => 'AuctionRegistrationRequest is now updated as REJECTED'
+        ], 200);
+    }
+
+    public function addRegisteredUser(Request $request)
+    {
+        // Extract attributes from $request
+        $storeID = $request->route('store_id');
+        $customerID = $request->route('customer_id');
+
+        // Check if there's existing AuctionRegistrationRequest
+        $oldForm =
+            AuctionRegistrationRequest::where('requested_by_customer_id', $customerID)
+            ->where('store_id', $storeID)
+            ->first();
+
+        // Auth
+        $account = $this->account();
+
+        if (!is_null($oldForm)) {
+            $oldFormAttributes = [
+                'approved_by_account_id' => $account->_id,
+                'status' => Status::ACTIVE,
+                'reply_status' => ReplyStatus::APPROVED,
+            ];
+            $oldForm->update($oldFormAttributes);
+
+            return response()->json([
+                'message' => 'Re-activated previously created AuctionRegistrationRequest successfully',
+                'id' => $oldForm->_id,
+            ], 200);
+        }
+
+        // Create AuctionRegistrationRequest
+        $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
+            ->get()
+            ->max('paddle_id')
+            ?? 0;
+        $assignedPaddleID = $highestPaddleID + 1;
+
+        $createAttributes = [
+            'requested_by_customer_id' => $customerID,
+            'store_id' => $storeID,
+            'paddle_id' => $assignedPaddleID,
+            'status' => Status::ACTIVE,
+            'reply_status' => ReplyStatus::APPROVED
+        ];
+        $newForm = AuctionRegistrationRequest::create($createAttributes);
+
+        // Return Auction Store
+        return response()->json([
+            'message' => 'Created New AuctionRegistrationRequest successfully',
+            'id' => $newForm->_id,
+        ], 200);
+    }
+
     public function getAllAuctionRegistrationRecords(Request $request)
     {
         $storeID = $request->route('store_id');

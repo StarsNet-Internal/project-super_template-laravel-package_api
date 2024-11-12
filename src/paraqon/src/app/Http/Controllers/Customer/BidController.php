@@ -116,36 +116,48 @@ class BidController extends Controller
                 ]);
             }
 
-            // Get all ADVANCED bids
-            $allAdvancedBids = $auctionLot->bids()
-                ->where('is_hidden', false)
-                ->orderBy('bid')
-                ->orderBy('created_at')
-                ->get()
-                ->groupBy('bid')
-                ->map(function ($group) {
-                    return $group->first();
-                })
-                ->values();
+            // Find winningCustomerID
+            $auctionLotMaximumBid = Bid::where('auction_lot_id', $auctionLotID)
+                ->where('is_hidden',  false)
+                ->orderBy('bid', 'desc')
+                ->first();
 
-            // Create History Item
-            $lastBid = $allAdvancedBids->last();
-            foreach ($allAdvancedBids as $bid) {
+            if (!is_null($auctionLotMaximumBid)) {
+                // get current bid and winner
+                $newCurrentBid = $auctionLot->getCurrentBidPrice(
+                    true,
+                    $auctionLotMaximumBid->customer_id,
+                    $auctionLotMaximumBid->bid,
+                    $auctionLotMaximumBid->type
+                );
+
+                $winningCustomerID = null;
+                if (!is_null($auctionLotMaximumBid)) {
+                    $winningCustomerID = $auctionLotMaximumBid->customer_id;
+                }
+
+                // Update BidHistory
                 $bidHistoryItemAttributes = [
-                    'winning_bid_customer_id' => $bid->customer_id,
-                    'current_bid' => $bid->bid
+                    'winning_bid_customer_id' => $winningCustomerID,
+                    'current_bid' => $newCurrentBid
                 ];
                 $bidHistory->histories()->create($bidHistoryItemAttributes);
+                $bidHistory->update(['current_bid' => $newCurrentBid]);
 
-                if ($bid === $lastBid) {
-                    $bidHistory->update(['current_bid' => $bid->bid]);
-                    $auctionLot->update([
-                        'is_bid_placed' => true,
-                        'current_bid' => $bid->bid,
-                        'latest_bid_customer_id' => $bid->customer_id,
-                        'winning_bid_customer_id' => $bid->customer_id,
-                    ]);
-                }
+                // Update Auction Lot
+                $auctionLot->update([
+                    'is_bid_placed' => true,
+                    'current_bid' => $newCurrentBid,
+                    'latest_bid_customer_id' => $winningCustomerID,
+                    'winning_bid_customer_id' => $winningCustomerID,
+                ]);
+            } else {
+                $auctionLot->update([
+                    'is_bid_placed' => false,
+                    'current_bid' => $auctionLot->starting_price,
+                    'latest_bid_customer_id' => null,
+                    'winning_bid_customer_id' => null,
+                ]);
             }
         }
 

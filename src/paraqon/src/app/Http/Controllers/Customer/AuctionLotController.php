@@ -346,7 +346,7 @@ class AuctionLotController extends Controller
                 $addMaxHours = $auctionLot->auction_time_settings['allow_duration']['hours'];
                 $addMaxMins = $auctionLot->auction_time_settings['allow_duration']['mins'];
 
-                $newEndDateTime = $now->copy()
+                $newEndDateTime = $currentLotEndDateTime->copy()
                     ->addDays($addExtendDays)
                     ->addHours($addExtendHours)
                     ->addMinutes($addExtendMins);
@@ -432,37 +432,40 @@ class AuctionLotController extends Controller
                 ]);
             }
 
-            // Get all ADVANCED bids
-            $allAdvancedBids = $auctionLot->bids()
-                ->where('is_hidden', false)
-                ->orderBy('bid')
-                ->orderBy('created_at')
-                ->get()
-                ->groupBy('bid')
-                ->map(function ($group) {
-                    return $group->first();
-                })
-                ->values();
+            // get current bid and winner
+            $newCurrentBid = $auctionLot->getCurrentBidPrice(
+                true,
+                $bid->customer_id,
+                $bid->bid,
+                $bid->type
+            );
 
-            // Create History Item
-            $lastBid = $allAdvancedBids->last();
-            foreach ($allAdvancedBids as $bid) {
-                $bidHistoryItemAttributes = [
-                    'winning_bid_customer_id' => $bid->customer_id,
-                    'current_bid' => $bid->bid
-                ];
-                $bidHistory->histories()->create($bidHistoryItemAttributes);
+            // Find winningCustomerID
+            $auctionLotMaximumBid = Bid::where('auction_lot_id', $auctionLotId)
+                ->where('is_hidden',  false)
+                ->orderBy('bid', 'desc')
+                ->first();
 
-                if ($bid === $lastBid) {
-                    $bidHistory->update(['current_bid' => $bid->bid]);
-                    $auctionLot->update([
-                        'is_bid_placed' => true,
-                        'current_bid' => $bid->bid,
-                        'latest_bid_customer_id' => $bid->customer_id,
-                        'winning_bid_customer_id' => $bid->customer_id,
-                    ]);
-                }
+            $winningCustomerID = null;
+            if (!is_null($auctionLotMaximumBid)) {
+                $winningCustomerID = $auctionLotMaximumBid->customer_id;
             }
+
+            // Update BidHistory
+            $bidHistoryItemAttributes = [
+                'winning_bid_customer_id' => $winningCustomerID,
+                'current_bid' => $newCurrentBid
+            ];
+            $bidHistory->histories()->create($bidHistoryItemAttributes);
+            $bidHistory->update(['current_bid' => $newCurrentBid]);
+
+            // Update Auction Lot
+            $auctionLot->update([
+                'is_bid_placed' => true,
+                'current_bid' => $newCurrentBid,
+                'latest_bid_customer_id' => $winningCustomerID,
+                'winning_bid_customer_id' => $winningCustomerID,
+            ]);
         }
 
         // Return Auction Store
@@ -653,7 +656,7 @@ class AuctionLotController extends Controller
                 $addMaxHours = $auctionLot->auction_time_settings['allow_duration']['hours'];
                 $addMaxMins = $auctionLot->auction_time_settings['allow_duration']['mins'];
 
-                $newEndDateTime = $now->copy()
+                $newEndDateTime = $currentLotEndDateTime->copy()
                     ->addDays($addExtendDays)
                     ->addHours($addExtendHours)
                     ->addMinutes($addExtendMins);
