@@ -17,9 +17,10 @@ use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Traits\Utils\RoundingTrait;
 use Carbon\Carbon;
-
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
@@ -124,11 +125,11 @@ class ServiceController extends Controller
                 } else if ($eventType == 'charge.refunded') {
                     $deposit->updateStatus('cancelled');
 
-                    $amountCaptured = $request->data['object']['amount_captured'] ?? null;
-                    $amountRefunded = $request->data['object']['amount_refunded'] ?? null;
+                    $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
+                    $amountRefunded = $request->data['object']['amount_refunded'] ?? 0;
                     $deposit->update([
-                        'amount_captured' => $amountCaptured,
-                        'amount_refunded' => $amountRefunded,
+                        'amount_captured' => $amountCaptured / 100,
+                        'amount_refunded' => $amountRefunded / 100,
                         // 'reply_status' => 'CANCELLED'
                     ]);
 
@@ -142,12 +143,12 @@ class ServiceController extends Controller
                 } else if ($eventType == 'charge.captured') {
                     $deposit->updateStatus('returned');
 
-                    $amountCaptured = $request->data['object']['amount_captured'] ?? null;
-                    $amountRefunded = $request->data['object']['amount_refunded'] ?? null;
+                    $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
+                    $amountRefunded = $request->data['object']['amount_refunded'] ?? 0;
 
                     $deposit->update([
-                        'amount_captured' => $amountCaptured,
-                        'amount_refunded' => $amountRefunded,
+                        'amount_captured' => $amountCaptured / 100,
+                        'amount_refunded' => $amountRefunded / 100,
                     ]);
 
                     return response()->json(
@@ -364,13 +365,246 @@ class ServiceController extends Controller
         ], 200);
     }
 
+    private function fullRefundDeposit(Deposit $deposit)
+    {
+        switch ($deposit->payment_method) {
+            case 'ONLINE':
+                $refundUrl = 'https://payment.paraqon.starsnet.hk/refunds';
+                try {
+                    $data = [
+                        'paymentIntentId' => $deposit->online['payment_intent_id'],
+                        'amount' => $deposit->amount * 100
+                    ];
+
+                    $response = Http::post(
+                        $refundUrl,
+                        $data
+                    );
+
+                    Log::info('This is response for full refund deposit id: ' . $deposit->_id);
+                    Log::info($data);
+                    Log::info($response);
+                    Log::info('---');
+
+                    if ($response->status() === 200) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } catch (\Throwable $th) {
+                    Log::error('Failed to capture deposit, deposit_id: ' . $deposit->_id);
+                    $deposit->updateStatus('return-failed');
+                    return false;
+                }
+            case 'OFFLINE':
+                $deposit->update([
+                    'amount_captured' => 0,
+                    'amount_refunded' => $deposit->amount,
+                ]);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private function captureDeposit(Deposit $deposit, $captureAmount)
+    {
+        switch ($deposit->payment_method) {
+            case 'ONLINE':
+                $paymentIntentID = $deposit->online['payment_intent_id'];
+                $captureUrl = "https://payment.paraqon.starsnet.hk/payment-intents/{$paymentIntentID}/capture";
+
+                try {
+                    $data = [
+                        'amount' => $captureAmount * 100
+                    ];
+
+                    $response = Http::post(
+                        $captureUrl,
+                        $data
+                    );
+
+                    Log::info('This is response for capture deposit id: ' . $deposit->_id);
+                    Log::info($data);
+                    Log::info($response);
+                    Log::info('---');
+
+                    if ($response->status() === 200) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } catch (\Throwable $th) {
+                    Log::error('Failed to capture deposit, deposit_id: ' . $deposit->_id);
+                    $deposit->updateStatus('return-failed');
+                    return false;
+                }
+            case 'OFFLINE':
+                $deposit->update([
+                    'amount_captured' => $captureAmount,
+                    'amount_refunded' => $deposit->amount - $captureAmount,
+                ]);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private function createAuctionOrder(
+        Store $store,
+        Customer $customer,
+        Collection $winningLots,
+        Collection $deposits
+    ) {
+        // Create ShoppingCartItem(s) from each AuctionLot
+        foreach ($winningLots as $lot) {
+            $attributes = [
+                'store_id' => $store->_id,
+                'product_id' => $lot->product_id,
+                'product_variant_id' => $lot->product_variant_id,
+                'qty' => 1,
+                'lot_number' => $lot->lot_number,
+                'winning_bid' => $lot->current_bid,
+            ];
+            $customer->shoppingCartItems()->create($attributes);
+        }
+
+        // Initialize calculation variables
+        $itemTotalPrice = 0;
+        $shippingFee = 0;
+
+        // Get ShoppingCartItem(s), then do calculations before creating Order
+        $cartItems = $customer->getAllCartItemsByStore($store);
+
+        foreach ($cartItems as $item) {
+            // Add default keys for Order's cart_item attributes integrity
+            $item->is_checkout = true;
+            $item->is_refundable = false;
+            $item->global_discount = null;
+
+            // Get winning_bid, update subtotal_price
+            $itemTotalPrice += $item->winning_bid;
+        }
+
+        // Get total price
+        $orderTotalPrice = $itemTotalPrice + $shippingFee;
+
+        // Calculate totalCapturedDeposit
+        $totalCustomerOnHoldDepositAmount = $deposits->sum('amount');
+        $totalCapturableDeposit = min($totalCustomerOnHoldDepositAmount, $orderTotalPrice);
+
+        // Start capturing deposits, and refund excess
+        $depositToBeDeducted = $totalCapturableDeposit;
+        foreach ($deposits as $deposit) {
+            if ($depositToBeDeducted <= 0) {
+                $this->fullRefundDeposit($deposit);
+                continue;
+            }
+
+            $currentDepositAmount = $deposit->amount;
+            $captureDeposit = min($currentDepositAmount, $depositToBeDeducted);
+            $isCapturedSuccessfully = $this->captureDeposit($deposit, $captureDeposit);
+
+            if ($isCapturedSuccessfully == true) {
+                $depositToBeDeducted -= $captureDeposit;
+            }
+        }
+
+        // Update total price
+        $orderTotalPrice -= $totalCapturableDeposit;
+
+        // Form calculation data object
+        $rawCalculation = [
+            'currency' => 'HKD',
+            'price' => [
+                'subtotal' => $itemTotalPrice,
+                'total' => $orderTotalPrice, // Deduct price_discount.local and .global
+            ],
+            'price_discount' => [
+                'local' => 0,
+                'global' => 0,
+            ],
+            'point' => [
+                'subtotal' => 0,
+                'total' => 0,
+            ],
+            'service_charge' => 0,
+            'deposit' => $totalCapturableDeposit,
+            'storage_fee' => 0,
+            'shipping_fee' => $shippingFee
+        ];
+        $roundedCalculation = $this->roundingNestedArray($rawCalculation); // Round off values
+
+        // Round up calculations.price.total only
+        $roundedCalculation['price']['total'] = ceil($roundedCalculation['price']['total']) . '.00';
+
+        // Create Order
+        $orderAttributes = [
+            'is_paid' => false,
+            'payment_method' => CheckoutType::OFFLINE,
+            'discounts' => [],
+            'calculations' => $roundedCalculation,
+            'delivery_info' => [
+                'country_code' => 'HK',
+                'method' => 'FACE_TO_FACE_PICKUP',
+                'courier_id' => null,
+                'warehouse_id' => null,
+            ],
+            'delivery_details' => [
+                'recipient_name' => null,
+                'email' => null,
+                'area_code' => null,
+                'phone' => null,
+                'address' => null,
+                'remarks' => null,
+            ],
+            'is_voucher_applied' => false,
+            'is_system' => true,
+            'payment_information' => [
+                'currency' => 'HKD',
+                'conversion_rate' => 1.00
+            ]
+        ];
+        $order = $customer->createOrder($orderAttributes, $store);
+
+        // Create OrderCartItem(s)
+        $variantIDs = [];
+        foreach ($cartItems as $item) {
+            $attributes = $item->toArray();
+            unset($attributes['_id'], $attributes['is_checkout']);
+
+            /** @var ProductVariant $variant */
+            $order->createCartItem($attributes);
+        }
+
+        // Update Order
+        $status = Str::slug(ShipmentDeliveryStatus::SUBMITTED);
+        $order->updateStatus($status);
+
+        // Create Checkout
+        $attributes = [
+            'payment_method' => CheckoutType::OFFLINE
+        ];
+        $order->checkout()->create($attributes);
+
+        // Delete ShoppingCartItem(s)
+        $variantIDs = $cartItems->map(function ($item) {
+            return $item['product_variant_id'];
+        })->toArray();
+        $variants = ProductVariant::objectIDs($variantIDs)->get();
+        $customer->clearCartByStore($store, $variants);
+
+        return $order;
+    }
+
     public function generateAuctionOrdersAndRefundDeposits(Request $request)
     {
-        // Get Store
+        // Extract attributes from request
         $storeID = $request->route('store_id');
+
+        // Check Store status, for validation before mass-generating Order(s)
         $store = Store::find($storeID);
 
-        // Check Store status
         if ($store->status === Status::ACTIVE) {
             return response()->json([
                 'message' => "Store is still ACTIVE. Skipping generating auction order sequences."
@@ -379,238 +613,74 @@ class ServiceController extends Controller
 
         if ($store->status === Status::DELETED) {
             return response()->json([
-                'message' => "Store is DELETED. Skipping generating auction order sequences."
+                'message' => "Store is already DELETED. Skipping generating auction order sequences."
             ], 200);
         }
 
-        // Get Auction Lots
+        // Get AuctionLot(s) from Store
         $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
-            // ->where('status', Status::ARCHIVED)
+            ->where('status', Status::ARCHIVED)
             ->whereNotNull('winning_bid_customer_id')
-            ->get();
-        $unpaidAuctionLots = $unpaidAuctionLots->filter(function ($item) {
-            return $item->current_bid >= $item->reserve_price;
-        });
+            ->get()
+            ->filter(function ($item) {
+                return $item->current_bid >= $item->reserve_price;
+            });
 
-        // Get unique winning_bid_customer_id
-        $winningCustomerIDs = $unpaidAuctionLots->pluck('winning_bid_customer_id')
+        // Get unique winning_bid_customer_id from all AuctionLot(s)
+        $winningCustomerIDs = $unpaidAuctionLots
+            ->pluck('winning_bid_customer_id')
             ->unique()
             ->values()
             ->all();
 
-        // Generate OFFLINE order by system
-        $generatedOrderCount = 0;
-        foreach ($winningCustomerIDs as $customerID) {
-            try {
-                // Find all winning Auction Lots
-                $winningLots = $unpaidAuctionLots->where('winning_bid_customer_id', $customerID)->all();
-
-                // Add item to Customer's Shopping Cart, with calculated winning_bid + storage_fee
-                $customer = Customer::find($customerID);
-                foreach ($winningLots as $lot) {
-                    $attributes = [
-                        'store_id' => $storeID,
-                        'product_id' => $lot->product_id,
-                        'product_variant_id' => $lot->product_variant_id,
-                        'qty' => 1,
-                        'lot_number' => $lot->lot_number,
-                        'winning_bid' => $lot->current_bid,
-                        // 'storage_fee' => $lot->current_bid * 0.03
-                    ];
-                    $customer->shoppingCartItems()->create($attributes);
-                }
-
-                // Get ShoppingCartItem(s)
-                $cartItems = $customer->getAllCartItemsByStore($store);
-
-                // Start Shopping Cart calculations
-                // Get subtotal Price
-                $subtotalPrice = 0;
-                $storageFee = 0;
-
-                $SERVICE_CHARGE_MULTIPLIER = 0.1;
-                $totalServiceCharge = 0;
-
-                foreach ($cartItems as $item) {
-                    // Add keys
-                    $item->is_checkout = true;
-                    $item->is_refundable = false;
-                    $item->global_discount = null;
-
-                    // Get winning_bid, update subtotal_price
-                    $winningBid = $item->winning_bid ?? 0;
-                    $subtotalPrice += $winningBid;
-
-                    // Update total_service_charge
-                    // $totalServiceCharge += $winningBid *
-                    //     $SERVICE_CHARGE_MULTIPLIER;
-                }
-                $totalPrice = $subtotalPrice +
-                    $storageFee + $totalServiceCharge;
-
-                // Get shipping_fee, then update total_price
-                $shippingFee = 0;
-                $totalPrice += $shippingFee;
-
-                // Form calculation data object
-                $rawCalculation = [
-                    'currency' => 'HKD',
-                    'price' => [
-                        'subtotal' => $subtotalPrice,
-                        'total' => $totalPrice, // Deduct price_discount.local and .global
-                    ],
-                    'price_discount' => [
-                        'local' => 0,
-                        'global' => 0,
-                    ],
-                    'point' => [
-                        'subtotal' => 0,
-                        'total' => 0,
-                    ],
-                    'service_charge' => $totalServiceCharge,
-                    'storage_fee' => $storageFee,
-                    'shipping_fee' => $shippingFee
-                ];
-
-                $rationalizedCalculation = $this->rationalizeRawCalculation($rawCalculation);
-                $roundedCalculation = $this->roundingNestedArray($rationalizedCalculation); // Round off values
-
-                // Round up calculations.price.total only
-                $roundedCalculation['price']['total'] = ceil($roundedCalculation['price']['total']);
-                $roundedCalculation['price']['total'] .= '.00';
-
-                // Return data
-                $checkoutDetails = [
-                    'cart_items' => $cartItems,
-                    'gift_items' => [],
-                    'discounts' => [],
-                    'calculations' => $roundedCalculation,
-                    'is_voucher_applied' => false,
-                    'is_enough_membership_points' => true
-                ];
-
-                // Validate, and update attributes
-                $totalPrice = $checkoutDetails['calculations']['price']['total'];
-                $paymentMethod = CheckoutType::OFFLINE;
-
-                // Create Order
-                $orderAttributes = [
-                    'is_paid' => $request->input('is_paid', false),
-                    'payment_method' => $paymentMethod,
-                    'discounts' => $checkoutDetails['discounts'],
-                    'calculations' => $checkoutDetails['calculations'],
-                    'delivery_info' => [
-                        'country_code' => 'HK',
-                        'method' => 'FACE_TO_FACE_PICKUP',
-                        'courier_id' => null,
-                        'warehouse_id' => null,
-                    ],
-                    'delivery_details' => [
-                        'recipient_name' => null,
-                        'email' => null,
-                        'area_code' => null,
-                        'phone' => null,
-                        'address' => null,
-                        'remarks' => null,
-                    ],
-                    'is_voucher_applied' => $checkoutDetails['is_voucher_applied'],
-                    'is_system' => true,
-                    'payment_information' => [
-                        'currency' => 'HKD',
-                        'conversion_rate' => 1.00
-                    ]
-                ];
-                $order = $customer->createOrder($orderAttributes, $store);
-
-                // Create OrderCartItem(s)
-                $checkoutItems = collect($checkoutDetails['cart_items'])
-                    ->filter(function ($item) {
-                        return $item->is_checkout;
-                    })->values();
-
-                $variantIDs = [];
-                foreach ($checkoutItems as $item) {
-                    $attributes = $item->toArray();
-                    unset($attributes['_id'], $attributes['is_checkout']);
-
-                    // Update WarehouseInventory(s)
-                    $variantID = $attributes['product_variant_id'];
-                    $variantIDs[] = $variantID;
-
-                    /** @var ProductVariant $variant */
-                    $order->createCartItem($attributes);
-                }
-
-                // Update Order
-                $status = Str::slug(ShipmentDeliveryStatus::SUBMITTED);
-                $order->updateStatus($status);
-
-                // Create Checkout
-                $this->createBasicCheckout($order, $paymentMethod);
-
-                // Delete ShoppingCartItem(s)
-                $variants = ProductVariant::objectIDs($variantIDs)->get();
-                $customer->clearCartByStore($store, $variants);
-
-                $generatedOrderCount++;
-            } catch (\Throwable $th) {
-                print($th);
-            }
-        }
-
-        // Get All fullRefundDeposits
+        // Get all Deposit(s), with on-hold current_deposit_status, from non-winning Customer(s)
         $allFullRefundDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
             $query->whereHas('store', function ($query2) use ($storeID) {
                 $query2->where('_id', $storeID);
             });
         })
             ->whereNotIn('requested_by_customer_id', $winningCustomerIDs)
+            ->where('current_deposit_status', 'on-hold')
             ->get();
 
-        // Full Refund
-        $refundUrl = 'https://payment.paraqon.starsnet.hk/refunds';
+        // Full-refund all Deposit(s) from all non-winning Customer(s)
         foreach ($allFullRefundDeposits as $deposit) {
-            try {
-                $data = [
-                    'payment_intent' => $deposit->online['payment_intent_id'],
-                    'amount' => $deposit->amount
-                ];
-
-                $response = Http::post(
-                    $refundUrl,
-                    $data
-                );
-
-                if ($response->status() === 200) {
-                    $deposit->update([
-                        'refund_id' => $response['id']
-                    ]);
-                    $deposit->updateStatus('returned');
-                } else {
-                    $deposit->updateStatus('return-failed');
-                }
-            } catch (\Throwable $th) {
-                $deposit->updateStatus('return-failed');
-            }
+            $this->fullRefundDeposit($deposit);
         }
 
-        // Do Partial or Full Refund for winning customers
-        // $winningCustomerDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
-        //     $query->whereHas('store', function ($query2) use ($storeID) {
-        //         $query2->where('_id', $storeID);
-        //     });
-        // })
-        //     ->whereIn('requested_by_customer_id', $winningCustomerIDs)
-        //     ->get();
+        // Generate OFFLINE order by system
+        $generatedOrderCount = 0;
 
-        // foreach ($winningCustomerIDs as $customerID) {
-        //     $winningCustomerOrder = Order::where('customer_id', $customerID)
-        //         ->where('store_id', $storeID)
-        //         ->where('is_system', true)
-        //         ->first();
+        foreach ($winningCustomerIDs as $customerID) {
+            try {
+                $customer = Customer::find($customerID);
 
-        //     $currentChargeAmount = 0;
-        // }
+                // Find all winning Auction Lots
+                $winningLots = $unpaidAuctionLots->where('winning_bid_customer_id', $customerID);
+
+                // Get all Deposit(s), with on-hold current_deposit_status, from this Customer
+                $customerOnHoldDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
+                    $query->whereHas('store', function ($query2) use ($storeID) {
+                        $query2->where('_id', $storeID);
+                    });
+                })
+                    ->where('requested_by_customer_id', $customer->_id)
+                    ->where('current_deposit_status', 'on-hold')
+                    ->get();
+
+                // Create Order, and capture/refund deposits
+                $this->createAuctionOrder(
+                    $store,
+                    $customer,
+                    $winningLots,
+                    $customerOnHoldDeposits
+                );
+
+                $generatedOrderCount++;
+            } catch (\Throwable $th) {
+                print($th);
+            }
+        }
 
         return response()->json([
             'message' => "Generated {$generatedOrderCount} Auction Store Orders Successfully"
@@ -680,37 +750,5 @@ class ServiceController extends Controller
             'message' => 'Updated Order as paid Successfully',
             'order_id' => $order->id
         ]);
-    }
-
-    private function rationalizeRawCalculation(array $rawCalculation)
-    {
-        return [
-            'currency' => $rawCalculation['currency'],
-            'price' => [
-                'subtotal' => max(0, $rawCalculation['price']['subtotal']),
-                'total' => max(0, $rawCalculation['price']['total']),
-            ],
-            'price_discount' => [
-                'local' => $rawCalculation['price_discount']['local'],
-                'global' => $rawCalculation['price_discount']['global'],
-            ],
-            'point' => [
-                'subtotal' => max(0, $rawCalculation['point']['subtotal']),
-                'total' => max(0, $rawCalculation['point']['total']),
-            ],
-            'service_charge' => max(0, $rawCalculation['service_charge']),
-            'shipping_fee' => max(0, $rawCalculation['shipping_fee']),
-            'storage_fee' => max(0, $rawCalculation['storage_fee'])
-        ];
-    }
-
-    private function createBasicCheckout(Order $order, string $paymentMethod = CheckoutType::ONLINE)
-    {
-        $attributes = [
-            'payment_method' => $paymentMethod
-        ];
-        /** @var Checkout $checkout */
-        $checkout = $order->checkout()->create($attributes);
-        return $checkout;
     }
 }
