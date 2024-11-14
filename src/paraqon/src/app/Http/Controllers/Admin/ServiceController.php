@@ -802,7 +802,7 @@ class ServiceController extends Controller
     public function getCurrentLot(Collection $lots)
     {
         // Try to find a lot with `is_disabled = true` and `status = ARCHIVED`
-        $archivedLot = $lots->firstWhere(function ($lot) {
+        $archivedLot = $lots->first(function ($lot) {
             return $lot->is_disabled && $lot->status === 'ARCHIVED';
         });
 
