@@ -47,7 +47,9 @@ class ServiceController extends Controller
         $acceptableEventTypes = [
             'charge.succeeded',
             'charge.refunded',
-            'charge.captured'
+            'charge.captured',
+            'charge.expired',
+            'payment_intent.canceled'
         ];
 
         if (!in_array($eventType, $acceptableEventTypes)) {
@@ -144,6 +146,24 @@ class ServiceController extends Controller
                         200
                     );
                 } else if ($eventType == 'charge.captured') {
+                    $deposit->updateStatus('returned');
+
+                    $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
+                    $amountRefunded = $request->data['object']['amount_refunded'] ?? 0;
+
+                    $deposit->update([
+                        'amount_captured' => $amountCaptured / 100,
+                        'amount_refunded' => $amountRefunded / 100,
+                    ]);
+
+                    return response()->json(
+                        [
+                            'message' => 'Deposit status updated as returned',
+                            'deposit_id' => $deposit->_id
+                        ],
+                        200
+                    );
+                } else if (in_array($eventType, ['charge.expired', 'payment_intent.canceled'])) {
                     $deposit->updateStatus('returned');
 
                     $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
@@ -368,24 +388,19 @@ class ServiceController extends Controller
         ], 200);
     }
 
-    private function fullRefundDeposit(Deposit $deposit)
+    private function cancelDeposit(Deposit $deposit)
     {
         switch ($deposit->payment_method) {
             case 'ONLINE':
-                $refundUrl = 'https://payment.paraqon.starsnet.hk/refunds';
-                try {
-                    $data = [
-                        'paymentIntentId' => $deposit->online['payment_intent_id'],
-                        'amount' => $deposit->amount * 100
-                    ];
+                $paymentIntentID = $deposit->online['payment_intent_id'];
+                $url = "https://payment.paraqon.starsnet.hk/payment-intents/{$paymentIntentID}/capture";
 
+                try {
                     $response = Http::post(
-                        $refundUrl,
-                        $data
+                        $url,
                     );
 
                     Log::info('This is response for full refund deposit id: ' . $deposit->_id);
-                    Log::info($data);
                     Log::info($response);
                     Log::info('---');
 
@@ -415,7 +430,7 @@ class ServiceController extends Controller
         switch ($deposit->payment_method) {
             case 'ONLINE':
                 $paymentIntentID = $deposit->online['payment_intent_id'];
-                $captureUrl = "https://payment.paraqon.starsnet.hk/payment-intents/{$paymentIntentID}/capture";
+                $captureUrl = "https://payment.paraqon.starsnet.hk/payment-intents/{$paymentIntentID}/cancel";
 
                 try {
                     $data = [
@@ -500,16 +515,13 @@ class ServiceController extends Controller
         $depositToBeDeducted = $totalCapturableDeposit;
         foreach ($deposits as $deposit) {
             if ($depositToBeDeducted <= 0) {
-                $this->fullRefundDeposit($deposit);
-                continue;
-            }
+                $this->cancelDeposit($deposit);
+            } else {
+                $currentDepositAmount = $deposit->amount;
+                $captureDeposit = min($currentDepositAmount, $depositToBeDeducted);
+                $isCapturedSuccessfully = $this->captureDeposit($deposit, $captureDeposit);
 
-            $currentDepositAmount = $deposit->amount;
-            $captureDeposit = min($currentDepositAmount, $depositToBeDeducted);
-            $isCapturedSuccessfully = $this->captureDeposit($deposit, $captureDeposit);
-
-            if ($isCapturedSuccessfully == true) {
-                $depositToBeDeducted -= $captureDeposit;
+                if ($isCapturedSuccessfully == true) $depositToBeDeducted -= $captureDeposit;
             }
         }
 
@@ -648,7 +660,7 @@ class ServiceController extends Controller
 
         // Full-refund all Deposit(s) from all non-winning Customer(s)
         foreach ($allFullRefundDeposits as $deposit) {
-            $this->fullRefundDeposit($deposit);
+            $this->cancelDeposit($deposit);
         }
 
         // Generate OFFLINE order by system
