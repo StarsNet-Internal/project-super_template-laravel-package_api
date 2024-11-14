@@ -499,6 +499,12 @@ class AuctionLotController extends Controller
             ], 404);
         }
 
+        if ($auctionLot->is_disabled == true) {
+            return response()->json([
+                'message' => 'Auction Lot not found'
+            ], 404);
+        }
+
         if ($auctionLot->status == Status::DELETED) {
             return response()->json([
                 'message' => 'Auction Lot not found'
