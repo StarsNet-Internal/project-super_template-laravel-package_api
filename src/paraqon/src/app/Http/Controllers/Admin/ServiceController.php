@@ -31,6 +31,9 @@ use StarsNet\Project\Paraqon\App\Models\ConsignmentRequest;
 use StarsNet\Project\Paraqon\App\Models\Deposit;
 use StarsNet\Project\Paraqon\App\Models\PassedAuctionRecord;
 
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AuctionLotController as AdminAuctionLotController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\AuctionLotController as CustomerAuctionLotController;
+
 class ServiceController extends Controller
 {
     use RoundingTrait;
@@ -750,5 +753,60 @@ class ServiceController extends Controller
             'message' => 'Updated Order as paid Successfully',
             'order_id' => $order->id
         ]);
+    }
+
+    public function getAuctionCurrentState(Request $request)
+    {
+        $storeId = $request->route('store_id');
+        $request->merge(['store_id' => $storeId]);
+
+        $adminAuctionLotController = new AdminAuctionLotController();
+        $lots = $adminAuctionLotController->getAllAuctionLots($request);
+
+        $currentLot = $this->getCurrentLot($lots);
+
+        $request->route()->setParameter('auction_lot_id', $currentLot->_id);
+        $customerAuctionLotController = new CustomerAuctionLotController();
+        $histories = $customerAuctionLotController->getBiddingHistory($request);
+
+        $data = [
+            'lots' => $lots,
+            'histories' => $histories,
+        ];
+
+        try {
+            $response = Http::post('http://192.168.0.101:8881/api/publish', [
+                'site' => 'paraqon',
+                'room' => 'live-' . $storeId,
+                'data' => $data,
+                'event' => 'liveBidding',
+            ]);
+            return $response;
+        } catch (\Throwable $th) {
+            return null;
+        }
+    }
+
+    public function getCurrentLot(Collection $lots)
+    {
+        // Try to find a lot with `is_disabled = true` and `status = ARCHIVED`
+        $archivedLot = $lots->firstWhere(function ($lot) {
+            return $lot->is_disabled && $lot->status === 'ARCHIVED';
+        });
+
+        if ($archivedLot) {
+            return $archivedLot;
+        }
+
+        // If no archived lot found, find the active lot with the largest `lot_number`
+        $largestActiveLot = $lots->filter(function ($lot) {
+            return $lot->status === 'ACTIVE';
+        })->sortByDesc('lot_number')->first();
+
+        if ($largestActiveLot) {
+            return $largestActiveLot;
+        }
+
+        return $lots->sortBy('lot_number')->first();
     }
 }

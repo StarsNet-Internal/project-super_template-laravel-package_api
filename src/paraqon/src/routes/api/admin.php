@@ -201,6 +201,8 @@ Route::group(
         Route::post('/deposits/return', [$defaultController, 'returnDeposit']);
         Route::post('/orders/paid', [$defaultController, 'confirmOrderPaid']);
 
+        Route::get('/auctions/{store_id}/state', [$defaultController, 'getAuctionCurrentState']);
+
         // Route::group(
         //     ['middleware' => 'auth:api'],
         //     function () use ($defaultController) {}
