@@ -784,6 +784,7 @@ class ServiceController extends Controller
         $data = [
             'lots' => $lots,
             'histories' => $histories,
+            'time' => now(),
         ];
 
         try {
