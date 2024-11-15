@@ -783,6 +783,7 @@ class ServiceController extends Controller
 
         $data = [
             'lots' => $lots,
+            'current_lot_id' => $currentLot->_id,
             'histories' => $histories,
             'time' => now(),
         ];
