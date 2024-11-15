@@ -30,6 +30,7 @@ use StarsNet\Project\Paraqon\App\Models\Bid;
 use StarsNet\Project\Paraqon\App\Models\ConsignmentRequest;
 use StarsNet\Project\Paraqon\App\Models\Deposit;
 use StarsNet\Project\Paraqon\App\Models\PassedAuctionRecord;
+use StarsNet\Project\Paraqon\App\Models\LiveBiddingEvent;
 
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AuctionLotController as AdminAuctionLotController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\AuctionLotController as CustomerAuctionLotController;
@@ -776,15 +777,21 @@ class ServiceController extends Controller
         $lots = $adminAuctionLotController->getAllAuctionLots($request);
 
         $currentLot = $this->getCurrentLot($lots);
+        $currentLotId = $currentLot->_id;
 
-        $request->route()->setParameter('auction_lot_id', $currentLot->_id);
+        $request->route()->setParameter('auction_lot_id', $currentLotId);
         $customerAuctionLotController = new CustomerAuctionLotController();
         $histories = $customerAuctionLotController->getBiddingHistory($request);
 
+        $events = LiveBiddingEvent::where('store_id', $storeId)
+            ->where('value_1', $currentLotId)
+            ->get();
+
         $data = [
             'lots' => $lots,
-            'current_lot_id' => $currentLot->_id,
+            'current_lot_id' => $currentLotId,
             'histories' => $histories,
+            'events' => $events,
             'time' => now(),
         ];
 
