@@ -104,9 +104,9 @@ class ProductManagementController extends Controller
 
         // Filter Product(s)
         $products = $this->getProductsInfoByAggregation($productIDs, $this->store->_id);
-
-        // Re-calculate current_bid value
-        $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
+        $products = $products->filter(function ($item) {
+            return $item->auction_lot_id != '0';
+        })->values();
 
         // Get WatchlistItem 
         $customer = $this->customer();
@@ -273,9 +273,9 @@ class ProductManagementController extends Controller
 
         // Append attributes to each Product
         $products = $this->getProductsInfoByAggregation($productIDs, $this->store->_id);
-
-        // Re-calculate current_bid value
-        $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
+        $products = $products->filter(function ($item) {
+            return $item->auction_lot_id != '0';
+        })->values();
 
         // Get WatchlistItem 
         $customer = $this->customer();
@@ -370,10 +370,11 @@ class ProductManagementController extends Controller
         if (count($productIDs) == 0) {
             return new Collection();
         }
-        $products = $this->getProductsInfoByAggregation($productIDs, $this->store->_id);
 
-        // Re-calculate current_bid value
-        $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
+        $products = $this->getProductsInfoByAggregation($productIDs, $this->store->_id);
+        $products = $products->filter(function ($item) {
+            return $item->auction_lot_id != '0';
+        })->values();
 
         foreach ($products as $product) {
             $auctionLotID = $product->auction_lot_id;

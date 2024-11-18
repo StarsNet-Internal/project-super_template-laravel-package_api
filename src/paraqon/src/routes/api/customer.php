@@ -195,6 +195,7 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/stores/{store_id}/all', [$defaultController, 'getOrdersByStoreID'])->middleware(['pagination']);
+                Route::put('/{order_id}/upload', [$defaultController, 'uploadPaymentProofAsCustomer']);
                 Route::post('/{order_id}/payment', [$defaultController, 'payPendingOrderByOnlineMethod']);
                 Route::get('/all/offline', [$defaultController, 'getAllOfflineOrders'])->middleware(['pagination']);
             }

@@ -313,6 +313,7 @@ class ProductManagementController extends Controller
         if (count($productIDs) == 0) {
             return new Collection();
         }
+
         $products = $this->getProductsInfoByAggregation($productIDs);
 
         // Re-calculate current_bid value
