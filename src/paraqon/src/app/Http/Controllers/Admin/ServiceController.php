@@ -50,7 +50,6 @@ class ServiceController extends Controller
             'charge.refunded',
             'charge.captured',
             'charge.expired',
-            'payment_intent.canceled'
         ];
 
         if (!in_array($eventType, $acceptableEventTypes)) {
@@ -129,19 +128,18 @@ class ServiceController extends Controller
                         200
                     );
                 } else if ($eventType == 'charge.refunded') {
-                    $deposit->updateStatus('cancelled');
+                    $deposit->updateStatus('returned');
 
                     $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
                     $amountRefunded = $request->data['object']['amount_refunded'] ?? 0;
                     $deposit->update([
                         'amount_captured' => $amountCaptured / 100,
                         'amount_refunded' => $amountRefunded / 100,
-                        // 'reply_status' => 'CANCELLED'
                     ]);
 
                     return response()->json(
                         [
-                            'message' => 'Deposit status updated as cancelled',
+                            'message' => 'Deposit status updated as returned',
                             'deposit_id' => $deposit->_id
                         ],
                         200
@@ -164,7 +162,7 @@ class ServiceController extends Controller
                         ],
                         200
                     );
-                } else if (in_array($eventType, ['charge.expired', 'payment_intent.canceled'])) {
+                } else if ($eventType == 'charge.expired') {
                     $deposit->updateStatus('returned');
 
                     $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
@@ -267,10 +265,10 @@ class ServiceController extends Controller
 
         $archivedStoresUpdateCount = 0;
         foreach ($archivedStores as $store) {
-            $startTime = Carbon::parse($store->start_datetime);
-            $endTime = Carbon::parse($store->end_datetime);
+            $startTime = Carbon::parse($store->start_datetime)->startOfMinute();
+            $endTime = Carbon::parse($store->end_datetime)->startOfMinute();
 
-            if ($now >= $startTime && $now < $endTime) {
+            if ($now >= $startTime && $now <= $endTime) {
                 $store->update(['status' => Status::ACTIVE]);
                 $archivedStoresUpdateCount++;
             }
@@ -283,7 +281,7 @@ class ServiceController extends Controller
 
         $activeStoresUpdateCount = 0;
         foreach ($activeStores as $store) {
-            $endTime = Carbon::parse($store->end_datetime);
+            $endTime = Carbon::parse($store->end_datetime)->startOfMinute();
 
             if ($now >= $endTime) {
                 $store->update(['status' => Status::ARCHIVED]);
@@ -309,8 +307,8 @@ class ServiceController extends Controller
 
         $archivedLotsUpdateCount = 0;
         foreach ($archivedLots as $lot) {
-            $startTime = Carbon::parse($lot->start_datetime);
-            $endTime = Carbon::parse($lot->end_datetime);
+            $startTime = Carbon::parse($lot->start_datetime)->startOfMinute();
+            $endTime = Carbon::parse($lot->end_datetime)->startOfMinute();
 
             if ($now >= $startTime && $now < $endTime) {
                 $lot->update(['status' => Status::ACTIVE]);
@@ -326,7 +324,7 @@ class ServiceController extends Controller
 
         $activeLotsUpdateCount = 0;
         foreach ($activeLots as $lot) {
-            $endTime = Carbon::parse($lot->end_datetime);
+            $endTime = Carbon::parse($lot->end_datetime)->startOfMinute();
 
             if ($now >= $endTime) {
                 $lot->update(['status' => Status::ARCHIVED]);
@@ -394,16 +392,12 @@ class ServiceController extends Controller
         switch ($deposit->payment_method) {
             case 'ONLINE':
                 $paymentIntentID = $deposit->online['payment_intent_id'];
-                $url = "https://payment.paraqon.starsnet.hk/payment-intents/{$paymentIntentID}/capture";
+                $url = "https://payment.paraqon.starsnet.hk/payment-intents/{$paymentIntentID}/cancel";
 
                 try {
                     $response = Http::post(
                         $url,
                     );
-
-                    Log::info('This is response for full refund deposit id: ' . $deposit->_id);
-                    Log::info($response);
-                    Log::info('---');
 
                     if ($response->status() === 200) {
                         return true;
@@ -411,7 +405,7 @@ class ServiceController extends Controller
                         return false;
                     }
                 } catch (\Throwable $th) {
-                    Log::error('Failed to capture deposit, deposit_id: ' . $deposit->_id);
+                    Log::error('Failed to cancel deposit, deposit_id: ' . $deposit->_id);
                     $deposit->updateStatus('return-failed');
                     return false;
                 }
@@ -431,7 +425,7 @@ class ServiceController extends Controller
         switch ($deposit->payment_method) {
             case 'ONLINE':
                 $paymentIntentID = $deposit->online['payment_intent_id'];
-                $captureUrl = "https://payment.paraqon.starsnet.hk/payment-intents/{$paymentIntentID}/cancel";
+                $captureUrl = "https://payment.paraqon.starsnet.hk/payment-intents/{$paymentIntentID}/capture";
 
                 try {
                     $data = [
@@ -442,11 +436,6 @@ class ServiceController extends Controller
                         $captureUrl,
                         $data
                     );
-
-                    Log::info('This is response for capture deposit id: ' . $deposit->_id);
-                    Log::info($data);
-                    Log::info($response);
-                    Log::info('---');
 
                     if ($response->status() === 200) {
                         return true;
@@ -767,6 +756,7 @@ class ServiceController extends Controller
             'order_id' => $order->id
         ]);
     }
+
 
     public function getAuctionCurrentState(Request $request)
     {

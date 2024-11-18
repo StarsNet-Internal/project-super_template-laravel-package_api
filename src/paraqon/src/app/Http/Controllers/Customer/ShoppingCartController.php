@@ -127,6 +127,16 @@ class ShoppingCartController extends Controller
             0;
         $totalPrice += $shippingFee;
 
+        // Find system order
+        $systemOrder = Order::where('store_id', $storeID)
+            ->where('customer_id', $customer->_id)
+            ->where('is_system', true)
+            ->first();
+        $systemOrderDeposit = $systemOrder->calculations['deposit'];
+
+        // Update total price
+        $totalPrice -= $systemOrderDeposit;
+
         // form calculation data object
         $rawCalculation = [
             'currency' => $currency,
@@ -143,15 +153,15 @@ class ShoppingCartController extends Controller
                 'total' => 0,
             ],
             'service_charge' => $totalServiceCharge,
+            'deposit' => $systemOrderDeposit,
+            'storage_fee' => 0,
             'shipping_fee' => $shippingFee
         ];
 
-        $rationalizedCalculation = $this->rationalizeRawCalculation($rawCalculation);
-        $roundedCalculation = $this->roundingNestedArray($rationalizedCalculation, 2); // Round off values
+        $roundedCalculation = $this->roundingNestedArray($rawCalculation, 2); // Round off values
 
         // Round down calculations.price.total only
-        $roundedCalculation['price']['total'] = floor($roundedCalculation['price']['total']);
-        $roundedCalculation['price']['total'] .= '.00';
+        $roundedCalculation['price']['total'] = ceil($roundedCalculation['price']['total']) . '.00';
 
         // Return data
         $data = [
@@ -367,6 +377,16 @@ class ShoppingCartController extends Controller
             0;
         $totalPrice += $shippingFee;
 
+        // Find system order
+        $systemOrder = Order::where('store_id', $storeID)
+            ->where('customer_id', $customer->_id)
+            ->where('is_system', true)
+            ->first();
+        $systemOrderDeposit = $systemOrder->calculations['deposit'];
+
+        // Update total price
+        $totalPrice -= $systemOrderDeposit;
+
         // form calculation data object
         $rawCalculation = [
             'currency' => 'HKD',
@@ -383,15 +403,15 @@ class ShoppingCartController extends Controller
                 'total' => 0,
             ],
             'service_charge' => $totalServiceCharge,
+            'deposit' => $systemOrderDeposit,
+            'storage_fee' => 0,
             'shipping_fee' => $shippingFee
         ];
 
-        $rationalizedCalculation = $this->rationalizeRawCalculation($rawCalculation);
-        $roundedCalculation = $this->roundingNestedArray($rationalizedCalculation); // Round off values
+        $roundedCalculation = $this->roundingNestedArray($rawCalculation, 2); // Round off values
 
-        // Round up calculations.price.total only
-        $roundedCalculation['price']['total'] = floor($roundedCalculation['price']['total']);
-        $roundedCalculation['price']['total'] .= '.00';
+        // Round down calculations.price.total only
+        $roundedCalculation['price']['total'] = ceil($roundedCalculation['price']['total']) . '.00';
 
         // Return data
         $checkoutDetails = [
@@ -516,6 +536,13 @@ class ShoppingCartController extends Controller
                     ], 404);
             }
         }
+
+        $data = [
+            'message' => 'Submitted Order successfully',
+            'checkout' => $checkout,
+            'order_id' => $order->_id
+        ];
+        return response()->json($data);
     }
 
     public function checkOutMainStore(Request $request)
