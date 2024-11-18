@@ -311,10 +311,12 @@ class ServiceController extends Controller
             $endTime = Carbon::parse($lot->end_datetime)->startOfMinute();
 
             if ($now >= $startTime && $now < $endTime) {
+                Log::info("Updating lot id " . $lot->id);
                 $lot->update(['status' => Status::ACTIVE]);
                 $archivedLotsUpdateCount++;
             }
         }
+        Log::info("Updated Count: " . $archivedLotsUpdateCount);
 
         // Make lots ARCHIVED
         $activeLots = AuctionLot::where('status', Status::ACTIVE)

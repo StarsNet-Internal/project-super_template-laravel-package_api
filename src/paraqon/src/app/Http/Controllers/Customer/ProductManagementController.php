@@ -131,6 +131,8 @@ class ProductManagementController extends Controller
             $product->end_datetime = $auctionLot->end_datetime;
             $product->lot_number = $auctionLot->lot_number;
             $product->status = $auctionLot->status;
+            $product->is_disabled = $auctionLot->is_disabled;
+            $product->is_closed = $auctionLot->is_closed;
 
             // is_watching
             $auctionLot->is_watching = in_array($auctionLotID, $watchingAuctionIDs);
@@ -300,6 +302,8 @@ class ProductManagementController extends Controller
             $product->end_datetime = $auctionLot->end_datetime;
             $product->lot_number = $auctionLot->lot_number;
             $product->status = $auctionLot->status;
+            $product->is_disabled = $auctionLot->is_disabled;
+            $product->is_closed = $auctionLot->is_closed;
 
             // is_watching
             $product->is_watching = in_array($auctionLotID, $watchingAuctionLotIDs);

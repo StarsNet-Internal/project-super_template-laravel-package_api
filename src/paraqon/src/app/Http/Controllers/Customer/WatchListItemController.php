@@ -137,6 +137,9 @@ class WatchlistItemController extends Controller
             $product->start_datetime = $auctionLot->start_datetime;
             $product->end_datetime = $auctionLot->end_datetime;
             $product->lot_number = $auctionLot->lot_number;
+            $product->status = $auctionLot->status;
+            $product->is_disabled = $auctionLot->is_disabled;
+            $product->is_closed = $auctionLot->is_closed;
 
             // is_watching
             $product->is_watching = true;

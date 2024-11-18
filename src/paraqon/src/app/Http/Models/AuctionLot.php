@@ -70,6 +70,7 @@ class AuctionLot extends Eloquent
 
         // Booleans
         'is_disabled' => false,
+        'is_closed' => false,
         'is_paid' => false,
         'is_bid_placed' => false,
 
