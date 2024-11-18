@@ -164,6 +164,7 @@ Route::group(
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getAllBids']);
                 Route::put('/{id}/cancel', [$defaultController, 'cancelBid']);
+                Route::put('/{id}/cancel-live', [$defaultController, 'cancelLiveBid']);
             }
         );
     }
