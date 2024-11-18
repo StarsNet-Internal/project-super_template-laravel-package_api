@@ -31,17 +31,6 @@ class BidController extends Controller
             ])
             ->get();
 
-        // Correct the bid value of highest bid to the lowest increment possible
-        foreach ($bids as $bid) {
-            $auctionLotID = $bid->auction_lot_id;
-            $auctionLot = AuctionLot::find($auctionLotID);
-            $bid->auction_lot = [
-                '_id' => $bid->auction_lot_id,
-                'starting_price' => $auctionLot->starting_price,
-                'current_bid' => $auctionLot->getCurrentBidPrice(),
-            ];
-        }
-
         return $bids;
     }
 
