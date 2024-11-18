@@ -802,20 +802,26 @@ class ServiceController extends Controller
 
     public function getCurrentLot(Collection $lots)
     {
-        // Try to find a lot with `is_disabled = true` and `status = ARCHIVED`
-        $archivedLot = $lots->first(function ($lot) {
-            return $lot->is_disabled && $lot->status === 'ARCHIVED';
+        // Find PREPARING lot
+        $preparingLot = $lots->first(function ($lot) {
+            return $lot->status === 'ARCHIVED' && !$lot->is_disabled && $lot->is_closed;
         });
-
-        if ($archivedLot) {
-            return $archivedLot;
+        if ($preparingLot) {
+            return $preparingLot;
         }
 
-        // If no archived lot found, find the active lot with the largest `lot_number`
+        // Find OPEN lot
+        $openedLot = $lots->first(function ($lot) {
+            return $lot->status === 'ACTIVE' && !$lot->is_disabled && !$lot->is_closed;
+        });
+        if ($openedLot) {
+            return $openedLot;
+        }
+
+        // Find SOLD or CLOSE lot with the highest `lot_number`
         $largestActiveLot = $lots->filter(function ($lot) {
             return $lot->status === 'ACTIVE';
         })->sortByDesc('lot_number')->first();
-
         if ($largestActiveLot) {
             return $largestActiveLot;
         }
