@@ -37,8 +37,8 @@ class OrderController extends CustomerOrderController
         $response = parent::getOrderDetailsAsCustomer($request);
         $order = json_decode(json_encode($response), true)['original'];
 
-        $bookings = $this->getOfflineOrders();
-        $order['cashier_id'] = $this->getReceiptNumber($order, $bookings);
+        $allOrders = $this->getAllOrders();
+        $order['cashier_id'] = $this->getReceiptNumber($order, $allOrders);
         if ($order['store']['slug'] !== 'default-mini-store') {
             $order['cart_items'] = array_map(function ($item) use ($order) {
                 $variant = ProductVariant::find($item['product_variant_id']);
