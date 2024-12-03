@@ -49,6 +49,8 @@ Route::group(
                 Route::get('/logout', [$defaultController, 'logoutMobileDevice']);
 
                 Route::get('/verification-code', [$defaultController, 'getVerificationCode']);
+
+                Route::put('/delete', [$defaultController, 'deleteAccount']);
             }
         );
     }

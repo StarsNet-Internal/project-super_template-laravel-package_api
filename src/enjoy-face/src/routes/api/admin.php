@@ -54,6 +54,8 @@ Route::group(
         $defaultController = StaffManagementController::class;
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::put('/delete', [$defaultController, 'deleteStaffAccounts']);
+
             Route::put('/merchants/{id}/details', [$defaultController, 'updateMerchantDetails']);
         });
     }
