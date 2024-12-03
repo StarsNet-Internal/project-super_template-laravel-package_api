@@ -20,9 +20,9 @@ trait ProjectOrderTrait
     private function getReceiptNumber(array $order, array $allOrders)
     {
         if ($order['store']['slug'] === 'default-mini-store') {
-            $orders = array_filter($allOrders, function ($order) {
+            $allOrders = array_values(array_filter($allOrders, function ($order) {
                 return $order['store']['slug'] === 'default-mini-store';
-            });
+            }));
 
             $prefixes = [];
             foreach (range('A', 'Z') as $first) {
@@ -33,7 +33,7 @@ trait ProjectOrderTrait
 
             // Generate the final strings
             // $generatedStrings = [];
-            $index = array_search($order, $orders);
+            $index = array_search($order, $allOrders);
 
             $prefixIndex = intdiv($index, 9999); // Determine the prefix index
 
