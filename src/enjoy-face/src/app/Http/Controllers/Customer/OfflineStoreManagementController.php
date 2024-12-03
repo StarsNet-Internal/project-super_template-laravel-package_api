@@ -191,6 +191,23 @@ class OfflineStoreManagementController extends Controller
             ])
             ->get();
 
+        $stores = $stores->sort(function ($a, $b) use ($request) {
+            // Sort by `is_recommended` (true before false)
+            $aBool = $a['is_recommended'] ?? false;
+            $bBool = $b['is_recommended'] ?? false;
+
+            if ($aBool !== $bBool) {
+                return $bBool - $aBool;
+            }
+
+            $aNumber = $a[$request['sort_by']] ?? 0;
+            $bNumber = $b[$request['sort_by']] ?? 0;
+
+            return $request['sort_order'] == 'ASC' ? $aNumber - $bNumber : $bNumber - $aNumber;
+        })->values();
+
+        $request['sort_by'] = 'default';
+
         $reviews = ProductReview::whereIn('store_id', $storeIds)
             ->where('reply_status', 'APPROVED')
             ->get();
