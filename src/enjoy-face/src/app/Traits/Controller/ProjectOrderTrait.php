@@ -33,7 +33,9 @@ trait ProjectOrderTrait
 
             // Generate the final strings
             // $generatedStrings = [];
-            $index = array_search($order, $allOrders);
+            $index = array_search($order['_id'], array_map(function ($order) {
+                return $order['_id'];
+            }, $allOrders));
 
             $prefixIndex = intdiv($index, 9999); // Determine the prefix index
 
