@@ -149,6 +149,8 @@ Route::group(
         $defaultController = OrderController::class;
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::get('/all', [$defaultController, 'getAll'])->middleware(['pagination']);
+            Route::get('/all/offline', [$defaultController, 'getAllOfflineOrders'])->middleware(['pagination']);
             Route::get('/{order_id}/details', [$defaultController, 'getOrderDetails']);
         });
     }

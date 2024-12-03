@@ -32,6 +32,30 @@ class OrderController extends CustomerOrderController
         StoreDependentTrait,
         ProjectOrderTrait;
 
+    public function getAll(Request $request)
+    {
+        $orders = parent::getAll($request)->toArray();
+
+        $allOrders = $this->getAllOrders();
+        foreach ($orders as $key => $order) {
+            $orders[$key]['cashier_id'] = $this->getReceiptNumber($order, $allOrders);
+        }
+
+        return $orders;
+    }
+
+    public function getAllOfflineOrders(Request $request)
+    {
+        $orders = parent::getAllOfflineOrders($request)->toArray();
+
+        $allOrders = $this->getAllOrders();
+        foreach ($orders as $key => $order) {
+            $orders[$key]['cashier_id'] = $this->getReceiptNumber($order, $allOrders);
+        }
+
+        return $orders;
+    }
+
     public function getOrderDetails(Request $request)
     {
         $response = parent::getOrderDetailsAsCustomer($request);
