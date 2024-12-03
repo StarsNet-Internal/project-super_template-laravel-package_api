@@ -191,6 +191,21 @@ class OfflineStoreManagementController extends Controller
             ])
             ->get();
 
+        $reviews = ProductReview::whereIn('store_id', $storeIds)
+            ->where('reply_status', 'APPROVED')
+            ->get();
+
+        if (isset($userId)) {
+            $customer = User::find($userId)->account->customer;
+            $wishlistItems = $customer->wishlistItems()->get()->pluck('store_id')->all();
+        } else {
+            $wishlistItems = [];
+        }
+
+        foreach ($stores as $store) {
+            $this->appendStoreAttributes($store, $reviews, $wishlistItems, $latitude, $longitude);
+        }
+
         $stores = $stores->sort(function ($a, $b) use ($request) {
             // Sort by `is_recommended` (true before false)
             $aBool = $a['is_recommended'] ?? false;
@@ -207,21 +222,6 @@ class OfflineStoreManagementController extends Controller
         })->values();
 
         $request['sort_by'] = 'default';
-
-        $reviews = ProductReview::whereIn('store_id', $storeIds)
-            ->where('reply_status', 'APPROVED')
-            ->get();
-
-        if (isset($userId)) {
-            $customer = User::find($userId)->account->customer;
-            $wishlistItems = $customer->wishlistItems()->get()->pluck('store_id')->all();
-        } else {
-            $wishlistItems = [];
-        }
-
-        foreach ($stores as $store) {
-            $this->appendStoreAttributes($store, $reviews, $wishlistItems, $latitude, $longitude);
-        }
 
         return $stores;
     }
