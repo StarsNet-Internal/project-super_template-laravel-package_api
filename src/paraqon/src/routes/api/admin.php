@@ -11,6 +11,7 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ConsignmentRequestContro
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\CustomerController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\CustomerGroupController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\DepositController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\DocumentController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\OrderController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\SeederController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ServiceController;
@@ -144,7 +145,9 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getAllConsignmentRequests'])->middleware(['pagination']);
+                Route::post('/', [$defaultController, 'createConsignmentRequest']);
                 Route::get('/{id}/details', [$defaultController, 'getConsignmentRequestDetails']);
+                Route::put('/{id}/details', [$defaultController, 'updateConsignmentRequestDetails']);
                 Route::put('/{id}/approve', [$defaultController, 'approveConsignmentRequest']);
             }
         );
@@ -181,6 +184,23 @@ Route::group(
             function () use ($defaultController) {
                 Route::get('/{id}/customers/assign', [$defaultController, 'getCustomerGroupAssignedCustomers'])->middleware(['pagination']);
                 Route::get('/{id}/customers/unassign', [$defaultController, 'getCustomerGroupUnassignedCustomers'])->middleware(['pagination']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'documents'],
+    function () {
+        $defaultController = DocumentController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/', [$defaultController, 'createDocument']);
+                Route::get('/all', [$defaultController, 'getAllDocuments'])->middleware(['pagination']);
+                Route::get('/{id}/details', [$defaultController, 'getDocumentDetails']);
+                Route::put('/{id}/details', [$defaultController, 'updateDocumentDetails']);
             }
         );
     }

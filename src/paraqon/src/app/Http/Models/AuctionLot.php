@@ -63,6 +63,7 @@ class AuctionLot extends Eloquent
         'starting_price' => 0,
         'reserve_price' => 0,
         'current_bid' => 0,
+        'permission_requests' => [],
 
         'status' => Status::ACTIVE,
         'reply_status' => ReplyStatus::PENDING,
@@ -71,6 +72,7 @@ class AuctionLot extends Eloquent
         // Booleans
         'is_disabled' => false,
         'is_closed' => false,
+        'is_permission_required' => false,
         'is_paid' => false,
         'is_bid_placed' => false,
 

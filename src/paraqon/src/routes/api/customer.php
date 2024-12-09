@@ -14,6 +14,7 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\AuthenticationControl
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\BidController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\ConsignmentRequestController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\DepositController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\DocumentController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\OrderController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\PaymentController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\ProductController;
@@ -104,6 +105,7 @@ Route::group(
                 Route::get('/owned/all', [$defaultController, 'getAllOwnedAuctionLots'])->middleware(['pagination']);
                 Route::get('/participated/all', [$defaultController, 'getAllParticipatedAuctionLots'])->middleware(['pagination']);
                 Route::post('/{auction_lot_id}/bids', [$defaultController, 'createMaximumBid']);
+                Route::put('/{auction_lot_id}/bid-requests', [$defaultController, 'requestForBidPermissions']);
 
                 Route::post('/{auction_lot_id}/live-bids', [$defaultController, 'createLiveBid']);
             }
@@ -327,6 +329,24 @@ Route::group(
         );
     }
 );
+
+Route::group(
+    ['prefix' => 'documents'],
+    function () {
+        $defaultController = DocumentController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/', [$defaultController, 'createDocument']);
+                Route::get('/all', [$defaultController, 'getAllDocuments'])->middleware(['pagination']);
+                Route::get('/{id}/details', [$defaultController, 'getDocumentDetails']);
+                Route::put('/{id}/details', [$defaultController, 'updateDocumentDetails']);
+            }
+        );
+    }
+);
+
 
 Route::group(
     ['prefix' => 'services'],

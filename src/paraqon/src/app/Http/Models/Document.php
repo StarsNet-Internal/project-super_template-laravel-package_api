@@ -3,7 +3,6 @@
 namespace StarsNet\Project\Paraqon\App\Models;
 
 // Constants
-use App\Constants\CollectionName;
 use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\Status;
 
@@ -22,9 +21,19 @@ use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 use Jenssegers\Mongodb\Relations\EmbedsMany;
 use Jenssegers\Mongodb\Relations\EmbedsOne;
 
-class ConsignmentRequestItem extends Eloquent
+use App\Models\Account;
+use App\Models\Configuration;
+use App\Models\Customer;
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\Store;
+use Illuminate\Support\Facades\Log;
+use StarsNet\Project\Paraqon\App\Models\Bid;
+
+class Document extends Eloquent
 {
-    use ObjectIDTrait;
+    use ObjectIDTrait,
+        StatusFieldTrait;
 
     /**
      * Define database connection.
@@ -33,22 +42,19 @@ class ConsignmentRequestItem extends Eloquent
      */
     protected $connection = 'mongodb';
 
+    /**
+     * The database collection used by the model.
+     *
+     * @var string
+     */
+    protected $collection = 'documents';
+
     protected $attributes = [
         // Relationships
-        'product_id' => null,
-        'product_variant_id' => null,
 
         // Default
-        'title' => null,
-        'description' => null,
-        'images' => [],
-        'videos' => [],
 
-        'is_approved' => false,
-        'evaluated_price' => 0,
-        'evaluated_currency' => 'HKD',
-        'rejection_reason' => null,
-        'remarks' => null
+        // Booleans
 
         // Timestamps
     ];
@@ -61,7 +67,7 @@ class ConsignmentRequestItem extends Eloquent
 
     /**
      * Blacklisted model properties from doing mass assignment.
-     * None are blacklisted by default for flexibility. 
+     * None are blacklisted by default for flexibility.
      * 
      * @var array
      */

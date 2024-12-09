@@ -11,9 +11,9 @@ class ConsignmentRequestController extends Controller
 {
     public function getAllConsignmentRequests(Request $request)
     {
-        $account = $this->account();
+        $customer = $this->customer();
 
-        $forms = ConsignmentRequest::where('requested_by_account_id', $account->_id)
+        $forms = ConsignmentRequest::where('requested_by_customer_id', $customer->_id)
             ->with(['items'])
             ->get();
 
@@ -31,7 +31,10 @@ class ConsignmentRequestController extends Controller
             $form->items()->create($item);
             $requestItemsCount++;
         }
-        $form->update(['requested_items_qty' => $requestItemsCount]);
+        $form->update([
+            'requested_by_customer_id' => $this->customer()->_id,
+            'requested_items_qty' => $requestItemsCount
+        ]);
 
         return response()->json([
             'message' => 'Created New ConsignmentRequest successfully',
@@ -51,9 +54,9 @@ class ConsignmentRequestController extends Controller
             ], 404);
         }
 
-        $account = $this->account();
+        $customer = $this->customer();
 
-        if ($form->requested_by_account_id != $account->_id) {
+        if ($form->requested_by_customer_id != $customer->_id) {
             return response()->json([
                 'message' => 'Access denied'
             ], 404);

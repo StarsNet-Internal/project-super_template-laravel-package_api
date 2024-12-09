@@ -20,15 +20,14 @@ class ProductController extends Controller
 
         foreach ($products as $product) {
             $product->product_variant_id = optional($product->variants()->latest()->first())->_id;
-
-            $passedAuctionCount = PassedAuctionRecord::where(
-                'customer_id',
-                $customer->_id
-            )->where(
-                'product_id',
-                $product->_id
-            )->count();
-            $product->passed_auction_count = $passedAuctionCount;
+            // $passedAuctionCount = PassedAuctionRecord::where(
+            //     'customer_id',
+            //     $customer->_id
+            // )->where(
+            //     'product_id',
+            //     $product->_id
+            // )->count();
+            $product->passed_auction_count = 0;
         }
 
         return $products;

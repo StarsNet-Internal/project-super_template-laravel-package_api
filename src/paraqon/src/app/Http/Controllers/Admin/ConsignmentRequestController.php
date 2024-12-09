@@ -10,6 +10,27 @@ use StarsNet\Project\Paraqon\App\Models\ConsignmentRequest;
 
 class ConsignmentRequestController extends Controller
 {
+    public function createConsignmentRequest(Request $request)
+    {
+        // Create ConsignmentRequest
+        $form = ConsignmentRequest::create($request->except('items'));
+
+        // Create ConsignmentRequestItem(s)
+        $requestItemsCount = 0;
+        foreach ($request->items as $item) {
+            $form->items()->create($item);
+            $requestItemsCount++;
+        }
+        $form->update([
+            'requested_items_qty' => $requestItemsCount
+        ]);
+
+        return response()->json([
+            'message' => 'Created New ConsignmentRequest successfully',
+            '_id' => $form->_id
+        ], 200);
+    }
+
     private function filterConsignmentRequests(array $queryParams = []): Collection
     {
         // Exclude all deleted documents first
@@ -35,13 +56,33 @@ class ConsignmentRequestController extends Controller
 
     public function getConsignmentRequestDetails(Request $request)
     {
-        $request = ConsignmentRequest::with([
+        $consignment = ConsignmentRequest::with([
             'requestedAccount',
             'approvedAccount',
             'items'
         ])->find($request->route('id'));
 
-        return $request;
+        return $consignment;
+    }
+
+    public function updateConsignmentRequestDetails(Request $request)
+    {
+        $consignmentID = $request->route('id');
+
+        $consignment = ConsignmentRequest::find($consignmentID);
+
+        if (is_null($consignment)) {
+            return response()->json([
+                'message' => 'ConsignmentRequest not found'
+            ], 404);
+        }
+
+        $attributes = $request->all();
+        $consignment->update($attributes);
+
+        return response()->json([
+            'message' => 'ConsignmentRequest updated successfully'
+        ]);
     }
 
     public function approveConsignmentRequest(Request $request)

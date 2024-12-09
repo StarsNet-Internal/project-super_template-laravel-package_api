@@ -3,6 +3,7 @@
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
 use App\Constants\Model\LoginType;
+use App\Constants\Model\Status;
 use App\Http\Controllers\Controller;
 use App\Models\Configuration;
 use App\Models\Customer;
@@ -70,15 +71,6 @@ class CustomerController extends Controller
 
         foreach ($products as $product) {
             $product->product_variant_id = optional($product->variants()->latest()->first())->_id;
-
-            $passedAuctionCount = PassedAuctionRecord::where(
-                'customer_id',
-                $customerId
-            )->where(
-                'product_id',
-                $product->_id
-            )->count();
-            $product->passed_auction_count = $passedAuctionCount;
         }
 
         return $products;
@@ -89,6 +81,7 @@ class CustomerController extends Controller
         $customerId = $request->route('customer_id');
 
         $auctionLots = AuctionLot::where('owned_by_customer_id', $customerId)
+            ->where('status', '!=', Status::DELETED)
             ->with([
                 'product',
                 'productVariant',
@@ -98,7 +91,6 @@ class CustomerController extends Controller
             ])
             ->get();
 
-        $incrementRulesDocument = Configuration::where('slug', 'bidding-increments')->latest()->first();
         foreach ($auctionLots as $auctionLot) {
             $auctionLot->current_bid = $auctionLot->getCurrentBidPrice();
         }

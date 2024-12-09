@@ -311,12 +311,12 @@ class ServiceController extends Controller
             $endTime = Carbon::parse($lot->end_datetime)->startOfMinute();
 
             if ($now >= $startTime && $now < $endTime) {
-                Log::info("Updating lot id " . $lot->id);
+                // Log::info("Updating lot id " . $lot->id);
                 $lot->update(['status' => Status::ACTIVE]);
                 $archivedLotsUpdateCount++;
             }
         }
-        Log::info("Updated Count: " . $archivedLotsUpdateCount);
+        // Log::info("Updated Count: " . $archivedLotsUpdateCount);
 
         // Make lots ARCHIVED
         $activeLots = AuctionLot::where('status', Status::ACTIVE)
@@ -788,7 +788,7 @@ class ServiceController extends Controller
         ];
 
         try {
-            $response = Http::post('http://192.168.0.101:8881/api/publish', [
+            $response = Http::post('https://socket.paraqon.starsnet.hk/api/publish', [
                 'site' => 'paraqon',
                 'room' => 'live-' . $storeId,
                 'data' => $data,

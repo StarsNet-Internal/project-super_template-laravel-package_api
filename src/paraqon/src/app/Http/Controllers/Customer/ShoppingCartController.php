@@ -575,7 +575,9 @@ class ShoppingCartController extends Controller
         // getShoppingCartDetails calculations
         // get subtotal Price
         $subtotalPrice = 0;
+        $totalPrice = 0;
         $storageFee = 0;
+        $shippingFee = 0;
 
         foreach ($cartItems as $item) {
             // Add keys
@@ -584,20 +586,20 @@ class ShoppingCartController extends Controller
             $item->global_discount = null;
 
             // Calculations
-            $winningBid = $item->winning_bid ?? 0;
-            $subtotalPrice += $winningBid;
+            // $winningBid = $item->winning_bid ?? 0;
+            // $subtotalPrice += $winningBid;
 
-            $storageFee += $item->storage_fee ?? 0;
+            // $storageFee += $item->storage_fee ?? 0;
         }
-        $totalPrice = $subtotalPrice + $storageFee;
+        // $totalPrice = $subtotalPrice + $storageFee;
 
         // get shippingFee
-        $courier = Courier::find($courierID);
-        $shippingFee =
-            !is_null($courier) ?
-            $courier->getShippingFeeByTotalFee($totalPrice) :
-            0;
-        $totalPrice += $shippingFee;
+        // $courier = Courier::find($courierID);
+        // $shippingFee =
+        //     !is_null($courier) ?
+        //     $courier->getShippingFeeByTotalFee($totalPrice) :
+        //     0;
+        // $totalPrice += $shippingFee;
 
         // form calculation data object
         $rawCalculation = [

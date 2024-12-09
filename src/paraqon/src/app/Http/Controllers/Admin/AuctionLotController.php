@@ -61,7 +61,6 @@ class AuctionLotController extends Controller
 
         // Create AuctionLot
         $auctionLotAttributes = [
-            'lot_number' => $request->lot_number,
             'title' => $request->title,
             'short_description' => $request->short_description,
             'long_description' => $request->long_description,

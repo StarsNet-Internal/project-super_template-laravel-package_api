@@ -24,6 +24,61 @@ use StarsNet\Project\Paraqon\App\Models\WatchlistItem;
 
 class AuctionLotController extends Controller
 {
+    public function requestForBidPermissions(Request $request)
+    {
+        // Extract attributes from $request
+        $auctionLotId = $request->route('auction_lot_id');
+
+        // Validate AuctionLot
+        $auctionLot = AuctionLot::find($auctionLotId);
+
+        if (is_null($auctionLot)) {
+            return response()->json([
+                'message' => 'Auction Lot not found'
+            ], 404);
+        }
+
+        if (!in_array(
+            $auctionLot->status,
+            [Status::ACTIVE, Status::ARCHIVED]
+        )) {
+            return response()->json([
+                'message' => 'Auction is not available for public'
+            ], 404);
+        }
+
+        if ($auctionLot->is_permission_required == false) {
+            return response()->json([
+                'message' => 'Auction Lot does not require permission to place bid'
+            ], 404);
+        }
+
+        // Check if requests exist
+        $allBidRequests = $auctionLot->permission_requests;
+
+        $customer = $this->customer();
+        $isCustomerRequestExists = collect($allBidRequests)->contains(function ($item) use ($customer) {
+            return $item['customer_id'] == $customer->_id
+                && in_array($item['approval_status'], ['PENDING', 'APPROVED']);
+        });
+        if ($isCustomerRequestExists) {
+            return response()->json([
+                'message' => 'You already have a PENDING or APPROVED request'
+            ], 400);
+        }
+
+        $bidRequest = [
+            'customer_id' => $customer->_id,
+            'approval_status' => 'PENDING',
+            'created_at' => now()->toISOString()
+        ];
+        $auctionLot->push('permission_requests', $bidRequest, true);
+
+        return response()->json([
+            'message' => 'Request to place bid on this Auction Lot sent successfully'
+        ], 200);
+    }
+
     public function getAuctionLotDetails(Request $request)
     {
         // Extract attributes from $request
@@ -58,7 +113,7 @@ class AuctionLotController extends Controller
 
         // Check is_reserve_met
         $auctionLot->is_reserve_price_met = $auctionLot->current_bid >= $auctionLot->reserve_price;
-        $auctionLot->setHidden(['reserve_price']);
+        // $auctionLot->setHidden(['reserve_price']);
 
         // Get Watching Lots
         $watchingAuctionIDs = WatchlistItem::where('customer_id', $customer->id)
@@ -89,9 +144,6 @@ class AuctionLotController extends Controller
 
         foreach ($auctionLots as $auctionLot) {
             $auctionLot->current_bid = $auctionLot->getCurrentBidPrice();
-            // $auctionLot->passed_auction_count = $auctionLot->passedAuctionRecords()
-            //     ->where('customer_id', $customer->_id)
-            //     ->get();
         }
 
         return $auctionLots;
@@ -748,37 +800,40 @@ class AuctionLotController extends Controller
                 ]);
             }
 
-            // Get all ADVANCED bids
-            $allAdvancedBids = $auctionLot->bids()
-                ->where('is_hidden', false)
-                ->orderBy('bid')
-                ->orderBy('created_at')
-                ->get()
-                ->groupBy('bid')
-                ->map(function ($group) {
-                    return $group->first();
-                })
-                ->values();
+            // get current bid and winner
+            $newCurrentBid = $auctionLot->getCurrentBidPrice(
+                true,
+                $bid->customer_id,
+                $bid->bid,
+                $bid->type
+            );
 
-            // Create History Item
-            $lastBid = $allAdvancedBids->last();
-            foreach ($allAdvancedBids as $bid) {
-                $bidHistoryItemAttributes = [
-                    'winning_bid_customer_id' => $bid->customer_id,
-                    'current_bid' => $bid->bid
-                ];
-                $bidHistory->histories()->create($bidHistoryItemAttributes);
+            // Find winningCustomerID
+            $auctionLotMaximumBid = Bid::where('auction_lot_id', $auctionLotId)
+                ->where('is_hidden',  false)
+                ->orderBy('bid', 'desc')
+                ->first();
 
-                if ($bid === $lastBid) {
-                    $bidHistory->update(['current_bid' => $bid->bid]);
-                    $auctionLot->update([
-                        'is_bid_placed' => true,
-                        'current_bid' => $bid->bid,
-                        'latest_bid_customer_id' => $bid->customer_id,
-                        'winning_bid_customer_id' => $bid->customer_id,
-                    ]);
-                }
+            $winningCustomerID = null;
+            if (!is_null($auctionLotMaximumBid)) {
+                $winningCustomerID = $auctionLotMaximumBid->customer_id;
             }
+
+            // Update BidHistory
+            $bidHistoryItemAttributes = [
+                'winning_bid_customer_id' => $winningCustomerID,
+                'current_bid' => $newCurrentBid
+            ];
+            $bidHistory->histories()->create($bidHistoryItemAttributes);
+            $bidHistory->update(['current_bid' => $newCurrentBid]);
+
+            // Update Auction Lot
+            $auctionLot->update([
+                'is_bid_placed' => true,
+                'current_bid' => $newCurrentBid,
+                'latest_bid_customer_id' => $winningCustomerID,
+                'winning_bid_customer_id' => $winningCustomerID,
+            ]);
         }
 
         // Return Auction Store
