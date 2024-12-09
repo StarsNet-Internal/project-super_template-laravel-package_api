@@ -32,13 +32,37 @@ class OrderController extends CustomerOrderController
         StoreDependentTrait,
         ProjectOrderTrait;
 
+    public function getAll(Request $request)
+    {
+        $orders = parent::getAll($request)->toArray();
+
+        $allOrders = $this->getAllOrders();
+        foreach ($orders as $key => $order) {
+            $orders[$key]['cashier_id'] = $this->getReceiptNumber($order, $allOrders);
+        }
+
+        return $orders;
+    }
+
+    public function getAllOfflineOrders(Request $request)
+    {
+        $orders = parent::getAllOfflineOrders($request)->toArray();
+
+        $allOrders = $this->getAllOrders();
+        foreach ($orders as $key => $order) {
+            $orders[$key]['cashier_id'] = $this->getReceiptNumber($order, $allOrders);
+        }
+
+        return $orders;
+    }
+
     public function getOrderDetails(Request $request)
     {
         $response = parent::getOrderDetailsAsCustomer($request);
         $order = json_decode(json_encode($response), true)['original'];
 
-        $bookings = $this->getOfflineOrders();
-        $order['cashier_id'] = $this->getReceiptNumber($order, $bookings);
+        $allOrders = $this->getAllOrders();
+        $order['cashier_id'] = $this->getReceiptNumber($order, $allOrders);
         if ($order['store']['slug'] !== 'default-mini-store') {
             $order['cart_items'] = array_map(function ($item) use ($order) {
                 $variant = ProductVariant::find($item['product_variant_id']);

@@ -17,11 +17,34 @@ use App\Models\Role;
 use App\Models\Store;
 use App\Models\User;
 use App\Traits\Controller\AuthenticationTrait;
+use StarsNet\Project\EnjoyFace\App\Traits\Controller\ProjectAuthenticationTrait;
 use Illuminate\Http\Request;
 
 class StaffManagementController extends Controller
 {
-    use AuthenticationTrait;
+    use AuthenticationTrait, ProjectAuthenticationTrait;
+
+    public function deleteStaffAccounts(Request $request)
+    {
+        // Extract attributes from $request
+        $userIDs = $request->input('ids', []);
+
+        // Get User(s)
+        /** @var Collection $users */
+        $users = User::find($userIDs);
+
+        // Update User(s)
+        /** @var User $user */
+        foreach ($users as $user) {
+            $user->softDeletes();
+            $this->updateLoginIdOnDelete($user);
+        }
+
+        // Return success message
+        return response()->json([
+            'message' => 'Deleted ' . $users->count() . ' User(s) successfully'
+        ], 200);
+    }
 
     public function updateMerchantDetails(Request $request)
     {

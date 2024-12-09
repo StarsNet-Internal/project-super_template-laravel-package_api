@@ -206,6 +206,23 @@ class OfflineStoreManagementController extends Controller
             $this->appendStoreAttributes($store, $reviews, $wishlistItems, $latitude, $longitude);
         }
 
+        $stores = $stores->sort(function ($a, $b) use ($request) {
+            // Sort by `is_recommended` (true before false)
+            $aBool = $a['is_recommended'] ?? false;
+            $bBool = $b['is_recommended'] ?? false;
+
+            if ($aBool !== $bBool) {
+                return $bBool - $aBool;
+            }
+
+            $aNumber = $a[$request['sort_by']] ?? 0;
+            $bNumber = $b[$request['sort_by']] ?? 0;
+
+            return $request['sort_order'] == 'ASC' ? $aNumber - $bNumber : $bNumber - $aNumber;
+        })->values();
+
+        $request['sort_by'] = 'default';
+
         return $stores;
     }
 

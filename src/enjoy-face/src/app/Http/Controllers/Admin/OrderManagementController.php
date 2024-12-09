@@ -38,9 +38,9 @@ class OrderManagementController extends AdminOrderManagementController
     {
         $orders = parent::getAllOrdersByStore($request)->toArray();
 
-        $bookings = $this->getOfflineOrders();
+        $allOrders = $this->getAllOrders();
         foreach ($orders as $key => $order) {
-            $orders[$key]['cashier_id'] = $this->getReceiptNumber($order, $bookings);
+            $orders[$key]['cashier_id'] = $this->getReceiptNumber($order, $allOrders);
         }
 
         // Return Order
@@ -52,8 +52,8 @@ class OrderManagementController extends AdminOrderManagementController
         $response = parent::getOrderDetails($request);
         $order = json_decode(json_encode($response), true)['original'];
 
-        $bookings = $this->getOfflineOrders();
-        $order['cashier_id'] = $this->getReceiptNumber($order, $bookings);
+        $allOrders = $this->getAllOrders();
+        $order['cashier_id'] = $this->getReceiptNumber($order, $allOrders);
 
         // Return Order
         return response()->json($order, $response->getStatusCode());

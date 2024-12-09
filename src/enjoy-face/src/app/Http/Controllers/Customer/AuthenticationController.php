@@ -14,7 +14,7 @@ use App\Models\Store;
 use App\Models\DiscountTemplate;
 use App\Traits\Controller\AuthenticationTrait;
 use App\Traits\Controller\StoreDependentTrait;
-use StarsNet\Project\Easeca\App\Traits\Controller\ProjectAuthenticationTrait;
+use StarsNet\Project\EnjoyFace\App\Traits\Controller\ProjectAuthenticationTrait;
 use StarsNet\Project\EnjoyFace\App\Traits\Controller\ProjectPostTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -270,5 +270,30 @@ class AuthenticationController extends CustomerAuthenticationController
         return response()->json([
             'message' => 'Generated new VerificationCode successfully',
         ]);
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        // Get User, then validate
+        $user = $this->user();
+
+        if (is_null($user) || $user->isDeleted()) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        // Delete User
+        $user->softDeletes();
+
+        $this->updateLoginIdOnDelete($user);
+
+        // Logout
+        $user->token()->revoke();
+
+        // Return success message
+        return response()->json([
+            'message' => 'Account scheduled to be deleted successfully'
+        ], 200);
     }
 }
