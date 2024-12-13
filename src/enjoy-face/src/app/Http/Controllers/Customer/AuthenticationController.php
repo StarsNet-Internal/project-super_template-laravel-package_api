@@ -123,7 +123,7 @@ class AuthenticationController extends CustomerAuthenticationController
         // First-time voucher
         if (!is_null($voucher)) {
             $account->update([
-                'country' => $invitationCode
+                'country' => $voucher->_id
             ]);
             $suffix = strtoupper(Str::random(6));
             $discountCode = $voucher->createVoucher($suffix, $account->customer, false);
