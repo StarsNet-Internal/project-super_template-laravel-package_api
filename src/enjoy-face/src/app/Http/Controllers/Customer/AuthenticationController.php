@@ -130,16 +130,8 @@ class AuthenticationController extends CustomerAuthenticationController
 
             // Inbox
             $inboxAttributes = [
-                'title' => [
-                    'en' => 'New User Offer',
-                    'zh' => '新用戶優惠',
-                    'cn' => '新用户优惠',
-                ],
-                'short_description' => [
-                    'en' => 'Enter the promo code "' . $discountCode->full_code . '" for your first order to enjoy the offer.',
-                    'zh' => '首張訂單輸入優惠碼"' . $discountCode->full_code . '"即可享優惠。',
-                    'cn' => '首张订单输入优惠码"' . $discountCode->full_code . '"即可享优惠。',
-                ],
+                'title' => $voucher->title,
+                'short_description' => $voucher->description,
                 'long_description' => [
                     'en' => $discountCode->full_code,
                     'zh' => $discountCode->full_code,
