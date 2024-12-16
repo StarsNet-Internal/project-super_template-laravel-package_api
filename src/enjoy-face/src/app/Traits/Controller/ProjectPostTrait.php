@@ -29,5 +29,7 @@ trait ProjectPostTrait
             $category = PostCategory::where('item_type', 'Post')->first();
             $category->attachPosts(collect([$post]));
         }
+
+        return $post;
     }
 }
