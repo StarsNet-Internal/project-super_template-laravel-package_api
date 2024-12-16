@@ -17,6 +17,7 @@ trait ProjectPostTrait
         }
 
         $post = Post::create($postAttributes);
+        $postId = $post->_id;
         // $accounts = Account::find($accountIds);
 
         $post->likedAccounts()->attach($accountIds);
@@ -30,6 +31,6 @@ trait ProjectPostTrait
             $category->attachPosts(collect([$post]));
         }
 
-        return $post;
+        return $postId;
     }
 }

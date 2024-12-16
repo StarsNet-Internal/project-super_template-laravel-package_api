@@ -45,12 +45,12 @@ class PostController extends Controller
 
         // Create Post
         /** @var Post $post */
-        $post = $this->createInboxPost($request->except(['category_ids']), $accountIds, false);
+        $postId = $this->createInboxPost($request->except(['category_ids']), $accountIds, false);
 
         // Return success message
         return response()->json([
             'message' => 'Created New Message successfully',
-            '_id' => $post->_id
+            '_id' => $postId
         ], 200);
     }
 
