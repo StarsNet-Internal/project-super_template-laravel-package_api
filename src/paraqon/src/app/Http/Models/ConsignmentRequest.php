@@ -22,6 +22,7 @@ use Jenssegers\Mongodb\Relations\EmbedsMany;
 use Jenssegers\Mongodb\Relations\EmbedsOne;
 
 use App\Models\Account;
+use App\Models\Customer;
 
 class ConsignmentRequest extends Eloquent
 {
@@ -102,11 +103,11 @@ class ConsignmentRequest extends Eloquent
     // Relationship Begins
     // -----------------------------
 
-    public function requestedAccount(): BelongsTo
+    public function requestedCustomer(): BelongsTo
     {
         return $this->belongsTo(
-            Account::class,
-            'requested_by_account_id'
+            Customer::class,
+            'requested_by_customer_id'
         );
     }
 

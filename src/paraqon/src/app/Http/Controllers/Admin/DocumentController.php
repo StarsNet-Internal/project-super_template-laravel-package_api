@@ -16,7 +16,7 @@ class DocumentController extends Controller
 
         return response()->json([
             'message' => 'Created new Document successfully',
-            'id' => $document->id
+            '_id' => $document->id
         ]);
     }
 
@@ -24,10 +24,7 @@ class DocumentController extends Controller
     {
         $queryParams = $request->query();
 
-        $customer = $this->customer();
-
-        $documentQuery = Document::where('customer_id', $customer->id)
-            ->where('status', '!=', Status::DELETED);
+        $documentQuery = Document::where('status', '!=', Status::DELETED);
 
         foreach ($queryParams as $key => $value) {
             $documentQuery->where($key, $value);

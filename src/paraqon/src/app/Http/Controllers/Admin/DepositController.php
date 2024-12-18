@@ -132,6 +132,9 @@ class DepositController extends Controller
                     $auctionRegistrationRequest->update($requestUpdateAttributes);
                     break;
                 case ReplyStatus::REJECTED:
+                    if ($auctionRegistrationRequest->reply_status == ReplyStatus::APPROVED) {
+                        break;
+                    }
                     // Update AuctionRegistrationRequest
                     $requestUpdateAttributes = [
                         'approved_by_account_id' => $account->_id,

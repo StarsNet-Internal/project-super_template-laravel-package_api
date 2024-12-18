@@ -216,6 +216,7 @@ Route::group(
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getAllOwnedProducts'])->middleware(['pagination']);
                 Route::get('/{product_id}/details', [$defaultController, 'getProductDetails']);
+                Route::put('/listing-status', [$defaultController, 'updateListingStatuses']);
             }
         );
     }

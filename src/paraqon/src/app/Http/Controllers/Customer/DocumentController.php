@@ -2,6 +2,7 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
+use App\Constants\Model\Status;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use StarsNet\Project\Paraqon\App\Models\Document;
@@ -25,7 +26,8 @@ class DocumentController extends Controller
 
         $customer = $this->customer();
 
-        $documentQuery = Document::where('customer_id', $customer->id);
+        $documentQuery = Document::where('customer_id', $customer->id)
+            ->where('status', '!=', Status::DELETED);
         foreach ($queryParams as $key => $value) {
             $documentQuery->where($key, $value);
         }

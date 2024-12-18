@@ -33,6 +33,26 @@ class ProductController extends Controller
         return $products;
     }
 
+    public function updateListingStatuses(Request $request)
+    {
+        $items = $request->items;
+
+        foreach ($items as $item) {
+            $productID = $item['product_id'];
+            $listingStatus = $item['listing_status'];
+
+            $product = Product::find($productID);
+
+            if (is_null($product)) continue;
+            $attributes = ['listing_status' => $listingStatus];
+            $product->update($attributes);
+        }
+
+        return response()->json([
+            'message' => 'Updated ' . count($items) . ' Product(s) listing_status successfully.'
+        ]);
+    }
+
     public function getProductDetails(Request $request)
     {
         // Extract attributes from $request

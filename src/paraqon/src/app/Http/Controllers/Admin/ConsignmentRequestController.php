@@ -42,7 +42,7 @@ class ConsignmentRequestController extends Controller
         }
 
         return $query->with([
-            'requestedAccount',
+            'requestedCustomer',
             'approvedAccount',
             'items'
         ])->get();
@@ -57,7 +57,7 @@ class ConsignmentRequestController extends Controller
     public function getConsignmentRequestDetails(Request $request)
     {
         $consignment = ConsignmentRequest::with([
-            'requestedAccount',
+            'requestedCustomer',
             'approvedAccount',
             'items'
         ])->find($request->route('id'));

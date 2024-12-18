@@ -12,6 +12,7 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\CustomerController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\CustomerGroupController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\DepositController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\DocumentController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\OrderController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\SeederController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ServiceController;
@@ -288,5 +289,15 @@ Route::group(
                 Route::post('/{store_id}/events', [$defaultController, 'createEvent']);
             }
         );
+    }
+);
+
+
+Route::group(
+    ['prefix' => 'products'],
+    function () {
+        $defaultController = ProductController::class;
+
+        Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
     }
 );

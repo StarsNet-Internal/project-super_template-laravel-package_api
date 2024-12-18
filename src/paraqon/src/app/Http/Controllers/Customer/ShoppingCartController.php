@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ShoppingCartController extends Controller
 {
@@ -132,7 +133,10 @@ class ShoppingCartController extends Controller
             ->where('customer_id', $customer->_id)
             ->where('is_system', true)
             ->first();
-        $systemOrderDeposit = $systemOrder->calculations['deposit'];
+        $systemOrderDeposit = 0;
+        if (!is_null($systemOrder)) {
+            $systemOrderDeposit = $systemOrder->calculations['deposit'];
+        }
 
         // Update total price
         $totalPrice -= $systemOrderDeposit;

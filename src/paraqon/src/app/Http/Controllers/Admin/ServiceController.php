@@ -98,7 +98,10 @@ class ServiceController extends Controller
                     $deposit->updateOnlineResponse($request->all());
 
                     if (
-                        $auctionRegistrationRequest->reply_status == ReplyStatus::PENDING
+                        in_array($auctionRegistrationRequest->reply_status, [
+                            ReplyStatus::PENDING,
+                            ReplyStatus::REJECTED
+                        ])
                     ) {
                         // get Paddle ID
                         $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
@@ -191,6 +194,7 @@ class ServiceController extends Controller
                 );
             case 'checkout':
                 // Get Checkout
+                /** Checkout $checkout */
                 $checkout = Checkout::find($modelID);
 
                 if (is_null($checkout)) {
@@ -222,6 +226,25 @@ class ServiceController extends Controller
                     // Update Order
                     if ($order->current_status !== ShipmentDeliveryStatus::PROCESSING) {
                         $order->updateStatus(ShipmentDeliveryStatus::PROCESSING);
+                    }
+
+                    // Update Product and AuctionLot
+                    $storeID = $order->store_id;
+                    $store = Store::find($storeID);
+
+                    if (
+                        !is_null($store) &&
+                        in_array($store->auction_type, ['LIVE', 'ONLINE'])
+                    ) {
+                        $productIDs = collect($order->cart_items)->pluck('product_id')->all();
+
+                        AuctionLot::where('store_id', $storeID)
+                            ->whereIn('product_id', $productIDs)
+                            ->update(['is_paid' => true]);
+
+                        Product::objectIDs($productIDs)->update(
+                            ['listing_status' => 'ALREADY_CHECKOUT']
+                        );
                     }
 
                     return response()->json(
