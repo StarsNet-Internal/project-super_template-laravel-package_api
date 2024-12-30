@@ -221,6 +221,11 @@ class OfflineStoreManagementController extends Controller
             return $request['sort_order'] == 'ASC' ? $aNumber - $bNumber : $bNumber - $aNumber;
         })->values();
 
+        $stores = $stores->map(function ($store) {
+            $store['is_recommended'] = $store['is_label_visible'] ?? false;
+            return $store;
+        });
+
         $request['sort_by'] = 'default';
 
         return $stores;
