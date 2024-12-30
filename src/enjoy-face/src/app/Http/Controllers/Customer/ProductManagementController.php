@@ -35,38 +35,60 @@ class ProductManagementController extends Controller
 
     public function getAllProductCategoryHierarchy(Request $request)
     {
-        // Get Hierarchy
-        $hierarchy = Hierarchy::whereModelID(Alias::getValue('default-main-store'))->first();
+        // Get Main Store Hierarchy for Offline Stores
+        $modelId = $request->route('store_id') === 'default-mini-store' ? 'default-mini-store' : 'default-main-store';
+        $hierarchy = Hierarchy::whereModelID(Alias::getValue($modelId))->first();
         if (is_null($hierarchy)) return new Collection();
         $hierarchy = $hierarchy['hierarchy'];
 
-        $categoryIds = Product::where('store_id', $request->route('store_id'))
-            ->statusActive()
-            ->get()
-            ->pluck('category_ids')
-            ->all();
+        $allCategories = ProductCategory::where('item_type', 'Product')
+            ->get(['parent_id', 'title'])
+            ->makeHidden(['parent_category']);
 
-        $flattened = array_merge(...$categoryIds);
-        $categoryIds = collect($flattened)->unique()->values()->all();
-
-        // Get Categories
-        $categories = [];
-        foreach ($hierarchy as $branch) {
-            $category = Category::objectID($branch['category_id'])
-                ->whereIn('_id', $categoryIds)
+        if ($request->route('store_id') === 'default-main-store' || $request->route('store_id') === 'default-mini-store') {
+            // Get Categories
+            $categories = [];
+            foreach ($hierarchy as $branch) {
+                $category = $allCategories->firstWhere('_id', $branch['category_id'])->toArray();
+                $children = [];
+                foreach ($branch['children'] as $child) {
+                    $childCategory = $allCategories->firstWhere('_id', $child['category_id']);
+                    $children[] = $childCategory;
+                }
+                $category['children'] = $children;
+                $categories[] = $category;
+            }
+        } else {
+            $categoryIds = Product::where('store_id', $request->route('store_id'))
                 ->statusActive()
-                ->with(['children' => function ($query) use ($categoryIds) {
-                    $query->whereIn('_id', $categoryIds)
-                        ->statusActive()
-                        ->orderBy('title.en', 'asc')
-                        ->get(['_id', 'parent_id', 'title']);
-                }])
-                ->first(['parent_id', 'title']);
-            if (is_null($category)) continue;
-            $categories[] = $category;
+                ->get()
+                ->pluck('category_ids')
+                ->all();
+
+            $flattened = array_merge(...$categoryIds);
+            $categoryIds = collect($flattened)->unique()->values()->all();
+
+            // Get Non-empty Categories of a given Store in Store Details
+            $allCategories = collect($allCategories->whereIn('_id', $categoryIds)->all());
+
+            $categories = [];
+            foreach ($hierarchy as $branch) {
+                $category = $allCategories->firstWhere('_id', $branch['category_id']);
+                if (is_null($category)) continue;
+                $category = $category->toArray();
+
+                $children = [];
+                foreach ($branch['children'] as $child) {
+                    $childCategory = $allCategories->firstWhere('_id', $child['category_id']);
+                    if (is_null($childCategory)) continue;
+
+                    $children[] = $childCategory;
+                }
+                $category['children'] = $children;
+                $categories[] = $category;
+            }
         }
 
-        // Return data
         return $categories;
     }
 }
