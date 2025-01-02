@@ -79,22 +79,22 @@ Route::group(
     function () {
         $defaultController = AuctionController::class;
 
-        Route::put('/statuses', [$defaultController, 'updateAuctionStatuses']);
-        Route::get('/{store_id}/archive', [$defaultController, 'archiveAllAuctionLots']);
-        Route::get('/{store_id}/orders/create', [$defaultController, 'generateAuctionOrders']);
-
-        Route::get('/{store_id}/registered-users', [$defaultController, 'getAllRegisteredUsers'])->middleware(['pagination']);
-        Route::put('/{store_id}/registered-users/{customer_id}/remove', [$defaultController, 'removeRegisteredUser']);
-        Route::put('/{store_id}/registered-users/{customer_id}/add', [$defaultController, 'addRegisteredUser']);
-
-        Route::get('/{store_id}/categories/all', [$defaultController, 'getAllCategories'])->middleware(['pagination']);
-        Route::get('/{store_id}/registration-records', [$defaultController, 'getAllAuctionRegistrationRecords'])->middleware(['pagination']);
-        Route::put('/products/{product_id}/categories/assign', [$defaultController, 'syncCategoriesToProduct']);
-        Route::get('/all', [$defaultController, 'getAllAuctions'])->middleware(['pagination']);
-
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::put('/statuses', [$defaultController, 'updateAuctionStatuses']);
+                Route::get('/{store_id}/archive', [$defaultController, 'archiveAllAuctionLots']);
+                Route::get('/{store_id}/orders/create', [$defaultController, 'generateAuctionOrders']);
+
+                Route::get('/{store_id}/registered-users', [$defaultController, 'getAllRegisteredUsers'])->middleware(['pagination']);
+                Route::put('/{store_id}/registered-users/{customer_id}/remove', [$defaultController, 'removeRegisteredUser']);
+                Route::put('/{store_id}/registered-users/{customer_id}/add', [$defaultController, 'addRegisteredUser']);
+
+                Route::get('/{store_id}/categories/all', [$defaultController, 'getAllCategories'])->middleware(['pagination']);
+                Route::get('/{store_id}/registration-records', [$defaultController, 'getAllAuctionRegistrationRecords'])->middleware(['pagination']);
+                Route::put('/products/{product_id}/categories/assign', [$defaultController, 'syncCategoriesToProduct']);
+                Route::get('/all', [$defaultController, 'getAllAuctions'])->middleware(['pagination']);
+
                 Route::get('/{store_id}/auction-lots/unpaid', [$defaultController, 'getAllUnpaidAuctionLots'])->middleware(['pagination']);
                 Route::put('/{store_id}/auction-lots/return', [$defaultController, 'returnAuctionLotToOriginalCustomer']);
             }

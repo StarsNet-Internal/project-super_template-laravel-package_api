@@ -80,10 +80,12 @@ class AuctionController extends Controller
     public function getAllRegisteredUsers(Request $request)
     {
         $storeID = $request->route('store_id');
+        $replyStatus = $request->input('reply_status', ReplyStatus::APPROVED);
 
         $registeredCustomers = AuctionRegistrationRequest::where('store_id', $storeID)
-            ->where('status', Status::ACTIVE)
+            // ->where('status', Status::ACTIVE)
             ->whereNotNull('paddle_id')
+            ->where('reply_status', $replyStatus)
             ->latest()
             ->get();
 
@@ -113,8 +115,8 @@ class AuctionController extends Controller
         $customerID = $request->route('customer_id');
 
         $registeredCustomerRequest = AuctionRegistrationRequest::where('store_id', $storeID)
-            ->where('customer_id', $customerID)
-            ->where('status', Status::ACTIVE)
+            ->where('requested_by_customer_id', $customerID)
+            // ->where('status', Status::ACTIVE)
             ->latest()
             ->first();
 
