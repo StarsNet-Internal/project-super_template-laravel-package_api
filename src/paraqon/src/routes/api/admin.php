@@ -115,6 +115,8 @@ Route::group(
                 Route::get('/{id}/details', [$defaultController, 'getAuctionLotDetails']);
                 Route::put('/{id}/details', [$defaultController, 'updateAuctionLotDetails']);
                 Route::put('/delete', [$defaultController, 'deleteAuctionLots']);
+                // Live Auction
+                Route::post('/{auction_lot_id}/live-bids', [$defaultController, 'createLiveBid']);
             }
         );
     }
