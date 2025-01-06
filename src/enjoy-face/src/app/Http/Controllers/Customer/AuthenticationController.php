@@ -105,12 +105,19 @@ class AuthenticationController extends CustomerAuthenticationController
         }
 
         // Try login with provided credentials
+        $loginId = $request->area_code . $request->phone;
         $credentials = [
             'type' => $request->input('type'),
-            'login_id' => $request->area_code . $request->phone,
+            'login_id' => $loginId,
             'password' => $request->input('password')
         ];
         if (Auth::attempt($credentials)) {
+            $user = User::loginID($loginId)->first();
+            $this->generatePhoneVerificationCodeByType(
+                $user,
+                VerificationCodeType::ACCOUNT_VERIFICATION,
+                60
+            );
             return response()->json([
                 'message' => 'Registered as new Customer successfully',
             ]);
