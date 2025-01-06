@@ -463,23 +463,23 @@ class AuctionLotController extends Controller
             ]);
 
             // Create Bid History Record
-            if ($isBidPlaced == false) {
-                $bidHistory = BidHistory::where('auction_lot_id', $auctionLotId)->first();
-                if ($bidHistory == null) {
-                    $bidHistory = BidHistory::create([
-                        'auction_lot_id' => $auctionLotId,
-                        'current_bid' => $newCurrentBid,
-                        'histories' => []
-                    ]);
-                }
-
-                $bidHistoryItemAttributes = [
-                    'winning_bid_customer_id' => $winningCustomerID,
-                    'current_bid' => $newCurrentBid
-                ];
-                $bidHistory->histories()->create($bidHistoryItemAttributes);
-                $bidHistory->update(['current_bid' => $newCurrentBid]);
+            // if ($isBidPlaced == false || $newCurrentBid > $currentBid) {
+            $bidHistory = BidHistory::where('auction_lot_id', $auctionLotId)->first();
+            if ($bidHistory == null) {
+                $bidHistory = BidHistory::create([
+                    'auction_lot_id' => $auctionLotId,
+                    'current_bid' => $newCurrentBid,
+                    'histories' => []
+                ]);
             }
+
+            $bidHistoryItemAttributes = [
+                'winning_bid_customer_id' => $winningCustomerID,
+                'current_bid' => $newCurrentBid
+            ];
+            $bidHistory->histories()->create($bidHistoryItemAttributes);
+            $bidHistory->update(['current_bid' => $newCurrentBid]);
+            // }
 
             // Extend Store endDateTime
             $currentStoreEndDateTime = Carbon::parse($store->end_datetime);
