@@ -463,7 +463,7 @@ class AuctionLotController extends Controller
             ]);
 
             // Create Bid History Record
-            if ($isBidPlaced == false || $newCurrentBid > $currentBid) {
+            if ($isBidPlaced == false) {
                 $bidHistory = BidHistory::where('auction_lot_id', $auctionLotId)->first();
                 if ($bidHistory == null) {
                     $bidHistory = BidHistory::create([
