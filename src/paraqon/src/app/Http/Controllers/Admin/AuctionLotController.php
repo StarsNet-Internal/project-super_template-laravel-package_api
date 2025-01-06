@@ -548,4 +548,76 @@ class AuctionLotController extends Controller
             '_id' => $bid->_id
         ], 200);
     }
+
+    public function resetAuctionLot(Request $request)
+    {
+        $auctionLotId = $request->route('auction_lot_id');
+
+        $auctionLot = AuctionLot::find($auctionLotId);
+        $bidHistory = BidHistory::firstWhere('auction_lot_id', $auctionLotId);
+
+        // Hide previous DIRECT bids
+        $auctionLot->bids()
+            ->where('is_hidden', false)
+            ->where('type', 'DIRECT')
+            ->update(['is_hidden' => true]);
+
+        // Reset history
+        $bidHistory->update([
+            'current_bid' => $auctionLot->starting_price
+        ]);
+        foreach ($bidHistory['histories'] as $history) {
+            $history->update(['is_hidden' => true]);
+        }
+
+        // Get current bid and winner
+        $auctionLotMaximumBid = $auctionLot->bids()
+            ->where('is_hidden',  false)
+            ->orderBy('bid', 'desc')
+            ->first();
+
+        // Copy from Customer BidController cancelBid START
+        if (!is_null($auctionLotMaximumBid)) {
+            // get current bid and winner
+            $newCurrentBid = $auctionLot->getCurrentBidPrice(
+                true,
+                $auctionLotMaximumBid->customer_id,
+                $auctionLotMaximumBid->bid,
+                $auctionLotMaximumBid->type
+            );
+
+            $winningCustomerID = null;
+            if (!is_null($auctionLotMaximumBid)) {
+                $winningCustomerID = $auctionLotMaximumBid->customer_id;
+            }
+
+            // Update BidHistory
+            $bidHistoryItemAttributes = [
+                'winning_bid_customer_id' => $winningCustomerID,
+                'current_bid' => $newCurrentBid
+            ];
+            $bidHistory->histories()->create($bidHistoryItemAttributes);
+            $bidHistory->update(['current_bid' => $newCurrentBid]);
+
+            // Update Auction Lot
+            $auctionLot->update([
+                'is_bid_placed' => true,
+                'current_bid' => $newCurrentBid,
+                'latest_bid_customer_id' => $winningCustomerID,
+                'winning_bid_customer_id' => $winningCustomerID,
+            ]);
+        } else {
+            $auctionLot->update([
+                'is_bid_placed' => false,
+                'current_bid' => $auctionLot->starting_price,
+                'latest_bid_customer_id' => null,
+                'winning_bid_customer_id' => null,
+            ]);
+        }
+        // Copy from Customer BidController cancelBid END
+
+        return response()->json([
+            'message' => 'Lot reset successfully'
+        ], 200);
+    }
 }
