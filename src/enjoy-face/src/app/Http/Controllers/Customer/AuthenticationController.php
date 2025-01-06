@@ -104,6 +104,18 @@ class AuthenticationController extends CustomerAuthenticationController
             $voucher = null;
         }
 
+        // Try login with provided credentials
+        $credentials = [
+            'type' => $request->input('type'),
+            'login_id' => $request->area_code . $request->phone,
+            'password' => $request->input('password')
+        ];
+        if (Auth::attempt($credentials)) {
+            return response()->json([
+                'message' => 'Registered as new Customer successfully',
+            ]);
+        }
+
         // Generate a new customer-identity Account
         $user = $this->createNewUserAsCustomer($request);
         $user->setAsCustomerAccount();
