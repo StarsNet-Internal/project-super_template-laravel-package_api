@@ -794,6 +794,12 @@ class ServiceController extends Controller
         $currentLot = $this->getCurrentLot($lots);
         $currentLotId = $currentLot->_id;
 
+        $highestAdvancedBid = $currentLot->bids()
+            ->where('is_hidden',  false)
+            ->where('type', 'ADVANCED')
+            ->orderBy('bid', 'desc')
+            ->first();
+
         $request->route()->setParameter('auction_lot_id', $currentLotId);
         $customerAuctionLotController = new CustomerAuctionLotController();
         $histories = $customerAuctionLotController->getBiddingHistory($request);
@@ -805,6 +811,7 @@ class ServiceController extends Controller
         $data = [
             'lots' => $lots,
             'current_lot_id' => $currentLotId,
+            'highest_advanced_bid' => $highestAdvancedBid,
             'histories' => $histories,
             'events' => $events,
             'time' => now(),
@@ -841,12 +848,12 @@ class ServiceController extends Controller
             return $openedLot;
         }
 
-        // Find SOLD or CLOSE lot with the highest `lot_number`
-        $largestActiveLot = $lots->filter(function ($lot) {
+        // Find last updated SOLD or CLOSE lot
+        $latestActiveLot = $lots->filter(function ($lot) {
             return $lot->status === 'ACTIVE';
-        })->sortByDesc('lot_number')->first();
-        if ($largestActiveLot) {
-            return $largestActiveLot;
+        })->sortByDesc('updated_at')->first();
+        if ($latestActiveLot) {
+            return $latestActiveLot;
         }
 
         return $lots->sortBy('lot_number')->first();
