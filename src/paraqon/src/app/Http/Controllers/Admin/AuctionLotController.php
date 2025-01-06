@@ -353,7 +353,7 @@ class AuctionLotController extends Controller
                 ->first();
             $highestAdvancedBidValue = optional($highestAdvancedBid)->bid ?? 0;
 
-            if ($requestedBid < $highestAdvancedBidValue) {
+            if ($requestedBid < $currentBid && $requestedBid < $highestAdvancedBidValue) {
                 return response()->json([
                     'message' => 'Your bid cannot be lower than highest advanced bid value of ' . $highestAdvancedBidValue . '.',
                     'error_status' => 1,
