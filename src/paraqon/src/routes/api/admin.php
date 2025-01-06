@@ -221,6 +221,7 @@ Route::group(
 
         Route::post('/payment/callback', [$defaultController, 'paymentCallback']);
         Route::get('/auctions/{store_id}/orders/create', [$defaultController, 'generateAuctionOrdersAndRefundDeposits']);
+        Route::post('/auctions/{store_id}/orders/create-live', [$defaultController, 'generateLiveAuctionOrdersAndRefundDeposits']);
 
         Route::post('/deposits/return', [$defaultController, 'returnDeposit']);
         Route::post('/orders/paid', [$defaultController, 'confirmOrderPaid']);
