@@ -779,13 +779,21 @@ class ServiceController extends Controller
             try {
                 // $customer = Customer::find($customerID);
                 $customer = Customer::find($result['customer_id']);
+                $confirmedLots = collect($result['lots']);
 
                 // Find all winning Auction Lots
                 // $winningLots = $unpaidAuctionLots->where('winning_bid_customer_id', $customerID);
-                $winningLotIds = array_map(function ($lot) {
-                    return $lot['lot_id'];
-                }, $result['lots']);
+                $winningLotIds = $confirmedLots->map(function ($lot) {
+                    return $lot->lot_id;
+                })->all();
                 $winningLots = AuctionLot::find($winningLotIds);
+                $winningLots = $winningLots->map(function ($winningLot) use ($confirmedLots) {
+                    $confirmedLot = $confirmedLots->first(function ($lot) use ($winningLot) {
+                        return $lot->lot_id === $winningLot->_id;
+                    });
+                    $winningLot->current_bid = $confirmedLot->price;
+                    return $winningLot;
+                });
 
                 // Get all Deposit(s), with on-hold current_deposit_status, from this Customer
                 $customerOnHoldDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
