@@ -784,14 +784,14 @@ class ServiceController extends Controller
                 // Find all winning Auction Lots
                 // $winningLots = $unpaidAuctionLots->where('winning_bid_customer_id', $customerID);
                 $winningLotIds = $confirmedLots->map(function ($lot) {
-                    return $lot->lot_id;
+                    return $lot['lot_id'];
                 })->all();
                 $winningLots = AuctionLot::find($winningLotIds);
                 $winningLots = $winningLots->map(function ($winningLot) use ($confirmedLots) {
                     $confirmedLot = $confirmedLots->first(function ($lot) use ($winningLot) {
-                        return $lot->lot_id === $winningLot->_id;
+                        return $lot['lot_id'] === $winningLot->_id;
                     });
-                    $winningLot->current_bid = $confirmedLot->price;
+                    $winningLot->current_bid = $confirmedLot['price'];
                     return $winningLot;
                 });
 
