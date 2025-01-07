@@ -959,7 +959,7 @@ class ServiceController extends Controller
         $latestActiveLot = $lots->filter(function ($lot) {
             return $lot->status === 'ACTIVE';
         })->sortByDesc('updated_at')->first();
-        if (!$latestActiveLot) {
+        if (is_null($latestActiveLot)) {
             return $lots->sortBy('lot_number')->first();
         } else {
             return $latestActiveLot;
