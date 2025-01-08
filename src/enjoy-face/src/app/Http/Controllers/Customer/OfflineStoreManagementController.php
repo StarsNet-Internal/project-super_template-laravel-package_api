@@ -186,7 +186,7 @@ class OfflineStoreManagementController extends Controller
                     $category->select('item_ids', 'title', 'store_category_type');
                 },
                 'orders' => function ($query) {
-                    $query->where('current_status', '!=', 'cancelled');
+                    $query->where('is_paid', true);
                 },
             ])
             ->get();
@@ -244,7 +244,7 @@ class OfflineStoreManagementController extends Controller
                 $category->select('item_ids', 'title', 'store_category_type');
             },
             'orders' => function ($query) {
-                $query->where('current_status', '!=', 'cancelled');
+                $query->where('is_paid', true);
             },
         ])
             ->find($storeId);
