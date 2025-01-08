@@ -774,6 +774,17 @@ class ServiceController extends Controller
         // Generate OFFLINE order by system
         $generatedOrderCount = 0;
 
+        // Update auction lots with inputted price
+        foreach ($request->results as $result) {
+            foreach ($result['lots'] as $lot) {
+                AuctionLot::where('_id', $lot['lot_id'])
+                    ->update([
+                        'winning_bid_customer_id' => $result['customer_id'],
+                        'current_bid' => $lot['price']
+                    ]);
+            }
+        }
+
         // foreach ($winningCustomerIDs as $customerID) {
         foreach ($request->results as $result) {
             try {
@@ -787,13 +798,13 @@ class ServiceController extends Controller
                     return $lot['lot_id'];
                 })->all();
                 $winningLots = AuctionLot::find($winningLotIds);
-                $winningLots = $winningLots->map(function ($winningLot) use ($confirmedLots) {
-                    $confirmedLot = $confirmedLots->first(function ($lot) use ($winningLot) {
-                        return $lot['lot_id'] === $winningLot->_id;
-                    });
-                    $winningLot->current_bid = $confirmedLot['price'];
-                    return $winningLot;
-                });
+                // $winningLots = $winningLots->map(function ($winningLot) use ($confirmedLots) {
+                //     $confirmedLot = $confirmedLots->first(function ($lot) use ($winningLot) {
+                //         return $lot['lot_id'] === $winningLot->_id;
+                //     });
+                //     $winningLot->current_bid = $confirmedLot['price'];
+                //     return $winningLot;
+                // });
 
                 // Get all Deposit(s), with on-hold current_deposit_status, from this Customer
                 $customerOnHoldDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
