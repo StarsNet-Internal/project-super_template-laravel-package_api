@@ -27,6 +27,7 @@ use Illuminate\Support\Str;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use StarsNet\Project\Paraqon\App\Models\Bid;
 use StarsNet\Project\Paraqon\App\Models\ProductStorageRecord;
+use StarsNet\Project\Paraqon\App\Models\LiveBiddingEvent;
 
 // Validator
 use Illuminate\Support\Facades\Validator;
@@ -555,6 +556,11 @@ class AuctionLotController extends Controller
 
         $auctionLot = AuctionLot::find($auctionLotId);
         $bidHistory = BidHistory::firstWhere('auction_lot_id', $auctionLotId);
+
+        // Reset events
+        LiveBiddingEvent::where('store_id', $auctionLot->store_id)
+            ->where('value_1', $auctionLotId)
+            ->update(['is_hidden' => true]);
 
         // Hide previous DIRECT bids
         $auctionLot->bids()
