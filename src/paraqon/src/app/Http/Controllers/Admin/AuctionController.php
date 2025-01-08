@@ -726,7 +726,7 @@ class AuctionController extends Controller
         ], 200);
     }
 
-    public function closeAllNonDisabledLots($request)
+    public function closeAllNonDisabledLots(Request $request)
     {
         $storeId = $request->route('store_id');
 
