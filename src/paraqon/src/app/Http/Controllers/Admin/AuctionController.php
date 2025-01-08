@@ -737,7 +737,8 @@ class AuctionController extends Controller
             ->update([
                 'status' => 'ACTIVE',
                 'is_disabled' => true,
-                'is_closed' => true
+                'is_closed' => true,
+                'end_datetime' => null
             ]);
 
         return response()->json([
