@@ -725,4 +725,23 @@ class AuctionController extends Controller
             'message' => 'Updated listing_status for ' . count($productIDs) . ' Product(s).'
         ], 200);
     }
+
+    public function closeAllNonDisabledLots($request)
+    {
+        $storeId = $request->route('store_id');
+
+        AuctionLot::where('store_id', $storeId)
+            ->where('status', '!=', Status::DELETED)
+            ->whereNotNull('lot_number')
+            ->where('is_disabled', false)
+            ->update([
+                'status' => 'ACTIVE',
+                'is_disabled' => true,
+                'is_closed' => true
+            ]);
+
+        return response()->json([
+            'message' => 'Close all Lots successfully'
+        ], 200);
+    }
 }

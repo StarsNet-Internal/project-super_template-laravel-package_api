@@ -955,14 +955,29 @@ class ServiceController extends Controller
             return $openedLot;
         }
 
+        $sortedLots = $lots->sortBy('lot_number')->values();
+
+        // Return last lot_number if all SOLD / CLOSE
+        $isAllLotsDisabled = $lots->every(function ($lot) {
+            return $lot->is_disabled;
+        });
+        if ($isAllLotsDisabled) {
+            return $sortedLots->last();
+        }
+
+        // Return first lot_number if all UPCOMING
+        $isAllLotsUpcoming = $lots->every(function ($lot) {
+            return $lot->status == 'ARCHIVED' && !$lot->is_disabled && !$lot->is_closed;
+        });
+        if ($isAllLotsUpcoming) {
+            return $sortedLots->first();
+        }
+
         // Find last updated SOLD or CLOSE lot
         $latestActiveLot = $lots->filter(function ($lot) {
             return $lot->status === 'ACTIVE';
         })->sortByDesc('updated_at')->first();
-        if (is_null($latestActiveLot)) {
-            return $lots->sortBy('lot_number')->first();
-        } else {
-            return $latestActiveLot;
-        }
+
+        return $latestActiveLot;
     }
 }

@@ -97,6 +97,8 @@ Route::group(
 
                 Route::get('/{store_id}/auction-lots/unpaid', [$defaultController, 'getAllUnpaidAuctionLots'])->middleware(['pagination']);
                 Route::put('/{store_id}/auction-lots/return', [$defaultController, 'returnAuctionLotToOriginalCustomer']);
+
+                Route::get('/{store_id}/close', [$defaultController, 'closeAllNonDisabledLots']);
             }
         );
     }
