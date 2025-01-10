@@ -74,6 +74,7 @@ Route::group(
 
                 Route::put('/{id}/details', [$defaultController, 'updatePostDetails']);
 
+                Route::get('/{id}/reviews', [$defaultController, 'getPostReviews'])->middleware(['pagination']);
                 Route::post('/reviews/{review_id}/reply', [$defaultController, 'replyPostReview']);
 
                 Route::put('/reviews/status', [$defaultController, 'updatePostReviewReplyStatus']);

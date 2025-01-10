@@ -81,6 +81,37 @@ class PostController extends Controller
         ], 200);
     }
 
+    public function getPostReviews(Request $request)
+    {
+        // Extract attributes from $request
+        $postID = $request->route('id');
+
+        // Get Post, then validate
+        /** @var Post $post */
+        $post = Post::find($postID);
+
+        if (is_null($post)) {
+            return response()->json([
+                'message' => 'Post not found'
+            ], 404);
+        }
+
+        // Get Review(s)
+        $reviews = $post->reviews()
+            ->statuses(Status::$typesForAdmin)
+            ->with(['user', 'user.account', 'user.account.customer'])
+            ->get();
+
+        // Get Authenticated User information
+        $user = $this->user();
+
+        // Append is_editable
+        $this->appendIsEditableFieldForReviews($reviews, $user);
+
+        // Return Review(s)
+        return $reviews;
+    }
+
     public function replyPostReview(Request $request)
     {
         // Extract attributes from $request
