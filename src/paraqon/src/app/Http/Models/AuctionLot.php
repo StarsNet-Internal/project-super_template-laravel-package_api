@@ -322,7 +322,8 @@ class AuctionLot extends Eloquent
 
         $maximumMaxBid = $allBids
             ->first(function ($value) {
-                return $value->type == 'MAX';
+                return in_array($value->type, ['MAX', 'ADVANCED']);
+                // return $value->type == 'MAX';
             });
         $maximumMaxBidValue = optional($maximumMaxBid)->bid;
 

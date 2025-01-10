@@ -1,6 +1,6 @@
 <?php
 
-namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
+namespace StarsNet\Project\Videocom\App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Store;
@@ -10,8 +10,8 @@ use App\Models\Content;
 use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use StarsNet\Project\Paraqon\App\Actions\CreateOrder;
-use StarsNet\Project\Paraqon\App\Models\AuctionLot;
+use StarsNet\Project\Videocom\App\Actions\CreateOrder;
+use StarsNet\Project\Videocom\App\Models\AuctionLot;
 
 class TestingController extends Controller
 {

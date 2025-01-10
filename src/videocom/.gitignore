@@ -1,0 +1,6 @@
+.env
+.vscode
+/node_modules
+vendor
+.DS_Store
+/public/images/_
