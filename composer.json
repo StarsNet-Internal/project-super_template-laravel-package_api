@@ -28,6 +28,7 @@
       "StarsNet\\Project\\SunKwong\\": "src/sun-kwong/src/",
       "StarsNet\\Project\\TripleGaga\\": "src/triple-gaga/src/",
       "StarsNet\\Project\\TuenSir\\": "src/tuen-sir/src/",
+      "StarsNet\\Project\\Videocom\\": "src/whisky-whiskers/src/",
       "StarsNet\\Project\\WhiskyWhiskers\\": "src/whisky-whiskers/src/"
     }
   },
@@ -58,6 +59,7 @@
         "StarsNet\\Project\\SunKwong\\ProjectServiceProvider",
         "StarsNet\\Project\\TripleGaga\\ProjectServiceProvider",
         "StarsNet\\Project\\TuenSir\\ProjectServiceProvider",
+        "StarsNet\\Project\\Videocom\\ProjectServiceProvider",
         "StarsNet\\Project\\WhiskyWhiskers\\EventServiceProvider",
         "StarsNet\\Project\\WhiskyWhiskers\\ProjectServiceProvider"
       ]

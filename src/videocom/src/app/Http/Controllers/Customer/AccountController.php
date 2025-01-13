@@ -20,18 +20,6 @@ use Illuminate\Http\Request;
 
 class AccountController extends Controller
 {
-    public function updateAccountVerification(Request $request)
-    {
-        $account = $this->account();
-
-        $updateFields = $request->all();
-        $account->update($updateFields);
-
-        return response()->json([
-            'message' => 'Updated Verification document successfully'
-        ], 200);
-    }
-
     public function getAllCustomerGroups(Request $request)
     {
         $customer = $this->customer();
