@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 use StarsNet\Project\Videocom\App\Http\Controllers\Customer\AccountController;
 use StarsNet\Project\Videocom\App\Http\Controllers\Customer\AuthenticationController;
 use StarsNet\Project\Videocom\App\Http\Controllers\Customer\AuthController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\ProductController;
+use StarsNet\Project\Videocom\App\Http\Controllers\Customer\ProductReviewController;
 use StarsNet\Project\Videocom\App\Http\Controllers\Customer\ServiceController;
 use StarsNet\Project\Videocom\App\Http\Controllers\Customer\TestingController;
 
@@ -73,16 +73,17 @@ Route::group(
 );
 
 Route::group(
-    ['prefix' => 'products'],
+    ['prefix' => 'products/reviews'],
     function () {
-        $defaultController = ProductController::class;
+        $defaultController = ProductReviewController::class;
+
+        Route::get('/{review_id}/details', [$defaultController, 'getProductReviewDetails']);
 
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
-                Route::get('/all', [$defaultController, 'getAllOwnedProducts'])->middleware(['pagination']);
-                Route::get('/{product_id}/details', [$defaultController, 'getProductDetails']);
-                Route::put('/listing-status', [$defaultController, 'updateListingStatuses']);
+                Route::get('/all', [$defaultController, 'getAllProductReviews'])->middleware(['pagination']);
+                Route::post('/all', [$defaultController, 'getAllProductReviews'])->middleware(['pagination']);
             }
         );
     }

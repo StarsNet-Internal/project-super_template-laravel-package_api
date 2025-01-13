@@ -5,19 +5,12 @@ namespace StarsNet\Project\Videocom\App\Http\Controllers\Customer;
 use App\Constants\Model\LoginType;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
-use App\Models\Warehouse;
 use App\Traits\Controller\AuthenticationTrait;
 use App\Constants\Model\VerificationCodeType;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
-
-use App\Events\Customer\Authentication\CustomerLogin;
-use App\Models\User;
-
-use App\Events\Customer\Authentication\CustomerRegistration;
-use App\Models\VerificationCode;
 
 class AuthenticationController extends Controller
 {
@@ -80,10 +73,18 @@ class AuthenticationController extends Controller
         $user->update($userUpdateAttributes);
 
         $accountUpdateAttributes = [
+            // Default
             'email' => $request->email,
             'area_code' => $request->area_code,
             'phone' => $request->phone,
-            'source' => $request->source,
+            // For Videocom
+            'user_display_id' => $request->user_display_id,
+            'password_verification_question' => $request->password_verification_question,
+            'password_verification_answer' => $request->password_verification_answer,
+            'address' => $request->address,
+            'landline' => $request->landline,
+            'is_agree_lifetime_membership' => $request->is_agree_lifetime_membership,
+            'referrer_id' => $request->referrer_id,
         ];
         $account->update($accountUpdateAttributes);
 
@@ -102,22 +103,22 @@ class AuthenticationController extends Controller
         // ]);
 
         // Update Notification Settings
-        $setting = $account->notificationSetting;
-        $setting->update([
-            "channels" => ["EMAIL", "SMS"],
-            "language" => "EN",
-            "is_accept" => [
-                "marketing_info" => true,
-                "delivery_update" => true,
-                "wishlist_product_update" => true,
-                "special_offers" => true,
-                "auction_notifications" => true,
-                "bid_notifications" => true,
-                "monthly_newsletter" => true,
-                "sales_support" => true
-            ],
-            "is_notifiable" => true,
-        ]);
+        // $setting = $account->notificationSetting;
+        // $setting->update([
+        //     "channels" => ["EMAIL", "SMS"],
+        //     "language" => "EN",
+        //     "is_accept" => [
+        //         "marketing_info" => true,
+        //         "delivery_update" => true,
+        //         "wishlist_product_update" => true,
+        //         "special_offers" => true,
+        //         "auction_notifications" => true,
+        //         "bid_notifications" => true,
+        //         "monthly_newsletter" => true,
+        //         "sales_support" => true
+        //     ],
+        //     "is_notifiable" => true,
+        // ]);
 
         // Return success message
         return response()->json([
