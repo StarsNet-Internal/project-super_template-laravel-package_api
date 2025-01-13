@@ -9,6 +9,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\OfflineStoreManagement
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\OrderManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\CustomerController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\PostController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\VerificationCodeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -138,6 +139,21 @@ Route::group(
 
                 Route::put('/{id}/cancel', [$defaultController, 'cancelOrder']);
                 Route::put('/cancel-all', [$defaultController, 'cancelAllIdleOrders']);
+            }
+        );
+    }
+);
+
+// VERIFICATION CODE
+Route::group(
+    ['prefix' => 'verification-codes'],
+    function () {
+        $defaultController = VerificationCodeController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllVerificationCodes'])->middleware(['pagination']);
             }
         );
     }
