@@ -14,7 +14,7 @@ class ProjectServiceProvider extends ServiceProvider
 {
     protected $namespace = 'StarsNet\Project\Videocom\App\Http\Controllers';
 
-    protected $routePrefix = 'paraqon';
+    protected $routePrefix = 'videocom';
 
     /**
      * Register services.

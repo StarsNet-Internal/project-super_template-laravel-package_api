@@ -2,27 +2,13 @@
 
 // Default Imports
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use StarsNet\Project\Videocom\App\Http\Controllers\Customer\AccountController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\AuctionController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\AuctionLotController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\AuctionRegistrationRequestController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\AuctionRequestController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\AuthController;
 use StarsNet\Project\Videocom\App\Http\Controllers\Customer\AuthenticationController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\BidController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\ConsignmentRequestController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\DepositController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\DocumentController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\OrderController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\PaymentController;
+use StarsNet\Project\Videocom\App\Http\Controllers\Customer\AuthController;
 use StarsNet\Project\Videocom\App\Http\Controllers\Customer\ProductController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\Videocom\App\Http\Controllers\Customer\ServiceController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\Videocom\App\Http\Controllers\Customer\TestingController;
-use StarsNet\Project\Videocom\App\Http\Controllers\Customer\WatchlistItemController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,6 +45,20 @@ Route::group(
 );
 
 Route::group(
+    ['prefix' => 'auth'],
+    function () {
+        $defaultController = AuthenticationController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/migrate', [$defaultController, 'migrateToRegistered']);
+            }
+        );
+    }
+);
+
+Route::group(
     ['prefix' => 'accounts'],
     function () {
         $defaultController = AccountController::class;
@@ -66,7 +66,6 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
-                Route::put('/verification', [$defaultController, 'updateAccountVerification']);
                 Route::get('/customer-groups', [$defaultController, 'getAllCustomerGroups'])->middleware(['pagination']);
             }
         );
