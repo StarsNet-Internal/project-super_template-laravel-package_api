@@ -135,6 +135,9 @@ class AuthenticationController extends CustomerAuthenticationController
             60
         );
 
+        // Verify User
+        $user->verify();
+
         // Update Account
         $account = $user->account;
         $this->updateAccountViaRegistration($account, $request);
