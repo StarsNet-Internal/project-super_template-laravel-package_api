@@ -6,6 +6,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\TestingController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\OfflineStoreManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\ShoppingCartController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\CheckoutController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\WishlistController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\OrderController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Customer\AuthenticationController;
@@ -134,6 +135,18 @@ Route::group(
                 Route::post('/all', [$defaultController, 'getAll']);
             });
         });
+
+        // CHECKOUT
+        Route::group(
+            ['prefix' => 'checkouts'],
+            function () {
+                $defaultController = CheckoutController::class;
+
+                Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                    Route::post('/', [$defaultController, 'checkOut']);
+                });
+            }
+        );
     }
 );
 
