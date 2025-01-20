@@ -24,6 +24,7 @@ use App\Traits\Controller\WarehouseInventoryTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -237,6 +238,8 @@ class OrderController extends Controller
                             ]
                         );
 
+                    Log::info($response);
+
                     // Get response from PinkiePay Service
                     try {
                         $url = 'https://api.stripe.com/v1/payment_intents';
@@ -251,9 +254,13 @@ class OrderController extends Controller
                                     "currency" => 'HKD'
                                 ]
                             );
+                        Log::info($response);
 
                         $transactionID = $response["id"];
                         $clientSecret = $response["client_secret"];
+
+                        Log::info(['transactionId' => $transactionID]);
+                        Log::info(['clientSecret' => $clientSecret]);
 
                         $checkout->updateOnlineTransactionID($transactionID);
                     } catch (\Throwable $th) {
