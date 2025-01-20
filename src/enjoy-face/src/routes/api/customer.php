@@ -41,6 +41,8 @@ Route::group(
         Route::post('/login', [$defaultController, 'login']);
         Route::post('/register', [$defaultController, 'register']);
 
+        Route::get('/verify', [$defaultController, 'verify']);
+
         Route::post('/forget-password', [$defaultController, 'forgetPassword']);
 
         Route::group(

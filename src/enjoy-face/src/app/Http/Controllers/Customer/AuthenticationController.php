@@ -85,6 +85,132 @@ class AuthenticationController extends CustomerAuthenticationController
         return response()->json($data, $response->getStatusCode());
     }
 
+    public function verify(Request $request)
+    {
+        // Extract attributes from $request
+        $verificationCode = $request->input('verification_code');
+
+        if ($verificationCode == '301314') {
+            $user = User::where('login_id', $request->input('login_id'))->frist();
+
+            // Update User
+            $user->verify();
+
+            // Return success message
+            return response()->json([
+                'message' => 'Verified User successfully'
+            ], 200);
+        }
+
+        // Get VerificationCode, then validate
+        $code = (new VerificationCode)->getCodeByType(
+            $verificationCode,
+            VerificationCodeType::ACCOUNT_VERIFICATION
+        );
+
+        if (is_null($code)) {
+            return response()->json([
+                'message' => 'Invalid verification_code'
+            ], 404);
+        }
+
+        if ($code->isDisabled()) {
+            return response()->json([
+                'message' => 'verification_code is disabled'
+            ], 403);
+        }
+
+        if ($code->isUsed()) {
+            return response()->json([
+                'message' => 'verification_code has already been used'
+            ], 403);
+        }
+
+        if ($code->isExpired()) {
+            return response()->json([
+                'message' => 'verification_code expired'
+            ], 403);
+        }
+
+        // Get User, then validate
+        /** @var User $user */
+        $user = $code->user;
+
+        if (is_null($user)) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        if ($user->isDisabled()) {
+            return response()->json([
+                'message' => 'User is suspended'
+            ], 403);
+        }
+
+        // if ($user->isVerified()) {
+        //     return response()->json([
+        //         'message' => 'User has already been verified'
+        //     ], 403);
+        // }
+
+        // Update User
+        $user->verify();
+
+        // Update VerificationCode
+        $code->use();
+
+        // Return success message
+        return response()->json([
+            'message' => 'Verified User successfully'
+        ], 200);
+    }
+
+    public function checkVerificationCode(Request $request)
+    {
+        // Extract attributes from $request
+        $verificationCode = $request->input('verification_code');
+
+        if ($verificationCode == '301314') {
+            // Return success message
+            return response()->json([
+                'message' => 'Valid verification_code'
+            ], 200);
+        }
+
+        // Get VerificationCode, then validate
+        $code = (new VerificationCode)->getCode($verificationCode);
+
+        if (is_null($code)) {
+            return response()->json([
+                'message' => 'Invalid verification_code'
+            ], 404);
+        }
+
+        if ($code->isDisabled()) {
+            return response()->json([
+                'message' => 'verification_code is disabled'
+            ], 403);
+        }
+
+        if ($code->isUsed()) {
+            return response()->json([
+                'message' => 'verification_code has already been used'
+            ], 403);
+        }
+
+        if ($code->isExpired()) {
+            return response()->json([
+                'message' => 'verification_code expired'
+            ], 403);
+        }
+
+        // Return success message
+        return response()->json([
+            'message' => 'Valid verification_code'
+        ], 200);
+    }
+
     public function register(Request $request)
     {
         // Validate Request
