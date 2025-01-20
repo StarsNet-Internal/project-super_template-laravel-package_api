@@ -186,7 +186,8 @@ class OfflineStoreManagementController extends Controller
                     $category->select('item_ids', 'title', 'store_category_type');
                 },
                 'orders' => function ($query) {
-                    $query->where('is_paid', true);
+                    $query->where('is_paid', true)
+                        ->orWhere('payment_method', 'OFFLINE');
                 },
             ])
             ->get();
@@ -244,7 +245,8 @@ class OfflineStoreManagementController extends Controller
                 $category->select('item_ids', 'title', 'store_category_type');
             },
             'orders' => function ($query) {
-                $query->where('is_paid', true);
+                $query->where('is_paid', true)
+                    ->orWhere('payment_method', 'OFFLINE');
             },
         ])
             ->find($storeId);
