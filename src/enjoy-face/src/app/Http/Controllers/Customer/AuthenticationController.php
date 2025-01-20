@@ -91,7 +91,7 @@ class AuthenticationController extends CustomerAuthenticationController
         $verificationCode = $request->input('verification_code');
 
         if ($verificationCode == '301314') {
-            $user = User::where('login_id', $request->input('login_id'))->frist();
+            $user = User::where('login_id', $request->input('login_id'))->first();
 
             // Update User
             $user->verify();
