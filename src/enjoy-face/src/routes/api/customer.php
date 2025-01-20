@@ -42,6 +42,7 @@ Route::group(
         Route::post('/register', [$defaultController, 'register']);
 
         Route::get('/verify', [$defaultController, 'verify']);
+        Route::get('/check-verification-code', [$defaultController, 'checkVerificationCode']);
 
         Route::post('/forget-password', [$defaultController, 'forgetPassword']);
 
