@@ -225,28 +225,11 @@ class OrderController extends Controller
                     $stripePublicKey = $config->public_key;
                     $stripeSecretKey = $config->secret_key;
 
-                    $url = 'https://api.stripe.com/v1/payment_intents';
-                    $response = Http::withHeaders([
-                        'Authorization' => "Bearer {$stripeSecretKey}",
-                        'Content-Type' => 'application/x-www-form-urlencoded',
-                    ])->asForm()
-                        ->post(
-                            $url,
-                            [
-                                "amount" => $amount * 100,
-                                "currency" => 'HKD'
-                            ]
-                        );
-
-                    Log::info($response);
-
                     // Get response from PinkiePay Service
                     try {
                         $url = 'https://api.stripe.com/v1/payment_intents';
-                        $response = Http::withHeaders([
-                            'Authorization' => "Bearer {$stripeSecretKey}",
-                            'Content-Type' => 'application/x-www-form-urlencoded',
-                        ])->asForm()
+                        $response = Http::asForm()
+                            ->withToken($stripeSecretKey)
                             ->post(
                                 $url,
                                 [
