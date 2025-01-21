@@ -105,6 +105,11 @@ class WishlistController extends Controller
             $this->appendStoreAttributes($store, $reviews, $wishlistItemIds, $latitude, $longitude);
         }
 
+        $stores = $stores->map(function ($store) {
+            $store['is_recommended'] = $store['is_label_visible'] ?? false;
+            return $store;
+        });
+
         return $stores;
     }
 
