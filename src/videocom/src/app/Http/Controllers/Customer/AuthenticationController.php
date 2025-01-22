@@ -87,7 +87,7 @@ class AuthenticationController extends Controller
             'is_agree_lifetime_membership' => $request->is_agree_lifetime_membership,
             'referrer_id' => $request->referrer_id,
             'gender' => $request->gender,
-            'birthday' => $request->dob,
+            'dob' => $request->dob,
             'agree_to_terms_of_use' => $request->agree_to_terms_of_use,
             'agree_to_collection_and_use_of_personal_information' => $request->agree_to_collection_and_use_of_personal_information,
             'agree_to_provide_personal_information_to_third_parties' => $request->agree_to_provide_personal_information_to_third_parties,
