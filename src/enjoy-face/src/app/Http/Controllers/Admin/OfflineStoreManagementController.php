@@ -37,8 +37,10 @@ class OfflineStoreManagementController extends AdminOfflineStoreManagementContro
                 //     $query->statuses(Status::$typesForAdmin)->get();
                 // },
                 'orders' => function ($query) {
-                    $query->where('is_paid', true)
-                        ->orWhere('payment_method', 'OFFLINE');
+                    $query->where(function ($query) {
+                        $query->where('is_paid', true)
+                            ->orWhere('payment_method', 'OFFLINE');
+                    });
                 },
             ])
             ->get();
