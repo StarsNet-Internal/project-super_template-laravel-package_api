@@ -82,9 +82,18 @@ class AuthenticationController extends Controller
             'password_verification_question' => $request->password_verification_question,
             'password_verification_answer' => $request->password_verification_answer,
             'address' => $request->address,
-            'landline' => $request->landline,
+            'landline_area_code' => $request->landline_area_code,
+            'landline_phone' => $request->landline_phone,
             'is_agree_lifetime_membership' => $request->is_agree_lifetime_membership,
             'referrer_id' => $request->referrer_id,
+            'gender' => $request->gender,
+            'birthday' => $request->dob,
+            'agree_to_terms_of_use' => $request->agree_to_terms_of_use,
+            'agree_to_collection_and_use_of_personal_information' => $request->agree_to_collection_and_use_of_personal_information,
+            'agree_to_provide_personal_information_to_third_parties' => $request->agree_to_provide_personal_information_to_third_parties,
+            'agree_to_personal_information_processing' => $request->agree_to_personal_information_processing,
+            'agree_to_receive_sms' => $request->agree_to_receive_sms,
+            'agree_to_receive_emails' => $request->agree_to_receive_emails,
         ];
         $account->update($accountUpdateAttributes);
 
