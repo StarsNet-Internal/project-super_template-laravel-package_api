@@ -159,97 +159,93 @@ class ProductManagementController extends Controller
         // Append to excluded Product
         $excludedProductIDs[] = $productID;
 
-        // Initialize a Product collector
-        $products = [];
+        // Get Product(s) registered for this auction/store
+        $productIDs = AuctionLot::where('store_id', $storeID)
+            ->statuses([Status::ARCHIVED, Status::ACTIVE])
+            ->whereNotIn('product_id', $excludedProductIDs)
+            ->pluck('product_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        // Get data from input 
+        $originalProduct = Product::find($productID);
+        $store = Store::find($storeID);
 
         /*
         *   Stage 1:
-        *   Get Product(s) from System ProductCategory, recommended-products
+        *   Append related_score per product based on intersected related_slugs
         */
-        $systemCategory = ProductCategory::slug('recommended-products')->first();
+        $originalProductRelatedSlugs = $originalProduct->related_slugs;
 
-        if (!is_null($systemCategory)) {
-            // Get Product(s)
-            $recommendedProducts = $systemCategory->products()
-                ->whereNotIn('status', [Status::DRAFT, Status::DELETED])
-                ->excludeIDs($excludedProductIDs)
-                ->get();
+        // Get score array for Store's related_lot_ordering
+        $relatedLotOrderingItems = $store->related_lot_ordering;
+        $relatedLotOrderingWeighting = [];
 
-            // Randomize ordering
-            $recommendedProducts = $recommendedProducts->shuffle(); // randomize ordering
+        if (!is_null($relatedLotOrderingItems)) {
+            $initialOrderingScore = count($relatedLotOrderingItems);
+            foreach ($relatedLotOrderingItems as $item) {
+                $relatedLotOrderingWeighting[$item] = $initialOrderingScore--;
+            }
 
-            // Collect data
-            $products = array_merge($products, $recommendedProducts->all()); // collect Product(s)
-            $excludedProductIDs = array_merge($excludedProductIDs, $recommendedProducts->pluck('_id')->all()); // collect _id
-        }
+            $products = Product::find($productIDs);
+            foreach ($products as $product) {
+                // Append default value
+                $product->related_score = 1;
+                $product->ordering_score = 1;
 
-        /*
-        *   Stage 2:
-        *   Get Product(s) from active, related ProductCategory(s)
-        */
-        $product = Product::find($productID);
-        $store = Store::find($storeID);
+                if (is_null($product->related_slugs) || count($product->related_slugs) == 0) {
+                    continue;
+                }
 
-        if (!is_null($product)) {
-            // Get related ProductCategory(s) by Product and within Store
-            $relatedCategories = $product->categories()
-                ->statusActive()
-                ->storeID($store)
-                ->get();
+                // Check intersection for related_score relate to current product
+                $intersectedRelatedSlugCount = count(
+                    array_intersect(
+                        $originalProductRelatedSlugs,
+                        $product->related_slugs
+                    )
+                );
+                $product->related_score = $intersectedRelatedSlugCount + 1;
 
-            $relatedCategoryIDs = $relatedCategories->pluck('_id')->all();
+                // Check intersection for ordering_score taken from current Store
+                $intersectedOrderingSlugs = array_intersect(
+                    $product->related_slugs,
+                    array_keys($relatedLotOrderingWeighting)
+                );
+                $orderingScores = array_map(
+                    fn($slug) =>
+                    $relatedLotOrderingWeighting[$slug],
+                    $intersectedOrderingSlugs
+                );
+                if (!empty($orderingScores)) {
+                    $product->ordering_score = max($orderingScores);
+                }
+            }
 
-            // Get Product(s)
-            $relatedProducts = Product::whereHas('categories', function ($query) use ($relatedCategoryIDs) {
-                $query->whereIn('_id', $relatedCategoryIDs);
-            })
-                ->whereNotIn('status', [Status::DRAFT, Status::DELETED])
-                ->excludeIDs($excludedProductIDs)
-                ->get();
+            /*
+            *   Stage 2:
+            *   Append related_score per product based on intersected related_slugs
+            */
+            $products = $products->sort(function ($a, $b) {
+                // Primary sort: related_score (descending)
+                if ($a['related_score'] !== $b['related_score']) {
+                    return $b['related_score'] <=> $a['related_score'];
+                }
+                // Secondary sort: ordering_score (descending)
+                return $b['ordering_score'] <=> $a['ordering_score'];
+            });
 
-            // Randomize ordering
-            $relatedProducts = $relatedProducts->shuffle(); // randomize ordering
-
-            // Collect data
-            $products = array_merge($products, $relatedProducts->all()); // collect Product(s)
-            $excludedProductIDs = array_merge($excludedProductIDs, $relatedProducts->pluck('_id')->all()); // collect _id
+            // Prevent overriding if sort_by key is given null
+            $request['sort_by'] = 'default';
+        } else {
+            $products = Product::find($productIDs);
         }
 
         /*
         *   Stage 3:
-        *   Get Product(s) assigned to this Store's active ProductCategory(s)
-        */
-        // Get remaining ProductCategory(s) by Store
-        if (!isset($relatedCategoryIDs)) $relatedCategoryIDs = [];
-        $otherCategories = $this->store
-            ->productCategories()
-            ->whereNotIn('status', [Status::DRAFT, Status::DELETED])
-            ->excludeIDs($relatedCategoryIDs)
-            ->get();
-
-        if ($otherCategories->count() > 0) {
-            $otherCategoryIDs = $otherCategories->pluck('_id')->all();
-
-            // Get Product(s)
-            $otherProducts = Product::whereHas('categories', function ($query) use ($otherCategoryIDs) {
-                $query->whereIn('_id', $otherCategoryIDs);
-            })
-                ->whereNotIn('status', [Status::DRAFT, Status::DELETED])
-                ->excludeIDs($excludedProductIDs)
-                ->get();
-
-            // Randomize ordering
-            $otherProducts = $otherProducts->shuffle();
-
-            // Collect data
-            $products = array_merge($products, $otherProducts->all());
-        }
-
-        /*
-        *   Stage 4:
         *   Generate URLs
         */
-        $productIDsSet = collect($products)
+        $productIDsSet = $products
             ->pluck('_id')
             ->chunk($itemsPerPage)
             ->all();

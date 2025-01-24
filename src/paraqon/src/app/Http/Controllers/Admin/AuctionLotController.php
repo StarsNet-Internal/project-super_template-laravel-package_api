@@ -219,6 +219,7 @@ class AuctionLotController extends Controller
         $auctionLotId = $request->route('auction_lot_id');
         $requestedBid = $request->bid;
         $bidType = $request->input('type', 'MAX');
+        $customerID = $request->customer_id;
 
         // Validation for the request body
         if (!in_array($bidType, ['MAX', 'DIRECT', 'ADVANCED'])) {
@@ -266,7 +267,7 @@ class AuctionLotController extends Controller
 
         // Get current_bid place
         $now = now();
-        $customer = $this->customer();
+        $customer = Customer::find($customerID) ?? $this->customer();
         $currentBid = $auctionLot->getCurrentBidPrice();
         $isBidPlaced = $auctionLot->is_bid_placed;
 
@@ -624,6 +625,53 @@ class AuctionLotController extends Controller
 
         return response()->json([
             'message' => 'Lot reset successfully'
+        ], 200);
+    }
+
+    public function updateBidHistoryLastItem(Request $request)
+    {
+        // Extract attributes from request
+        $auctionLotID = $request->route('auction_lot_id');
+        $winningBidCustomerID = $request->winning_bid_customer_id;
+
+        // Find AuctionLot
+        $lot = AuctionLot::find($auctionLotID);
+
+        if (is_null($lot)) {
+            return response()->json([
+                'message' => 'Auction Lot not found'
+            ], 404);
+        }
+
+        // Find Customer
+        $customer = Customer::find($winningBidCustomerID);
+
+        if (is_null($customer)) {
+            return response()->json([
+                'message' => 'Customer not found'
+            ], 404);
+        }
+
+        // Update BidHistory
+        $bidHistory = $lot->bidHistory()->first();
+
+        if (is_null($bidHistory)) {
+            return response()->json([
+                'message' => 'BidHistory not found'
+            ], 404);
+        }
+
+        if ($bidHistory->histories()->count() == 0) {
+            return response()->json([
+                'message' => 'BidHistory histories is empty'
+            ], 404);
+        }
+
+        $lastItem = $bidHistory->histories()->last();
+        $lastItem->update(['winning_bid_customer_id' => $winningBidCustomerID]);
+
+        return response()->json([
+            'message' => 'Updated BidHistory winning_bid_customer_id for the last item'
         ], 200);
     }
 }

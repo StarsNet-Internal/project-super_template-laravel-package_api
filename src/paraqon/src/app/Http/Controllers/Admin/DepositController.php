@@ -116,11 +116,12 @@ class DepositController extends Controller
                     $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
 
                     if (is_null($assignedPaddleID)) {
-                        $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-                            ->get()
-                            ->max('paddle_id')
-                            ?? 0;
-                        $assignedPaddleID = $highestPaddleID + 1;
+                        // $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
+                        //     ->get()
+                        //     ->max('paddle_id')
+                        //     ?? 0;
+                        // $assignedPaddleID = $highestPaddleID + 1;
+                        $assignedPaddleID = $request->paddle_id;
                     }
 
                     $requestUpdateAttributes = [
@@ -158,6 +159,7 @@ class DepositController extends Controller
         // Extract attributes from $request
         $depositID = $request->route('id');
         $replyStatus = $request->reply_status;
+        $paddleID = $request->paddle_id;
 
         // Validation 
         $replyStatus = strtoupper($replyStatus);
@@ -213,20 +215,20 @@ class DepositController extends Controller
                 $deposit->updateStatus('on-hold');
 
                 // Update AuctionRegistrationRequest
-                $storeID = $auctionRegistrationRequest->store_id;
-                $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
+                // $storeID = $auctionRegistrationRequest->store_id;
+                // $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
 
-                if (is_null($assignedPaddleID)) {
-                    $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-                        ->get()
-                        ->max('paddle_id')
-                        ?? 0;
-                    $assignedPaddleID = $highestPaddleID + 1;
-                }
+                // if (is_null($assignedPaddleID)) {
+                //     $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
+                //         ->get()
+                //         ->max('paddle_id')
+                //         ?? 0;
+                //     $assignedPaddleID = $highestPaddleID + 1;
+                // }
 
                 $requestUpdateAttributes = [
                     'approved_by_account_id' => $account->_id,
-                    'paddle_id' => $assignedPaddleID,
+                    'paddle_id' => $paddleID,
                     'status' => Status::ACTIVE,
                     'reply_status' => ReplyStatus::APPROVED
                 ];

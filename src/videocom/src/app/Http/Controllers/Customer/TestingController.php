@@ -11,6 +11,8 @@ use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
+use App\Host;
+
 class TestingController extends Controller
 {
     public function healthCheck(Request $request)

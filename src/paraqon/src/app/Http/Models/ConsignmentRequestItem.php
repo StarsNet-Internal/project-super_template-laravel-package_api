@@ -43,6 +43,7 @@ class ConsignmentRequestItem extends Eloquent
         'description' => null,
         'images' => [],
         'videos' => [],
+        'certificates' => [],
 
         'is_approved' => false,
         'evaluated_price' => 0,

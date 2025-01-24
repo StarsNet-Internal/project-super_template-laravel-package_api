@@ -46,15 +46,6 @@ class AuctionRegistrationRequestController extends Controller
             ->first();
 
         if (!is_null($oldForm)) {
-            $assignedPaddleID = $oldForm->paddle_id;
-            if ($replyStatus == ReplyStatus::APPROVED) {
-                $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-                    ->get()
-                    ->max('paddle_id')
-                    ?? 0;
-                $assignedPaddleID = $highestPaddleID + 1;
-            }
-
             $oldFormAttributes = [
                 'approved_by_account_id' => null,
                 'status' => Status::ACTIVE,
@@ -69,19 +60,19 @@ class AuctionRegistrationRequestController extends Controller
         }
 
         // Create AuctionRegistrationRequest
-        $assignedPaddleID = null;
-        if ($replyStatus == ReplyStatus::APPROVED) {
-            $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-                ->get()
-                ->max('paddle_id')
-                ?? 0;
-            $assignedPaddleID = $highestPaddleID + 1;
-        }
+        // $assignedPaddleID = null;
+        // if ($replyStatus == ReplyStatus::APPROVED) {
+        //     $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
+        //         ->get()
+        //         ->max('paddle_id')
+        //         ?? 0;
+        //     $assignedPaddleID = $highestPaddleID + 1;
+        // }
 
         $newFormAttributes = [
             'requested_by_customer_id' => $customer->_id,
             'store_id' => $storeID,
-            'paddle_id' => $assignedPaddleID,
+            // 'paddle_id' => $assignedPaddleID,
             'status' => Status::ACTIVE,
             'reply_status' => $replyStatus,
         ];

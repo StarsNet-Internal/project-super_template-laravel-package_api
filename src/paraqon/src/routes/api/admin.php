@@ -120,6 +120,7 @@ Route::group(
                 // Live Auction
                 Route::post('/{auction_lot_id}/live-bids', [$defaultController, 'createLiveBid']);
                 Route::get('/{auction_lot_id}/reset', [$defaultController, 'resetAuctionLot']);
+                Route::put('/{auction_lot_id}/bid-histories/last', [$defaultController, 'updateBidHistoryLastItem']);
             }
         );
     }

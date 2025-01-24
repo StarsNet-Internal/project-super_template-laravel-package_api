@@ -17,7 +17,11 @@ class ProductReviewController extends Controller
 
         /** @var ProductReview $reviewQuery */
         $reviewQuery = ProductReview::where('model_type', 'Product')
-            ->where('status', Status::ACTIVE);
+            ->where('status', Status::ACTIVE)
+            ->whereHas('product', function ($q) {
+                $q->where('status', Status::ACTIVE);
+                return;
+            });
 
         foreach ($queryParams as $key => $value) {
             if (is_array($value) && !is_string($value)) {
@@ -33,7 +37,24 @@ class ProductReviewController extends Controller
             'product',
             'productVariant',
             'store',
-        ])->get();
+        ])
+            ->get();
+
+        foreach ($reviews as $review) {
+            $productID = $review->model_type_id;
+
+            $review->review_count = $reviews
+                ->where('model_type_id', $productID)
+                ->count();
+            $review->average_rating = $reviews
+                ->where('model_type_id', $productID)
+                ->where('rating', '>=', 0)
+                ->sum('rating') /
+                $reviews
+                ->where('model_type_id', $productID)
+                ->where('rating', '>=', 0)
+                ->count();
+        }
 
         return $reviews;
     }
