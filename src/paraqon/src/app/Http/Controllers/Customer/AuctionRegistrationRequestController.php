@@ -59,20 +59,24 @@ class AuctionRegistrationRequestController extends Controller
             ], 200);
         }
 
+        // TODO: PARAQON REMOVE
         // Create AuctionRegistrationRequest
-        // $assignedPaddleID = null;
-        // if ($replyStatus == ReplyStatus::APPROVED) {
-        //     $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-        //         ->get()
-        //         ->max('paddle_id')
-        //         ?? 0;
-        //     $assignedPaddleID = $highestPaddleID + 1;
-        // }
+        $assignedPaddleID = null;
+        if ($replyStatus == ReplyStatus::APPROVED) {
+            $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
+                ->get()
+                ->max('paddle_id')
+                ?? 0;
+            $assignedPaddleID = $highestPaddleID + 1;
+        }
+        // TODO: PARAQON REMOVE
 
         $newFormAttributes = [
             'requested_by_customer_id' => $customer->_id,
             'store_id' => $storeID,
-            // 'paddle_id' => $assignedPaddleID,
+            // TODO: PARAQON REMOVE
+            'paddle_id' => $assignedPaddleID,
+            // TODO: PARAQON REMOVE
             'status' => Status::ACTIVE,
             'reply_status' => $replyStatus,
         ];

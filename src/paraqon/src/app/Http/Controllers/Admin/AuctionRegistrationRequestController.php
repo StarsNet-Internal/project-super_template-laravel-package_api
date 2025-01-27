@@ -124,7 +124,7 @@ class AuctionRegistrationRequestController extends Controller
     public function archiveAuctionRegistrationRequest(Request $request)
     {
         // Extract attributes from $request
-        $formID = $request->route('auction_registration_request_id');
+        $formID = $request->route('id');
 
         // Get AuctionRegistrationRequest
         $form = AuctionRegistrationRequest::find($formID);
@@ -139,6 +139,28 @@ class AuctionRegistrationRequestController extends Controller
 
         return response()->json([
             'message' => 'Updated AuctionRegistrationRequest status to ARCHIVED',
+        ], 200);
+    }
+
+    public function updateAuctionRegistrationRequest(Request $request)
+    {
+        // Extract attributes from $request
+        $formID = $request->route('id');
+
+        // Get AuctionRegistrationRequest
+        $form = AuctionRegistrationRequest::find($formID);
+
+        if (is_null($form)) {
+            return response()->json([
+                'message' => 'AuctionRegistrationRequest not found'
+            ], 404);
+        }
+
+        $attributes = $request->all();
+        $form->update($attributes);
+
+        return response()->json([
+            'message' => 'Updated AuctionRegistrationRequest',
         ], 200);
     }
 }

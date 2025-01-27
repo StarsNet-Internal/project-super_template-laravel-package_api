@@ -137,7 +137,8 @@ Route::group(
                 Route::post('/register', [$defaultController, 'registerAuction']);
                 Route::get('/all', [$defaultController, 'getAllRegisteredAuctions'])->middleware(['pagination']);
                 // Route::post('/{id}/deposit', [$defaultController, 'createDeposit']);
-                Route::put('/{auction_registration_request_id}/archive', [$defaultController, 'archiveAuctionRegistrationRequest']);
+                Route::put('/{id}/archive', [$defaultController, 'archiveAuctionRegistrationRequest']);
+                Route::put('/{id}/details', [$defaultController, 'updateAuctionRegistrationRequest']);
             }
         );
     }
