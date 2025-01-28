@@ -232,7 +232,10 @@ class DepositController extends Controller
 
                 $requestUpdateAttributes = [
                     'approved_by_account_id' => $account->_id,
-                    'paddle_id' => $paddleID,
+                    // TODO: PARAQON REMOVE
+                    'paddle_id' => $assignedPaddleID,
+                    // TODO: PARAQON REMOVE
+                    // 'paddle_id' => $paddleID,
                     'status' => Status::ACTIVE,
                     'reply_status' => ReplyStatus::APPROVED
                 ];

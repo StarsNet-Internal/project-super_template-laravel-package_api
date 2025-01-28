@@ -166,17 +166,22 @@ class AuctionController extends Controller
             ], 200);
         }
 
+        // TODO: PARAQON REMOVE
         // Create AuctionRegistrationRequest
-        // $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-        //     ->get()
-        //     ->max('paddle_id')
-        //     ?? 0;
-        // $assignedPaddleID = $highestPaddleID + 1;
+        $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
+            ->get()
+            ->max('paddle_id')
+            ?? 0;
+        $assignedPaddleID = $highestPaddleID + 1;
+        // TODO: PARAQON REMOVE
 
         $createAttributes = [
             'requested_by_customer_id' => $customerID,
             'store_id' => $storeID,
-            'paddle_id' => $paddleID,
+            // TODO: PARAQON REMOVE
+            'paddle_id' => $assignedPaddleID,
+            // TODO: PARAQON REMOVE
+            // 'paddle_id' => $paddleID,
             'status' => Status::ACTIVE,
             'reply_status' => ReplyStatus::APPROVED
         ];
