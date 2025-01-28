@@ -123,7 +123,7 @@ class DepositController extends Controller
                             ?? 0;
                         $assignedPaddleID = $highestPaddleID + 1;
                         // TODO: PARAQON REMOVE
-                        $assignedPaddleID = $request->paddle_id;
+                        // $assignedPaddleID = $request->paddle_id;
                     }
 
                     $requestUpdateAttributes = [
