@@ -251,7 +251,8 @@ class ProductManagementController extends Controller
                                 ],
                                 'then' => [
                                     '$subtract' => [
-                                        '$price', '$local_discount_value'
+                                        '$price',
+                                        '$local_discount_value'
                                     ]
                                 ]
                             ],
@@ -263,13 +264,16 @@ class ProductManagementController extends Controller
                                     '$divide' => [
                                         [
                                             '$multiply' => [
-                                                '$price', [
+                                                '$price',
+                                                [
                                                     '$subtract' => [
-                                                        100, '$local_discount_value'
+                                                        100,
+                                                        '$local_discount_value'
                                                     ]
                                                 ]
                                             ]
-                                        ], 100
+                                        ],
+                                        100
                                     ]
                                 ]
                             ]
@@ -284,14 +288,16 @@ class ProductManagementController extends Controller
                     '$cond' => [
                         'if' => [
                             '$lte' => [
-                                '$discounted_price', 0
+                                '$discounted_price',
+                                0
                             ],
                         ],
                         'then' =>  '0',
                         'else' => [
                             '$toString' => [
                                 '$round' => [
-                                    '$discounted_price', 2
+                                    '$discounted_price',
+                                    2
                                 ]
                             ]
                         ],
@@ -352,7 +358,6 @@ class ProductManagementController extends Controller
         $keyword = $request->input('keyword');
         if ($keyword === "") $keyword = null;
         $slug = $request->input('slug', 'by-keyword-relevance');
-
 
         // Get sorting attributes via slugs
         if (!is_null($slug)) {

@@ -64,7 +64,7 @@ class AuctionController extends Controller
                 $auction->auction_registration_request = $auctionRegistrationRequest;
             }
 
-            $auction->deposits = Deposit::where('customer_id', $customer->id)
+            $auction->deposits = Deposit::where('requested_by_customer_id', $customer->id)
                 ->where('status', '!=', Status::DELETED)
                 ->whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
                     $query->where('store_id', $storeID);
@@ -79,10 +79,10 @@ class AuctionController extends Controller
     public function getAuctionDetails(Request $request)
     {
         // Extract attributes from $request
-        $storeId = $request->route('auction_id');
+        $storeID = $request->route('auction_id');
 
         // Get Auction Store(s)
-        $auction = Store::find($storeId);
+        $auction = Store::find($storeID);
 
         if (is_null($auction)) {
             return response()->json([
@@ -126,6 +126,14 @@ class AuctionController extends Controller
             ->all();
 
         $auction->is_watching = in_array($auction->id, $watchingAuctionIDs);
+
+        $auction->deposits = Deposit::where('requested_by_customer_id', $customer->id)
+            ->where('status', '!=', Status::DELETED)
+            ->whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
+                $query->where('store_id', $storeID);
+            })
+            ->latest()
+            ->get();
 
         // Return Auction Store
         return $auction;

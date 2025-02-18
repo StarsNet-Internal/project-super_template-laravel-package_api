@@ -210,7 +210,68 @@ class AuctionLotController extends Controller
         // Get AuctionLot
         $auctionLot = AuctionLot::find($auctionLotID);
 
+        if (is_null($auctionLot)) {
+            return response()->json([
+                'message' => 'Auction Lot not found',
+            ], 404);
+        }
+
+        if ($auctionLot->status === Status::DELETED) {
+            return response()->json([
+                'message' => 'Auction Lot not found',
+            ], 404);
+        }
+
         return $auctionLot;
+    }
+
+    public function getAllAuctionLotBids(Request $request)
+    {
+        // Extract attributes from $request
+        $auctionLotID = $request->route('id');
+
+        // Get AuctionLot
+        $auctionLot = AuctionLot::find($auctionLotID);
+
+        if (is_null($auctionLot)) {
+            return response()->json([
+                'message' => 'Auction Lot not found',
+            ], 404);
+        }
+
+        if ($auctionLot->status === Status::DELETED) {
+            return response()->json([
+                'message' => 'Auction Lot not found',
+            ], 404);
+        }
+
+        // Get Bids
+        $bids = $auctionLot->bids()
+            ->with('customer')
+            ->get();
+
+        return $bids;
+    }
+
+    public function massUpdateAuctionLots(Request $request)
+    {
+        $lotAttributes = $request->lots;
+
+        foreach ($lotAttributes as $lot) {
+            $lotID = $lot['id'];
+            $auctionLot = AuctionLot::find($lotID);
+
+            // Check if the AuctionLot exists
+            if (!is_null($auctionLot)) {
+                $updateAttributes = $lot;
+                unset($updateAttributes['id']);
+                $auctionLot->update($updateAttributes);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Auction Lots updated successfully'
+        ], 200);
     }
 
     public function createLiveBid(Request $request)

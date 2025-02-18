@@ -63,6 +63,7 @@ class AuctionLot extends Eloquent
         'starting_price' => 0,
         'reserve_price' => 0,
         'current_bid' => 0,
+        'permission_type' => null,
         'permission_requests' => [],
 
         'status' => Status::ACTIVE,

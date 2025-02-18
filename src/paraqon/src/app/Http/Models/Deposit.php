@@ -81,6 +81,7 @@ class Deposit extends Eloquent
         'deposit_statuses' => [],
         'status' => Status::ACTIVE,
         'reply_status' => ReplyStatus::PENDING,
+        'permission_type' => null,
         'remarks' => null,
 
         // Timestamps

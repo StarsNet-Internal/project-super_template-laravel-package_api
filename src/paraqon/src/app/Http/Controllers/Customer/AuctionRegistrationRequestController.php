@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
 use StarsNet\Project\Paraqon\App\Models\Deposit;
 
@@ -32,12 +33,13 @@ class AuctionRegistrationRequestController extends Controller
         $storeID = $request->store_id;
 
         // Check CustomerGroup for reply_status value
-        $hasWaivedAuctionRegistrationGroup = $customer->groups()
-            ->where('is_waived_auction_registration_deposit', true)
-            ->exists();
-        $replyStatus = $hasWaivedAuctionRegistrationGroup ?
-            ReplyStatus::APPROVED :
-            ReplyStatus::PENDING;
+        // $hasWaivedAuctionRegistrationGroup = $customer->groups()
+        //     ->where('is_waived_auction_registration_deposit', true)
+        //     ->exists();
+        // $replyStatus = $hasWaivedAuctionRegistrationGroup ?
+        //     ReplyStatus::APPROVED :
+        //     ReplyStatus::PENDING;
+        $replyStatus = ReplyStatus::PENDING;
 
         // Check if there's existing AuctionRegistrationRequest
         $oldForm =
@@ -59,24 +61,9 @@ class AuctionRegistrationRequestController extends Controller
             ], 200);
         }
 
-        // TODO: PARAQON REMOVE
-        // Create AuctionRegistrationRequest
-        $assignedPaddleID = null;
-        if ($replyStatus == ReplyStatus::APPROVED) {
-            $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-                ->get()
-                ->max('paddle_id')
-                ?? 0;
-            $assignedPaddleID = $highestPaddleID + 1;
-        }
-        // TODO: PARAQON REMOVE
-
         $newFormAttributes = [
             'requested_by_customer_id' => $customer->_id,
             'store_id' => $storeID,
-            // TODO: PARAQON REMOVE
-            'paddle_id' => $assignedPaddleID,
-            // TODO: PARAQON REMOVE
             'status' => Status::ACTIVE,
             'reply_status' => $replyStatus,
         ];
@@ -96,7 +83,8 @@ class AuctionRegistrationRequestController extends Controller
         $paymentMethod = $request->payment_method;
         $amount = $request->amount;
         $currency = $request->input('currency', 'HKD');
-        $conversion_rate = $request->input('conversion_rate', '1.00');
+        $conversionRate = $request->input('conversion_rate', '1.00');
+        $auctionLotID = $request->auction_lot_id;
 
         // Get authenticated User information
         $customer = $this->customer();
@@ -106,20 +94,62 @@ class AuctionRegistrationRequestController extends Controller
 
         if (is_null($form)) {
             return response()->json([
-                'message' => 'AuctionRegistrationRequest not found',
+                'message' => 'Auction Registration Request not found',
             ], 200);
         }
-
-        // if ($form->status != Status::ACTIVE) {
-        //     return response()->json([
-        //         'message' => 'AuctionRegistrationRequest Status is not ACTIVE'
-        //     ], 404);
-        // }
 
         if ($form->requested_by_customer_id != $customer->_id) {
             return response()->json([
                 'message' => 'You do not have the permission to create Deposit'
             ], 404);
+        }
+
+        // If auction_lot_id is provided, find the correct deposit amount written in Store deposit_permissions
+        $lotPermissionType = null;
+        if (!is_null($auctionLotID)) {
+            $auctionLot = AuctionLot::find($auctionLotID);
+
+            if (is_null($auctionLot)) {
+                return response()->json([
+                    'message' => 'Invalid auction_lot_id'
+                ], 404);
+            }
+
+            if ($auctionLot->status == Status::DELETED) {
+                return response()->json([
+                    'message' => 'Auction Lot not found'
+                ], 404);
+            }
+
+            $lotPermissionType = $auctionLot->permission_type;
+
+            if (!is_null($lotPermissionType)) {
+                $storeID = $form->store_id;
+                $store = Store::find($storeID);
+
+                if (is_null($store)) {
+                    return response()->json([
+                        'message' => 'Invalid Store'
+                    ], 404);
+                }
+
+                if ($store->status == Status::DELETED) {
+                    return response()->json([
+                        'message' => 'Store not found'
+                    ], 404);
+                }
+
+                $depositPermissions = $store->deposit_permissions;
+
+                if (!empty($depositPermissions)) {
+                    foreach ($depositPermissions as $permission) {
+                        if ($permission['permission_type'] === $lotPermissionType) {
+                            $amount = $permission['amount'];
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         switch ($paymentMethod) {
@@ -133,8 +163,9 @@ class AuctionRegistrationRequestController extends Controller
                     'currency' => 'HKD',
                     'payment_information' => [
                         'currency' => $currency,
-                        'conversion_rate' => $conversion_rate
-                    ]
+                        'conversion_rate' => $conversionRate
+                    ],
+                    'permission_type' => $lotPermissionType
                 ];
                 $deposit = Deposit::create($depositAttributes);
                 $deposit->updateStatus('submitted');
@@ -195,8 +226,9 @@ class AuctionRegistrationRequestController extends Controller
                     ],
                     'payment_information' => [
                         'currency' => $currency,
-                        'conversion_rate' => $conversion_rate
-                    ]
+                        'conversion_rate' => $conversionRate
+                    ],
+                    'permission_type' => $lotPermissionType
                 ];
                 $deposit = Deposit::create($depositAttributes);
                 $deposit->updateStatus('submitted');
@@ -318,6 +350,7 @@ class AuctionRegistrationRequestController extends Controller
     {
         // Get AuctionRegistrationRequest
         $form = null;
+        $customer = $this->customer();
 
         if ($request->exists('id')) {
             $form = AuctionRegistrationRequest::objectID($request->id)
@@ -328,6 +361,7 @@ class AuctionRegistrationRequestController extends Controller
 
         if ($request->exists('store_id')) {
             $form = AuctionRegistrationRequest::where('store_id', $request->store_id)
+                ->where('requested_by_customer_id', $customer->_id)
                 ->with(['store', 'deposits'])
                 ->latest()
                 ->first();
@@ -336,14 +370,6 @@ class AuctionRegistrationRequestController extends Controller
         if (is_null($form)) {
             return response()->json([
                 'message' => 'Auction Registration Request not found'
-            ], 404);
-        }
-
-        $customer = $this->customer();
-
-        if ($form->requested_by_customer_id != $customer->_id) {
-            return response()->json([
-                'message' => 'Access denied'
             ], 404);
         }
 

@@ -97,34 +97,6 @@ class ServiceController extends Controller
                     ]);
                     $deposit->updateOnlineResponse($request->all());
 
-                    // TODO: PARAQON REMOVE
-                    if (
-                        in_array($auctionRegistrationRequest->reply_status, [
-                            ReplyStatus::PENDING,
-                            ReplyStatus::REJECTED
-                        ])
-                    ) {
-                        // get Paddle ID
-                        $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
-                        $storeID = $auctionRegistrationRequest->store_id;
-
-                        if (is_null($assignedPaddleID)) {
-                            $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-                                ->get()
-                                ->max('paddle_id')
-                                ?? 0;
-                            $assignedPaddleID = $highestPaddleID + 1;
-                        }
-
-                        $requestUpdateAttributes = [
-                            'paddle_id' => $assignedPaddleID,
-                            'status' => Status::ACTIVE,
-                            'reply_status' => ReplyStatus::APPROVED
-                        ];
-                        $auctionRegistrationRequest->update($requestUpdateAttributes);
-                    }
-                    // TODO: PARAQON REMOVE
-
                     return response()->json(
                         [
                             'message' => 'Deposit status updated as on-hold',
@@ -682,96 +654,6 @@ class ServiceController extends Controller
         return $newOrder;
     }
 
-    public function generateAuctionOrdersAndRefundDeposits(Request $request)
-    {
-        // Extract attributes from request
-        $storeID = $request->route('store_id');
-
-        // Check Store status, for validation before mass-generating Order(s)
-        $store = Store::find($storeID);
-
-        if ($store->status === Status::ACTIVE) {
-            return response()->json([
-                'message' => "Store is still ACTIVE. Skipping generating auction order sequences."
-            ], 200);
-        }
-
-        if ($store->status === Status::DELETED) {
-            return response()->json([
-                'message' => "Store is already DELETED. Skipping generating auction order sequences."
-            ], 200);
-        }
-
-        // Get AuctionLot(s) from Store
-        $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
-            ->where('status', Status::ARCHIVED)
-            ->whereNotNull('winning_bid_customer_id')
-            ->get()
-            ->filter(function ($item) {
-                return $item->current_bid >= $item->reserve_price;
-            });
-
-        // Get unique winning_bid_customer_id from all AuctionLot(s)
-        $winningCustomerIDs = $unpaidAuctionLots
-            ->pluck('winning_bid_customer_id')
-            ->unique()
-            ->values()
-            ->all();
-
-        // Get all Deposit(s), with on-hold current_deposit_status, from non-winning Customer(s)
-        $allFullRefundDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
-            $query->whereHas('store', function ($query2) use ($storeID) {
-                $query2->where('_id', $storeID);
-            });
-        })
-            ->whereNotIn('requested_by_customer_id', $winningCustomerIDs)
-            ->where('current_deposit_status', 'on-hold')
-            ->get();
-
-        // Full-refund all Deposit(s) from all non-winning Customer(s)
-        foreach ($allFullRefundDeposits as $deposit) {
-            $this->cancelDeposit($deposit);
-        }
-
-        // Generate OFFLINE order by system
-        $generatedOrderCount = 0;
-
-        foreach ($winningCustomerIDs as $customerID) {
-            try {
-                $customer = Customer::find($customerID);
-
-                // Find all winning Auction Lots
-                $winningLots = $unpaidAuctionLots->where('winning_bid_customer_id', $customerID);
-
-                // Get all Deposit(s), with on-hold current_deposit_status, from this Customer
-                $customerOnHoldDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
-                    $query->whereHas('store', function ($query2) use ($storeID) {
-                        $query2->where('_id', $storeID);
-                    });
-                })
-                    ->where('requested_by_customer_id', $customer->_id)
-                    ->where('current_deposit_status', 'on-hold')
-                    ->get();
-
-                // Create Order, and capture/refund deposits
-                $this->createAuctionOrder(
-                    $store,
-                    $customer,
-                    $winningLots,
-                    $customerOnHoldDeposits
-                );
-
-                $generatedOrderCount++;
-            } catch (\Throwable $th) {
-                print($th);
-            }
-        }
-
-        return response()->json([
-            'message' => "Generated {$generatedOrderCount} Auction Store Orders Successfully"
-        ], 200);
-    }
-
     // public function generateAuctionOrdersAndRefundDeposits(Request $request)
     // {
     //     // Extract attributes from request
@@ -793,26 +675,20 @@ class ServiceController extends Controller
     //     }
 
     //     // Get AuctionLot(s) from Store
-    //     // $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
-    //     //     ->where('status', Status::ARCHIVED)
-    //     //     ->whereNotNull('winning_bid_customer_id')
-    //     //     ->get()
-    //     //     ->filter(function ($item) {
-    //     //         return $item->current_bid >= $item->reserve_price;
-    //     //     });
+    //     $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
+    //         ->where('status', Status::ARCHIVED)
+    //         ->whereNotNull('winning_bid_customer_id')
+    //         ->get()
+    //         ->filter(function ($item) {
+    //             return $item->current_bid >= $item->reserve_price;
+    //         });
 
-    //     // // Get unique winning_bid_customer_id from all AuctionLot(s)
-    //     // $winningCustomerIDs = $unpaidAuctionLots
-    //     //     ->pluck('winning_bid_customer_id')
-    //     //     ->unique()
-    //     //     ->values()
-    //     //     ->all();
-
-    //     // Get all winning customer ids
-    //     $winningCustomerIDs = array_map(function ($result) {
-    //         return $result['customer_id'];
-    //     }, $request->results);
-
+    //     // Get unique winning_bid_customer_id from all AuctionLot(s)
+    //     $winningCustomerIDs = $unpaidAuctionLots
+    //         ->pluck('winning_bid_customer_id')
+    //         ->unique()
+    //         ->values()
+    //         ->all();
 
     //     // Get all Deposit(s), with on-hold current_deposit_status, from non-winning Customer(s)
     //     $allFullRefundDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
@@ -832,31 +708,12 @@ class ServiceController extends Controller
     //     // Generate OFFLINE order by system
     //     $generatedOrderCount = 0;
 
-    //     // Update auction lots with inputted price
-    //     foreach ($request->results as $result) {
-    //         foreach ($result['lots'] as $lot) {
-    //             AuctionLot::where('_id', $lot['lot_id'])
-    //                 ->update([
-    //                     'winning_bid_customer_id' => $result['customer_id'],
-    //                     'current_bid' => $lot['price']
-    //                 ]);
-    //         }
-    //     }
-
-    //     foreach ($request->results as $result) {
+    //     foreach ($winningCustomerIDs as $customerID) {
     //         try {
-    //             // Extract attributes from $result
-    //             $customerID = $result['customer_id'];
-    //             $confirmedLots = collect($result['lots']);
-
-    //             // Get Customer
     //             $customer = Customer::find($customerID);
 
     //             // Find all winning Auction Lots
-    //             $winningLotIds = $confirmedLots->map(function ($lot) {
-    //                 return $lot['lot_id'];
-    //             })->all();
-    //             $winningLots = AuctionLot::find($winningLotIds);
+    //             $winningLots = $unpaidAuctionLots->where('winning_bid_customer_id', $customerID);
 
     //             // Get all Deposit(s), with on-hold current_deposit_status, from this Customer
     //             $customerOnHoldDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
@@ -869,17 +726,12 @@ class ServiceController extends Controller
     //                 ->get();
 
     //             // Create Order, and capture/refund deposits
-    //             $order = $this->createAuctionOrder(
+    //             $this->createAuctionOrder(
     //                 $store,
     //                 $customer,
     //                 $winningLots,
     //                 $customerOnHoldDeposits
     //             );
-
-    //             // Create non-system Order is total price is 0
-    //             // if ($order->calculations['price']['total'] == 0) {
-    //             //     $this->createPaidAuctionOrder($order);
-    //             // }
 
     //             $generatedOrderCount++;
     //         } catch (\Throwable $th) {
@@ -891,6 +743,126 @@ class ServiceController extends Controller
     //         'message' => "Generated {$generatedOrderCount} Auction Store Orders Successfully"
     //     ], 200);
     // }
+
+    public function generateAuctionOrdersAndRefundDeposits(Request $request)
+    {
+        // Extract attributes from request
+        $storeID = $request->route('store_id');
+
+        // Check Store status, for validation before mass-generating Order(s)
+        $store = Store::find($storeID);
+
+        if ($store->status === Status::ACTIVE) {
+            return response()->json([
+                'message' => "Store is still ACTIVE. Skipping generating auction order sequences."
+            ], 200);
+        }
+
+        if ($store->status === Status::DELETED) {
+            return response()->json([
+                'message' => "Store is already DELETED. Skipping generating auction order sequences."
+            ], 200);
+        }
+
+        // Get AuctionLot(s) from Store
+        // $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
+        //     ->where('status', Status::ARCHIVED)
+        //     ->whereNotNull('winning_bid_customer_id')
+        //     ->get()
+        //     ->filter(function ($item) {
+        //         return $item->current_bid >= $item->reserve_price;
+        //     });
+
+        // // Get unique winning_bid_customer_id from all AuctionLot(s)
+        // $winningCustomerIDs = $unpaidAuctionLots
+        //     ->pluck('winning_bid_customer_id')
+        //     ->unique()
+        //     ->values()
+        //     ->all();
+
+        // Get all winning customer ids
+        $winningCustomerIDs = array_map(function ($result) {
+            return $result['customer_id'];
+        }, $request->results);
+
+
+        // Get all Deposit(s), with on-hold current_deposit_status, from non-winning Customer(s)
+        $allFullRefundDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
+            $query->whereHas('store', function ($query2) use ($storeID) {
+                $query2->where('_id', $storeID);
+            });
+        })
+            ->whereNotIn('requested_by_customer_id', $winningCustomerIDs)
+            ->where('current_deposit_status', 'on-hold')
+            ->get();
+
+        // Full-refund all Deposit(s) from all non-winning Customer(s)
+        foreach ($allFullRefundDeposits as $deposit) {
+            $this->cancelDeposit($deposit);
+        }
+
+        // Generate OFFLINE order by system
+        $generatedOrderCount = 0;
+
+        // Update auction lots with inputted price
+        foreach ($request->results as $result) {
+            foreach ($result['lots'] as $lot) {
+                AuctionLot::where('_id', $lot['lot_id'])
+                    ->update([
+                        'winning_bid_customer_id' => $result['customer_id'],
+                        'current_bid' => $lot['price']
+                    ]);
+            }
+        }
+
+        foreach ($request->results as $result) {
+            try {
+                // Extract attributes from $result
+                $customerID = $result['customer_id'];
+                $confirmedLots = collect($result['lots']);
+
+                // Get Customer
+                $customer = Customer::find($customerID);
+
+                // Find all winning Auction Lots
+                $winningLotIds = $confirmedLots->map(function ($lot) {
+                    return $lot['lot_id'];
+                })->all();
+                $winningLots = AuctionLot::find($winningLotIds);
+
+                // Get all Deposit(s), with on-hold current_deposit_status, from this Customer
+                $customerOnHoldDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
+                    $query->whereHas('store', function ($query2) use ($storeID) {
+                        $query2->where('_id', $storeID);
+                    });
+                })
+                    ->where('requested_by_customer_id', $customer->_id)
+                    ->where('current_deposit_status', 'on-hold')
+                    ->get();
+
+                // Create Order, and capture/refund deposits
+                $order = $this->createAuctionOrder(
+                    $store,
+                    $customer,
+                    $winningLots,
+                    $customerOnHoldDeposits
+                );
+
+                // Create non-system Order is total price is 0
+                // if ($order->calculations['price']['total'] == 0) {
+                //     $this->createPaidAuctionOrder($order);
+                // }
+
+                $generatedOrderCount++;
+            } catch (\Throwable $th) {
+                print($th);
+            }
+        }
+
+        return response()->json([
+            'message' => "Generated {$generatedOrderCount} Auction Store Orders Successfully"
+        ], 200);
+    }
 
     public function generateLiveAuctionOrdersAndRefundDeposits(Request $request)
     {

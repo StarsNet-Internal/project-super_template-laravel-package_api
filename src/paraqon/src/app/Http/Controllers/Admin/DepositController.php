@@ -112,18 +112,11 @@ class DepositController extends Controller
             switch ($replyStatus) {
                 case ReplyStatus::APPROVED:
                     // Update AuctionRegistrationRequest
-                    $storeID = $auctionRegistrationRequest->store_id;
+                    // $storeID = $auctionRegistrationRequest->store_id;
                     $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
 
                     if (is_null($assignedPaddleID)) {
-                        // TODO: PARAQON REMOVE
-                        $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-                            ->get()
-                            ->max('paddle_id')
-                            ?? 0;
-                        $assignedPaddleID = $highestPaddleID + 1;
-                        // TODO: PARAQON REMOVE
-                        // $assignedPaddleID = $request->paddle_id;
+                        $assignedPaddleID = $request->paddle_id;
                     }
 
                     $requestUpdateAttributes = [
@@ -216,26 +209,9 @@ class DepositController extends Controller
                 $deposit->update($depositUpdateAttributes);
                 $deposit->updateStatus('on-hold');
 
-                // TODO: PARAQON REMOVE
-                // Update AuctionRegistrationRequest
-                $storeID = $auctionRegistrationRequest->store_id;
-                $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
-
-                if (is_null($assignedPaddleID)) {
-                    $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-                        ->get()
-                        ->max('paddle_id')
-                        ?? 0;
-                    $assignedPaddleID = $highestPaddleID + 1;
-                }
-                // TODO: PARAQON REMOVE
-
                 $requestUpdateAttributes = [
                     'approved_by_account_id' => $account->_id,
-                    // TODO: PARAQON REMOVE
-                    'paddle_id' => $assignedPaddleID,
-                    // TODO: PARAQON REMOVE
-                    // 'paddle_id' => $paddleID,
+                    'paddle_id' => $paddleID,
                     'status' => Status::ACTIVE,
                     'reply_status' => ReplyStatus::APPROVED
                 ];

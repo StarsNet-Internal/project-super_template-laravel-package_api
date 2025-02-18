@@ -86,6 +86,8 @@ Route::group(
                 Route::get('/{store_id}/archive', [$defaultController, 'archiveAllAuctionLots']);
                 Route::get('/{store_id}/orders/create', [$defaultController, 'generateAuctionOrders']);
 
+                Route::get('/{store_id}/auction-registration-requests/all', [$defaultController, 'getAllAuctionRegistrationRequests'])->middleware(['pagination']);
+
                 Route::get('/{store_id}/registered-users', [$defaultController, 'getAllRegisteredUsers'])->middleware(['pagination']);
                 Route::put('/{store_id}/registered-users/{customer_id}/remove', [$defaultController, 'removeRegisteredUser']);
                 Route::put('/{store_id}/registered-users/{customer_id}/add', [$defaultController, 'addRegisteredUser']);
@@ -115,8 +117,11 @@ Route::group(
                 Route::post('/', [$defaultController, 'createAuctionLot']);
                 Route::get('/all', [$defaultController, 'getAllAuctionLots'])->middleware(['pagination']);
                 Route::get('/{id}/details', [$defaultController, 'getAuctionLotDetails']);
+                Route::get('/{id}/bids/all', [$defaultController, 'getAllAuctionLotBids'])->middleware(['pagination']);
+                Route::put('/mass-update', [$defaultController, 'massUpdateAuctionLots']);
                 Route::put('/{id}/details', [$defaultController, 'updateAuctionLotDetails']);
                 Route::put('/delete', [$defaultController, 'deleteAuctionLots']);
+
                 // Live Auction
                 Route::post('/{auction_lot_id}/live-bids', [$defaultController, 'createLiveBid']);
                 Route::get('/{auction_lot_id}/reset', [$defaultController, 'resetAuctionLot']);

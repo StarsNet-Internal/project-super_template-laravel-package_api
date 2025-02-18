@@ -77,6 +77,33 @@ class AuctionController extends Controller
         ], 200);
     }
 
+    public function getAllAuctionRegistrationRequests(Request $request)
+    {
+        $storeID = $request->route('store_id');
+
+        $store = Store::find($storeID);
+
+        if (is_null($store)) {
+            return response()->json([
+                'message' => 'Store not found'
+            ], 404);
+        }
+
+        $auctionRegistrationRequests = AuctionRegistrationRequest::where('store_id', $storeID)
+            ->where('status', '!=', Status::DELETED)
+            ->with([
+                'requestedCustomer',
+                'requestedCustomer.account',
+                'deposits' => function ($q) {
+                    $q->where('status', '!=', Status::DELETED);
+                }
+            ])
+            ->latest()
+            ->get();
+
+        return $auctionRegistrationRequests;
+    }
+
     public function getAllRegisteredUsers(Request $request)
     {
         $storeID = $request->route('store_id');
@@ -107,7 +134,6 @@ class AuctionController extends Controller
 
         return $customers;
     }
-
 
     public function removeRegisteredUser(Request $request)
     {
@@ -166,22 +192,11 @@ class AuctionController extends Controller
             ], 200);
         }
 
-        // TODO: PARAQON REMOVE
-        // Create AuctionRegistrationRequest
-        $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-            ->get()
-            ->max('paddle_id')
-            ?? 0;
-        $assignedPaddleID = $highestPaddleID + 1;
-        // TODO: PARAQON REMOVE
 
         $createAttributes = [
             'requested_by_customer_id' => $customerID,
             'store_id' => $storeID,
-            // TODO: PARAQON REMOVE
-            'paddle_id' => $assignedPaddleID,
-            // TODO: PARAQON REMOVE
-            // 'paddle_id' => $paddleID,
+            'paddle_id' => $paddleID,
             'status' => Status::ACTIVE,
             'reply_status' => ReplyStatus::APPROVED
         ];
