@@ -101,49 +101,6 @@ class DepositController extends Controller
         $updateAttributes = $request->all();
         $deposit->update($updateAttributes);
 
-        // Get AuctionRegistrationRequest
-        $auctionRegistrationRequest = $deposit->auctionRegistrationRequest;
-
-        if (!is_null($auctionRegistrationRequest)) {
-            // Get current Account
-            $account = $this->account();
-
-            // Update Deposit and AuctionRegistrationRequest
-            switch ($replyStatus) {
-                case ReplyStatus::APPROVED:
-                    // Update AuctionRegistrationRequest
-                    // $storeID = $auctionRegistrationRequest->store_id;
-                    $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
-
-                    if (is_null($assignedPaddleID)) {
-                        $assignedPaddleID = $request->paddle_id;
-                    }
-
-                    $requestUpdateAttributes = [
-                        'approved_by_account_id' => $account->_id,
-                        'paddle_id' => $assignedPaddleID,
-                        'status' => Status::ACTIVE,
-                        'reply_status' => ReplyStatus::APPROVED
-                    ];
-                    $auctionRegistrationRequest->update($requestUpdateAttributes);
-                    break;
-                case ReplyStatus::REJECTED:
-                    if ($auctionRegistrationRequest->reply_status == ReplyStatus::APPROVED) {
-                        break;
-                    }
-                    // Update AuctionRegistrationRequest
-                    $requestUpdateAttributes = [
-                        'approved_by_account_id' => $account->_id,
-                        'status' => Status::ACTIVE,
-                        'reply_status' => ReplyStatus::REJECTED
-                    ];
-                    $auctionRegistrationRequest->update($requestUpdateAttributes);
-                    break;
-                default:
-                    break;
-            }
-        }
-
         return response()->json([
             'message' => 'Deposit updated successfully'
         ], 200);
