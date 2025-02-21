@@ -5,11 +5,9 @@ namespace StarsNet\Project\Paraqon;
 use App\Events\Common\Checkout\OfflineCheckoutImageUploaded;
 use App\Events\Common\Order\OrderCreated;
 use App\Events\Common\Order\OrderPaid;
-use StarsNet\Project\Paraqon\App\Events\Common\Payment\PaidFromPinkiePay;
 use App\Events\Customer\Authentication\CustomerLogin;
 use App\Events\Customer\Authentication\CustomerRegistration;
 use App\Listeners\Common\Checkout\ApproveOfflineCheckoutImage;
-use StarsNet\Project\Paraqon\App\Listeners\Common\Payment\UpdateOrderCheckoutIsPaid;
 use App\Listeners\Customer\Authentication\SaveCustomer;
 use App\Listeners\Customer\Authentication\SaveCustomerLoginHistory;
 use App\Listeners\Customer\MembershipPoint\DistributePoint;
@@ -39,11 +37,7 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array
      */
-    protected $listen = [
-        PaidFromPinkiePay::class => [
-            UpdateOrderCheckoutIsPaid::class,
-        ],
-    ];
+    protected $listen = [];
 
     /**
      * Register any events for your application.

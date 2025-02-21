@@ -10,7 +10,6 @@ use App\Models\Content;
 use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use StarsNet\Project\Paraqon\App\Actions\CreateOrder;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 
 class TestingController extends Controller
@@ -23,13 +22,7 @@ class TestingController extends Controller
         $customer = Customer::find($customerID);
         $store = Store::find($storeID);
 
-        $order = new CreateOrder(
-            $customer,
-            $store
-        );
-        $items = $order->getAllCartItems();
-
-        return response()->json($items);
+        return response()->json($store);
     }
 
     public function healthCheck(Request $request)
@@ -39,12 +32,6 @@ class TestingController extends Controller
 
         $customer = Customer::find($customerID);
         $store = Store::find($storeID);
-
-        $order = new CreateOrder(
-            $customer,
-            $store
-        );
-        return response()->json($order);
 
         // $now = now();
         // $upcomingStores = Store::where(
