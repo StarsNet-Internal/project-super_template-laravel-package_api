@@ -86,7 +86,6 @@ class DepositController extends Controller
     {
         // Extract attributes from $request
         $depositID = $request->route('id');
-        $replyStatus = $request->reply_status;
 
         // Get Deposit
         $deposit = Deposit::find($depositID);
@@ -100,56 +99,6 @@ class DepositController extends Controller
         // Update Deposit
         $updateAttributes = $request->all();
         $deposit->update($updateAttributes);
-
-        // Get AuctionRegistrationRequest
-        $auctionRegistrationRequest = $deposit->auctionRegistrationRequest;
-
-        // TODO: PADDLE_ID_RELATED
-        if (!is_null($auctionRegistrationRequest)) {
-            // Get current Account
-            $account = $this->account();
-
-            // Update Deposit and AuctionRegistrationRequest
-            switch ($replyStatus) {
-                case ReplyStatus::APPROVED:
-                    // Update AuctionRegistrationRequest
-                    $storeID = $auctionRegistrationRequest->store_id;
-                    $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
-
-                    if (is_null($assignedPaddleID)) {
-                        $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-                            ->get()
-                            ->max('paddle_id')
-                            ?? 0;
-                        $assignedPaddleID = $highestPaddleID + 1;
-                        $assignedPaddleID = $request->paddle_id;
-                    }
-
-                    $requestUpdateAttributes = [
-                        'approved_by_account_id' => $account->_id,
-                        'paddle_id' => $assignedPaddleID,
-                        'status' => Status::ACTIVE,
-                        'reply_status' => ReplyStatus::APPROVED
-                    ];
-                    $auctionRegistrationRequest->update($requestUpdateAttributes);
-                    break;
-                case ReplyStatus::REJECTED:
-                    if ($auctionRegistrationRequest->reply_status == ReplyStatus::APPROVED) {
-                        break;
-                    }
-                    // Update AuctionRegistrationRequest
-                    $requestUpdateAttributes = [
-                        'approved_by_account_id' => $account->_id,
-                        'status' => Status::ACTIVE,
-                        'reply_status' => ReplyStatus::REJECTED
-                    ];
-                    $auctionRegistrationRequest->update($requestUpdateAttributes);
-                    break;
-                default:
-                    break;
-            }
-        }
-        // TODO: PADDLE_ID_RELATED
 
         return response()->json([
             'message' => 'Deposit updated successfully'
@@ -216,24 +165,9 @@ class DepositController extends Controller
                 $deposit->update($depositUpdateAttributes);
                 $deposit->updateStatus('on-hold');
 
-                // TODO: PADDLE_ID_RELATED
-                // Update AuctionRegistrationRequest
-                $storeID = $auctionRegistrationRequest->store_id;
-                $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
-
-                if (is_null($assignedPaddleID)) {
-                    $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-                        ->get()
-                        ->max('paddle_id')
-                        ?? 0;
-                    $assignedPaddleID = $highestPaddleID + 1;
-                }
-                // TODO: PADDLE_ID_RELATED
-
-
                 $requestUpdateAttributes = [
                     'approved_by_account_id' => $account->_id,
-                    'paddle_id' => $assignedPaddleID, // TODO: PADDLE_ID_RELATED
+                    'paddle_id' => $paddleID,
                     'status' => Status::ACTIVE,
                     'reply_status' => ReplyStatus::APPROVED
                 ];

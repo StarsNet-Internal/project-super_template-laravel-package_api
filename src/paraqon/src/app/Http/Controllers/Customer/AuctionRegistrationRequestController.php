@@ -32,16 +32,8 @@ class AuctionRegistrationRequestController extends Controller
         // Extract attributes from $request
         $storeID = $request->store_id;
 
-        // TODO: PADDLE_ID_RELATED
         // Check CustomerGroup for reply_status value
-        $hasWaivedAuctionRegistrationGroup = $customer->groups()
-            ->where('is_waived_auction_registration_deposit', true)
-            ->exists();
-        $replyStatus = $hasWaivedAuctionRegistrationGroup ?
-            ReplyStatus::APPROVED :
-            ReplyStatus::PENDING;
-        // TODO: PADDLE_ID_RELATED
-        // $replyStatus = ReplyStatus::PENDING;
+        $replyStatus = ReplyStatus::PENDING;
 
         // Check if there's existing AuctionRegistrationRequest
         $oldForm =
@@ -63,22 +55,9 @@ class AuctionRegistrationRequestController extends Controller
             ], 200);
         }
 
-        // TODO: PADDLE_ID_RELATED
-        // Create AuctionRegistrationRequest
-        $assignedPaddleID = null;
-        if ($replyStatus == ReplyStatus::APPROVED) {
-            $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-                ->get()
-                ->max('paddle_id')
-                ?? 0;
-            $assignedPaddleID = $highestPaddleID + 1;
-        }
-        // TODO: PADDLE_ID_RELATED
-
         $newFormAttributes = [
             'requested_by_customer_id' => $customer->_id,
             'store_id' => $storeID,
-            'paddle_id' => $assignedPaddleID, // TODO: PADDLE_ID_RELATED
             'status' => Status::ACTIVE,
             'reply_status' => $replyStatus,
         ];

@@ -97,34 +97,6 @@ class ServiceController extends Controller
                     ]);
                     $deposit->updateOnlineResponse($request->all());
 
-                    // TODO: PADDLE_ID_RELATED
-                    if (
-                        in_array($auctionRegistrationRequest->reply_status, [
-                            ReplyStatus::PENDING,
-                            ReplyStatus::REJECTED
-                        ])
-                    ) {
-                        // get Paddle ID
-                        $assignedPaddleID = $auctionRegistrationRequest->paddle_id;
-                        $storeID = $auctionRegistrationRequest->store_id;
-
-                        if (is_null($assignedPaddleID)) {
-                            $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-                                ->get()
-                                ->max('paddle_id')
-                                ?? 0;
-                            $assignedPaddleID = $highestPaddleID + 1;
-                        }
-
-                        $requestUpdateAttributes = [
-                            'paddle_id' => $assignedPaddleID,
-                            'status' => Status::ACTIVE,
-                            'reply_status' => ReplyStatus::APPROVED
-                        ];
-                        $auctionRegistrationRequest->update($requestUpdateAttributes);
-                    }
-                    // TODO: PADDLE_ID_RELATED
-
                     return response()->json(
                         [
                             'message' => 'Deposit status updated as on-hold',

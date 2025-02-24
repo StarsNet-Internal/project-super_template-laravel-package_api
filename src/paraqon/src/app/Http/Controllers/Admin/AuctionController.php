@@ -167,7 +167,7 @@ class AuctionController extends Controller
         // Extract attributes from $request
         $storeID = $request->route('store_id');
         $customerID = $request->route('customer_id');
-        // $paddleID = $request->paddle_id;
+        $paddleID = $request->paddle_id;
 
         // Check if there's existing AuctionRegistrationRequest
         $oldForm =
@@ -192,19 +192,10 @@ class AuctionController extends Controller
             ], 200);
         }
 
-        // TODO: PADDLE_ID_RELATED
-        // Create AuctionRegistrationRequest
-        $highestPaddleID = AuctionRegistrationRequest::where('store_id', $storeID)
-            ->get()
-            ->max('paddle_id')
-            ?? 0;
-        $assignedPaddleID = $highestPaddleID + 1;
-        // TODO: PADDLE_ID_RELATED
-
         $createAttributes = [
             'requested_by_customer_id' => $customerID,
             'store_id' => $storeID,
-            'paddle_id' => $assignedPaddleID, // TODO: PADDLE_ID_RELATED
+            'paddle_id' => $paddleID,
             'status' => Status::ACTIVE,
             'reply_status' => ReplyStatus::APPROVED
         ];
