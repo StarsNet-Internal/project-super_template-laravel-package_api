@@ -56,6 +56,7 @@ Route::group(
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
             Route::put('/delete', [$defaultController, 'deleteStaffAccounts']);
+            Route::post('/', [$defaultController, 'createStaff']);
 
             Route::put('/merchants/{id}/details', [$defaultController, 'updateMerchantDetails']);
         });
