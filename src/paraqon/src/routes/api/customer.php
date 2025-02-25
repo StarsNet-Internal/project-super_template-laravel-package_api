@@ -23,6 +23,7 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\ServiceController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\TestingController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\WatchlistItemController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -136,6 +137,8 @@ Route::group(
 
                 Route::get('/change-email-request', [$defaultController, 'changeEmailRequest']);
                 Route::get('/change-phone-request', [$defaultController, 'changePhoneRequest']);
+
+                Route::get('/user', [$defaultController, 'getAuthUserInfo']);
             }
         );
     }
@@ -345,6 +348,22 @@ Route::group(
                 Route::get('/all', [$defaultController, 'getAllDocuments'])->middleware(['pagination']);
                 Route::get('/{id}/details', [$defaultController, 'getDocumentDetails']);
                 Route::put('/{id}/details', [$defaultController, 'updateDocumentDetails']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'notifications'],
+    function () {
+        $defaultController = NotificationController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllNotifications'])->middleware(['pagination']);
+                Route::put('/read', [$defaultController, 'markNotificationsAsRead']);
+                Route::put('/{id}/delete', [$defaultController, 'deleteNotification']);
             }
         );
     }

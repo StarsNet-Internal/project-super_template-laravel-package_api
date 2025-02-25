@@ -18,6 +18,7 @@ use App\Models\User;
 
 use App\Events\Customer\Authentication\CustomerRegistration;
 use App\Models\VerificationCode;
+use StarsNet\Project\Paraqon\App\Models\Notification;
 
 class AuthenticationController extends Controller
 {
@@ -659,5 +660,40 @@ class AuthenticationController extends Controller
             ->create($verificationCodeAttributes);
 
         return $code;
+    }
+
+    public function getAuthUserInfo()
+    {
+        // Get User, then validate
+        $user = $this->user();
+
+        if (is_null($user)) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        if ($user->isDisabled()) {
+            return response()->json([
+                'message' => 'This account is disabled'
+            ], 403);
+        }
+
+        // Get Role 
+        $user->role = $user->getRole();
+
+        // Get Unread Message Count
+        $customer = $this->customer();
+        $unreadNotificationCount = Notification::where('customer_id', $customer->_id)
+            ->where('is_read', false)
+            ->count();
+
+        // Return data
+        $data = [
+            'user' => $user,
+            'unread_notification_count' => $unreadNotificationCount
+        ];
+
+        return response()->json($data, 200);
     }
 }

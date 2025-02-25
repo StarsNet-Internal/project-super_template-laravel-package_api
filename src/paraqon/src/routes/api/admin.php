@@ -18,6 +18,7 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\SeederController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ServiceController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ShoppingCartController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\LiveBiddingEventController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -312,5 +313,22 @@ Route::group(
         $defaultController = ProductController::class;
 
         Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
+    }
+);
+
+
+Route::group(
+    ['prefix' => 'notifications'],
+    function () {
+        $defaultController = NotificationController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllNotifications'])->middleware(['pagination']);
+                Route::put('/read', [$defaultController, 'markNotificationsAsRead']);
+                Route::put('/{id}/delete', [$defaultController, 'deleteNotification']);
+            }
+        );
     }
 );

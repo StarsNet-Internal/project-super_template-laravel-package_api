@@ -21,7 +21,8 @@ use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 use Jenssegers\Mongodb\Relations\EmbedsMany;
 use Jenssegers\Mongodb\Relations\EmbedsOne;
 
-use App\Models\Customer;
+use App\Models\Account;
+use App\Traits\Model\SoftDeleteTrait;
 
 class Notification extends Eloquent
 {
@@ -49,7 +50,7 @@ class Notification extends Eloquent
 
         // Default
         'type' => null,
-        'customer_id' => null,
+        'account_id' => null,
         'path' => null,
         'subject' => null,
 
@@ -57,9 +58,12 @@ class Notification extends Eloquent
         'is_read' => false,
 
         // Timestamps
+        'deleted_at' => null
     ];
 
-    protected $dates = [];
+    protected $dates = [
+        'deleted_at'
+    ];
 
     protected $casts = [];
 
@@ -79,10 +83,10 @@ class Notification extends Eloquent
     // Relationship Begins
     // -----------------------------
 
-    public function customer(): BelongsTo
+    public function account(): BelongsTo
     {
         return $this->belongsTo(
-            Customer::class
+            Account::class
         );
     }
 
@@ -102,9 +106,9 @@ class Notification extends Eloquent
     // Action Begins
     // -----------------------------
 
-    public function associateCustomer(Customer $customer): bool
+    public function associateAccount(Account $account): bool
     {
-        $this->customer()->associate($customer);
+        $this->account()->associate($account);
         return $this->save();
     }
 
