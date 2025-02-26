@@ -46,6 +46,44 @@ class StaffManagementController extends Controller
         ], 200);
     }
 
+    public function createStaff(Request $request)
+    {
+        // Extract attributes from $request
+        $registrationType = $request->input('type', LoginType::EMAIL);
+        $email = $request->input('email');
+        $userName = $request->input('username');
+        $roleID = $request->input('role_id');
+
+        // Get Role, then validate
+        /** @var Role $role */
+        $role = Role::find($roleID);
+
+        if (is_null($role)) {
+            $role = Role::slug('staff')->latest()->first();
+        }
+
+        // Generate a new customer-identity Account
+        $user = $this->createNewUserAsCustomer($request);
+        $user->setAsStaffAccount($role);
+
+        // Update User
+        $this->updateUserViaRegistration($user, $request);
+
+        // Update Account
+        /** @var ?Account $account */
+        $account = $user->account;
+        if ($account instanceof Account) {
+            $this->updateAccountViaRegistration($account, $request);
+        }
+
+        // Return success message
+        return response()->json([
+            'message' => 'Created Staff successfully',
+            '_id' => $user->id,
+            'customer_id' => $account->customer->_id
+        ], 200);
+    }
+
     public function updateMerchantDetails(Request $request)
     {
         $userID = $request->route('id');
