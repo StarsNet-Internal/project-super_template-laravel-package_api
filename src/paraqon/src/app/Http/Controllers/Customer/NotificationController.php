@@ -24,10 +24,10 @@ class NotificationController extends Controller
     public function getAllNotifications(Request $request)
     {
         // Get auth user info
-        $customer = $this->customer();
+        $account = $this->account();
 
         // Get Notifications
-        $notifications = Notification::where('account_id', $customer->_id)
+        $notifications = Notification::where('account_id', $account->_id)
             ->latest()
             ->get();
 

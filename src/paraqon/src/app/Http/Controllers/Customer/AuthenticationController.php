@@ -683,15 +683,15 @@ class AuthenticationController extends Controller
         $user->role = $user->getRole();
 
         // Get Unread Message Count
-        $customer = $this->customer();
-        $unreadNotificationCount = Notification::where('customer_id', $customer->_id)
+        $account = $this->account();
+        $unreadNotificationCount = Notification::where('account_id', $account->_id)
             ->where('is_read', false)
             ->count();
+        $user->unread_notification_count = $unreadNotificationCount;
 
         // Return data
         $data = [
             'user' => $user,
-            'unread_notification_count' => $unreadNotificationCount
         ];
 
         return response()->json($data, 200);
