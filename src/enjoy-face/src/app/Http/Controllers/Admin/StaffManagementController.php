@@ -86,11 +86,13 @@ class StaffManagementController extends Controller
 
     public function updateMerchantDetails(Request $request)
     {
-        $userID = $request->route('id');
+        $accountId = $request->route('id');
 
-        $user = User::find($userID);
+        $account = Account::find($accountId);
         // Accept user_id or account_id for convenience
-        $account = is_null($user) ? Account::find($userID) : $user->account;
+        if (is_null($account)) {
+            $account = User::find($accountId)->account;
+        }
         $account->update($request->all());
 
         return response()->json([
