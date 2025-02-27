@@ -89,7 +89,8 @@ class StaffManagementController extends Controller
         $userID = $request->route('id');
 
         $user = User::find($userID);
-        $account = $user->account;
+        // Accept user_id or account_id for convenience
+        $account = is_null($user) ? Account::find($userID) : $user->account;
         $account->update($request->all());
 
         return response()->json([
