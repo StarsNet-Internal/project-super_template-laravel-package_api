@@ -8,6 +8,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\OfflineStoreManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\OrderManagementController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\CustomerController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\CustomerGroupController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\PostController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\VerificationCodeController;
 
@@ -43,6 +44,21 @@ Route::group(
                 Route::put('/delete', [$defaultController, 'deleteCustomers']);
 
                 Route::post('/membership/distribute', [$defaultController, 'distributeMembershipPoint']);
+            }
+        );
+    }
+);
+
+// CUSTOMER_GROUP
+Route::group(
+    ['prefix' => 'customer-groups'],
+    function () {
+        $defaultController = CustomerGroupController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/{id}/customers/assign', [$defaultController, 'getCustomerGroupAssignedCustomers'])->middleware(['pagination']);
             }
         );
     }
