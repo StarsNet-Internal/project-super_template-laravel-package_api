@@ -1111,7 +1111,8 @@ class ServiceController extends Controller
         ];
 
         try {
-            $response = Http::post('https://socket.paraqon.starsnet.hk/api/publish', [
+            // $response = Http::post('https://socket.paraqon.starsnet.hk/api/publish', [
+            $response = Http::post('https://socket.starsnet.paraqon.com/api/publish', [
                 'site' => 'paraqon',
                 'room' => 'live-' . $storeId,
                 'data' => $data,
