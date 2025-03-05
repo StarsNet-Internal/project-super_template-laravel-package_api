@@ -255,7 +255,7 @@ class ProductManagementController extends Controller
             $url = route('paraqon.products.ids', [
                 'store_id' => $this->store->_id,
                 'ids' => $IDsSet->all(),
-                'sort_by' => 'a'
+                // 'sort_by' => 'a'
             ]);
             $urls[] = $url;
         }

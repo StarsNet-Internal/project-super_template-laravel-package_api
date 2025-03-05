@@ -97,6 +97,34 @@ class ServiceController extends Controller
                     ]);
                     $deposit->updateOnlineResponse($request->all());
 
+                    // For Auction Registration, immediately refund 
+                    $paymentIntentID = $deposit->online['payment_intent_id'];
+                    $depositPermissionType = $deposit->permission_type;
+
+                    if (
+                        $deposit->payment_method == 'ONLINE' &&
+                        !is_null($paymentIntentID) &&
+                        $depositPermissionType == null
+                    ) {
+                        $url = "https://payment.paraqon.starsnet.hk/payment-intents/{$paymentIntentID}/cancel";
+                        try {
+                            $response = Http::post(
+                                $url,
+                            );
+
+                            if ($response->status() === 200) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        } catch (\Throwable $th) {
+                            Log::error('Failed to cancel deposit, deposit_id: ' . $deposit->_id);
+                            $deposit->updateStatus('return-failed');
+                            return false;
+                        }
+                    }
+                    // For Auction Registration, immediately refund 
+
                     return response()->json(
                         [
                             'message' => 'Deposit status updated as on-hold',

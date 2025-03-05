@@ -29,6 +29,10 @@ class DocumentController extends Controller
         $documentQuery = Document::where('customer_id', $customer->id)
             ->where('status', '!=', Status::DELETED);
         foreach ($queryParams as $key => $value) {
+            if (in_array($key, ['per_page', 'page', 'sort_by', 'sort_order'])) {
+                continue;
+            }
+
             $documentQuery->where($key, $value);
         }
         $documents = $documentQuery->latest()->get();

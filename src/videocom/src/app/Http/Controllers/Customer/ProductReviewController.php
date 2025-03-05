@@ -24,6 +24,10 @@ class ProductReviewController extends Controller
             });
 
         foreach ($queryParams as $key => $value) {
+            if (in_array($key, ['per_page', 'page', 'sort_by', 'sort_order'])) {
+                continue;
+            }
+
             if (is_array($value) && !is_string($value)) {
                 $reviewQuery->whereIn($key, $value);
             } else {
@@ -42,18 +46,8 @@ class ProductReviewController extends Controller
 
         foreach ($reviews as $review) {
             $productID = $review->model_type_id;
-
-            $review->review_count = $reviews
-                ->where('model_type_id', $productID)
-                ->count();
-            $review->average_rating = $reviews
-                ->where('model_type_id', $productID)
-                ->where('rating', '>=', 0)
-                ->sum('rating') /
-                $reviews
-                ->where('model_type_id', $productID)
-                ->where('rating', '>=', 0)
-                ->count();
+            $review->review_count = $aggregates[$productID]->review_count ?? 0;
+            $review->average_rating = $aggregates[$productID]->average_rating ?? 0;
         }
 
         return $reviews;

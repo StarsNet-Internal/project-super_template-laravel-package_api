@@ -279,24 +279,24 @@ class AuthenticationController extends Controller
         ];
         $account->update($accountUpdateAttributes);
 
-        // Create Warehouse
-        // $warehouseTitle = 'account_warehouse_' . $account->_id;
-        // $warehouse = Warehouse::create([
-        //     'type' => 'PERSONAL',
-        //     'slug' => Str::slug($warehouseTitle),
-        //     'title' => [
-        //         'en' => $warehouseTitle,
-        //         'zh' => $warehouseTitle,
-        //         'cn' => $warehouseTitle
-        //     ],
-        //     'account_id' => $account->_id,
-        //     'is_system' => true,
-        // ]);
-
         // Update Notification Settings
         $setting = $account->notificationSetting;
+
+        $notificationChannels = ["EMAIL", "SMS"];
+        switch ($request->area_code) {
+            case '852': {
+                    $notificationChannels = ["EMAIL", "SMS"];
+                    break;
+                }
+            case '86':
+            default: {
+                    $notificationChannels = ["EMAIL"];
+                    break;
+                }
+        }
+
         $setting->update([
-            "channels" => ["EMAIL", "SMS"],
+            "channels" => $notificationChannels,
             "language" => "EN",
             "is_accept" => [
                 "marketing_info" => true,

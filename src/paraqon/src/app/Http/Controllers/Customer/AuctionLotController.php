@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use StarsNet\Project\Paraqon\App\Models\BidHistory;
 use StarsNet\Project\Paraqon\App\Models\WatchlistItem;
+use MongoDB\BSON\UTCDateTime;
+use DateTime;
 
 class AuctionLotController extends Controller
 {
@@ -70,7 +72,8 @@ class AuctionLotController extends Controller
         $bidRequest = [
             'customer_id' => $customer->_id,
             'approval_status' => 'PENDING',
-            'created_at' => now()->toISOString()
+            'created_at' => now()->toISOString(),
+            'updated_at' => now()->toISOString()
         ];
         $auctionLot->push('permission_requests', $bidRequest, true);
 

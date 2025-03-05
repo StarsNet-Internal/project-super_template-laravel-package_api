@@ -17,10 +17,22 @@ class NotificationController extends Controller
 {
     public function getAllNotifications(Request $request)
     {
+        // Extract attributes from request
+        $queryParams = $request->query();
+
         // Get Notifications
-        $notifications = Notification::where('type', 'staff')
-            ->where('status', '!=', Status::DELETED)
-            ->latest()
+        $notificationQuery = Notification::where('type', 'staff')
+            ->where('status', '!=', Status::DELETED);
+
+        foreach ($queryParams as $key => $value) {
+            if (in_array($key, ['per_page', 'page', 'sort_by', 'sort_order'])) {
+                continue;
+            }
+
+            $notificationQuery->where($key, filter_var($value, FILTER_VALIDATE_BOOLEAN));
+        }
+
+        $notifications = $notificationQuery->latest()
             ->get();
 
         return $notifications;
