@@ -276,6 +276,8 @@ class AuthenticationController extends Controller
             'area_code' => $request->area_code,
             'phone' => $request->phone,
             'source' => $request->source,
+            'is_created_by_admin' => $request->input('is_created_by_admin', false),
+            'is_default_password_changed' => $request->input('is_default_password_changed', false)
         ];
         $account->update($accountUpdateAttributes);
 

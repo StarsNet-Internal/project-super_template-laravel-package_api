@@ -240,7 +240,7 @@ class ProductManagementController extends Controller
         } else {
             $products = Product::find($productIDs);
         }
-
+        // return $products;
         /*
         *   Stage 3:
         *   Generate URLs
@@ -255,7 +255,7 @@ class ProductManagementController extends Controller
             $url = route('paraqon.products.ids', [
                 'store_id' => $this->store->_id,
                 'ids' => $IDsSet->all(),
-                // 'sort_by' => 'a'
+                'sort_by' => 'default'
             ]);
             $urls[] = $url;
         }
@@ -271,6 +271,7 @@ class ProductManagementController extends Controller
 
         // Append attributes to each Product
         $products = $this->getProductsInfoByAggregation($productIDs, $this->store->_id);
+
         $products = $products->filter(function ($item) {
             return $item->auction_lot_id != '0';
         })->values();
@@ -311,8 +312,11 @@ class ProductManagementController extends Controller
             );
         }
 
+        $productMap = array_column($products->all(), null, 'id');
+        $sortedProducts = array_map(fn($id) => $productMap[$id], $productIDs);
+
         // Return data
-        return $products;
+        return $sortedProducts;
     }
 
     public function getAllWishlistAuctionLots(Request $request)
