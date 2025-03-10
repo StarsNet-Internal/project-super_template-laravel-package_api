@@ -50,6 +50,7 @@ class CustomerGroupController extends Controller
             $customer['email'] = $customer['account']['email'];
             $customer['area_code'] = $customer['account']['area_code'];
             $customer['phone'] = $customer['account']['phone'];
+            $customer['user_id'] = $customer['account']['user_id'];
             $customer['store_ids'] = $customer['account']['store_ids'];
             $customer['role'] = $customer['account']['role'];
 

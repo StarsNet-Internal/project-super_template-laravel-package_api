@@ -11,6 +11,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\CustomerController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\CustomerGroupController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\PostController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\VerificationCodeController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\CompanyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -173,5 +174,17 @@ Route::group(
                 Route::get('/all', [$defaultController, 'getAllVerificationCodes'])->middleware(['pagination']);
             }
         );
+    }
+);
+
+// COMPANY
+Route::group(
+    ['prefix' => 'companies', 'middleware' => 'auth:api'],
+    function () {
+        $defaultController = CompanyController::class;
+
+        Route::put('/delete', [$defaultController, 'deleteCompanies']);
+        Route::put('/stores/delete', [$defaultController, 'deleteStores']);
+        Route::put('/customers/delete', [$defaultController, 'deleteCustomers']);
     }
 );
