@@ -131,6 +131,11 @@ class ShoppingCartController extends Controller
         }
         $totalPrice = $subtotalPrice + $totalServiceCharge;
 
+        // credit_card_charge_percentage
+        $creditCardChargePercentage = (float) $request->input('credit_card_charge_percentage', 0);
+        $creditCardChargeFee = floor(($totalPrice * $creditCardChargePercentage) / 100);
+        $totalPrice = $totalPrice + $creditCardChargeFee;
+
         // get shippingFee
         $courier = Courier::find($courierID);
         $shippingFee +=
@@ -168,6 +173,7 @@ class ShoppingCartController extends Controller
                 'total' => 0,
             ],
             'service_charge' => $totalServiceCharge,
+            'credit_card_charge_fee' => $creditCardChargeFee,
             'deposit' => $systemOrderDeposit,
             'storage_fee' => 0,
             'shipping_fee' => $shippingFee
@@ -385,6 +391,11 @@ class ShoppingCartController extends Controller
         }
         $totalPrice = $subtotalPrice + $totalServiceCharge;
 
+        // credit_card_charge_percentage
+        $creditCardChargePercentage = (float) $request->input('credit_card_charge_percentage', 0);
+        $creditCardChargeFee = floor(($totalPrice * $creditCardChargePercentage) / 100);
+        $totalPrice = $totalPrice + $creditCardChargeFee;
+
         // get shippingFee
         $courier = Courier::find($courierID);
         $shippingFee =
@@ -419,6 +430,7 @@ class ShoppingCartController extends Controller
                 'total' => 0,
             ],
             'service_charge' => $totalServiceCharge,
+            'credit_card_charge_fee' => $creditCardChargeFee,
             'deposit' => $systemOrderDeposit,
             'storage_fee' => 0,
             'shipping_fee' => $shippingFee

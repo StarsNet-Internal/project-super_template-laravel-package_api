@@ -88,7 +88,10 @@ class AuctionLotController extends Controller
             'attributes' => $request->attributes ?? [],
             'shipping_costs' => $request->shipping_costs ?? [],
 
-            'lot_number' => $lotNumber
+            'lot_number' => $lotNumber,
+
+            'brand' => $request->brand,
+            'saleroom_notice' => $request->saleroom_notice,
         ];
 
         $auctionLot = AuctionLot::create($auctionLotAttributes);

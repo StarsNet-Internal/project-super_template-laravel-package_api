@@ -19,6 +19,7 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ServiceController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ShoppingCartController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\LiveBiddingEventController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\NotificationController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\WatchlistItemController;
 
 /*
 |--------------------------------------------------------------------------
@@ -328,6 +329,20 @@ Route::group(
                 Route::get('/all', [$defaultController, 'getAllNotifications'])->middleware(['pagination']);
                 Route::put('/read', [$defaultController, 'markNotificationsAsRead']);
                 Route::put('/{id}/delete', [$defaultController, 'deleteNotification']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'watchlist'],
+    function () {
+        $defaultController = WatchlistItemController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/customers/all', [$defaultController, 'getAllWatchlistedCustomers'])->middleware(['pagination']);
             }
         );
     }

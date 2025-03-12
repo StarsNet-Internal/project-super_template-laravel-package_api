@@ -38,6 +38,10 @@ class ConsignmentRequestController extends Controller
 
         // Chain all string matching query
         foreach ($queryParams as $key => $value) {
+            if (in_array($key, ['per_page', 'page', 'sort_by', 'sort_order'])) {
+                continue;
+            }
+
             $query = $query->where($key, $value);
         }
 

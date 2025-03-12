@@ -276,6 +276,21 @@ class AuthenticationController extends Controller
             'area_code' => $request->area_code,
             'phone' => $request->phone,
             'source' => $request->source,
+
+            // New key for Account Type
+            'account_type' => $request->input('account_type', "INDIVIDUAL"),
+            'company_name' => $request->input('company_name'),
+            'business_registration_number' => $request->input('business_registration_number'),
+            'company_address' => $request->input('company_address'),
+            'business_registration_verification' => $request->input('business_registration_verification'),
+            'registrar_of_shareholders_verification' => $request->input('registrar_of_shareholders_verification'),
+            'authorised_person_id_verification' => $request->input('authorised_person_id_verification'),
+
+            // Account Verification
+            'address_proof_verification' => null,
+            'photo_id_verification' => null,
+
+            // Admin Created Accounts
             'is_created_by_admin' => $request->input('is_created_by_admin', false),
             'is_default_password_changed' => $request->input('is_default_password_changed', false)
         ];
