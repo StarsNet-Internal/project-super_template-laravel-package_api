@@ -131,11 +131,6 @@ class ShoppingCartController extends Controller
         }
         $totalPrice = $subtotalPrice + $totalServiceCharge;
 
-        // credit_card_charge_percentage
-        $creditCardChargePercentage = (float) $request->input('credit_card_charge_percentage', 0);
-        $creditCardChargeFee = floor(($totalPrice * $creditCardChargePercentage) / 100);
-        $totalPrice = $totalPrice + $creditCardChargeFee;
-
         // get shippingFee
         $courier = Courier::find($courierID);
         $shippingFee +=
@@ -156,6 +151,11 @@ class ShoppingCartController extends Controller
 
         // Update total price
         $totalPrice -= $systemOrderDeposit;
+
+        // credit_card_charge_percentage
+        $creditCardChargePercentage = (float) $request->input('credit_card_charge_percentage', 0);
+        $creditCardChargeFee = floor(($totalPrice * $creditCardChargePercentage) / 100);
+        $totalPrice = $totalPrice + $creditCardChargeFee;
 
         // form calculation data object
         $rawCalculation = [
@@ -391,11 +391,6 @@ class ShoppingCartController extends Controller
         }
         $totalPrice = $subtotalPrice + $totalServiceCharge;
 
-        // credit_card_charge_percentage
-        $creditCardChargePercentage = (float) $request->input('credit_card_charge_percentage', 0);
-        $creditCardChargeFee = floor(($totalPrice * $creditCardChargePercentage) / 100);
-        $totalPrice = $totalPrice + $creditCardChargeFee;
-
         // get shippingFee
         $courier = Courier::find($courierID);
         $shippingFee =
@@ -413,6 +408,11 @@ class ShoppingCartController extends Controller
 
         // Update total price
         $totalPrice -= $systemOrderDeposit;
+
+        // credit_card_charge_percentage
+        $creditCardChargePercentage = (float) $request->input('credit_card_charge_percentage', 0);
+        $creditCardChargeFee = floor(($totalPrice * $creditCardChargePercentage) / 100);
+        $totalPrice = $totalPrice + $creditCardChargeFee;
 
         // form calculation data object
         $rawCalculation = [
