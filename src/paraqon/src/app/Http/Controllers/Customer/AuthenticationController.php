@@ -284,11 +284,10 @@ class AuthenticationController extends Controller
             'company_address' => $request->input('company_address'),
             'business_registration_verification' => $request->input('business_registration_verification'),
             'registrar_of_shareholders_verification' => $request->input('registrar_of_shareholders_verification'),
-            'authorised_person_id_verification' => $request->input('authorised_person_id_verification'),
 
             // Account Verification
-            'address_proof_verification' => null,
-            'photo_id_verification' => null,
+            'address_proof_verification' => $request->input('address_proof_verification'),
+            'photo_id_verification' => $request->input('photo_id_verification'),
 
             // Admin Created Accounts
             'is_created_by_admin' => $request->input('is_created_by_admin', false),

@@ -131,6 +131,40 @@ class AuctionLotController extends Controller
         return $auctionLot;
     }
 
+    public function getAllAuctionLotBids(Request $request)
+    {
+        // Extract attributes from $request
+        $auctionLotId = $request->route('auction_lot_id');
+
+        $auctionLot = AuctionLot::find($auctionLotId);
+
+        if (!in_array(
+            $auctionLot->status,
+            [Status::ACTIVE, Status::ARCHIVED]
+        )) {
+            return response()->json([
+                'message' => 'Auction Lot is not available for public'
+            ], 404);
+        }
+
+        $bids = Bid::where('auction_lot_id', $auctionLotId)
+            ->where('is_hidden', false)
+            ->latest()
+            ->get();
+
+        // Attach customer and account information to each bid
+        foreach ($bids as $bid) {
+            $customerID = $bid->customer_id;
+            $customer = Customer::find($customerID);
+            $account = $customer->account;
+
+            $bid->username = optional($account)->username;
+            $bid->avatar = optional($account)->avatar;
+        }
+
+        return $bids;
+    }
+
     public function getAllOwnedAuctionLots(Request $request)
     {
         $customer = $this->customer();

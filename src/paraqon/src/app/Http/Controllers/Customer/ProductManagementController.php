@@ -177,23 +177,54 @@ class ProductManagementController extends Controller
         *   Stage 1:
         *   Append related_score per product based on intersected related_slugs
         */
-        $parentCategoryOrdering = $store->parent_category_ordering;
+        $parentCategoryOrdering = $store->parent_category_ordering ?? [];
+        $parentCategoryOrdering = array_unique($parentCategoryOrdering);
 
-        if (!is_null($parentCategoryOrdering)) {
-            $parentCategoryOrdering = array_unique($parentCategoryOrdering);
+        if (!is_null($parentCategoryOrdering) && count($parentCategoryOrdering) > 0) {
             $parentCategoryCount = count($parentCategoryOrdering);
 
+            // First category_id in $parentCategoryOrdering must be Brand Parent Category
+            $brandParentCategoryID = $parentCategoryOrdering[0];
+            $brandChildrenCategoryIDs = Category::where('parent_id', $brandParentCategoryID)->pluck('_id')->all();
+
+            // Check if this product assigned to any children categories from Brand Parent Category
+            $doesProductHaveBrandCategory = false;
+            if (array_intersect($originalProductCategoryIDs, $brandChildrenCategoryIDs)) {
+                $doesProductHaveBrandCategory = true;
+            }
+
             $childrenCategorySets = [];
+
+            // This is weighting for Brand Category
+            if ($doesProductHaveBrandCategory == true) {
+                // Add weighting for matching Brand children category
+                $childrenCategorySets[] = [
+                    'weighting' => pow(2, $parentCategoryCount),
+                    'ids' =>  array_intersect($originalProductCategoryIDs, $brandChildrenCategoryIDs)
+                ];
+
+                // Add weighting for mismatching Brand children category
+                $childrenCategorySets[] = [
+                    'weighting' => pow(2, $parentCategoryCount - 1),
+                    'ids' => array_values(array_diff($brandChildrenCategoryIDs, $originalProductCategoryIDs))
+                ];
+            }
+
+            // Remove first item from the Category Ordering
+            array_shift($parentCategoryOrdering);
+            $parentCategoryOrdering = array_values($parentCategoryOrdering);
+
+            // For the rests of Parent Categories, append weighting score
+            $weightingBaseExponent = $parentCategoryCount - 1;
             foreach ($parentCategoryOrdering as $key => $parentCategoryID) {
                 $childrenCategoryIDs = Category::where('parent_id', $parentCategoryID)->pluck('_id')->all();
                 $matchingChildrenCategoryIDs = array_intersect($originalProductCategoryIDs, $childrenCategoryIDs);
 
-                $weighting = pow(2, $parentCategoryCount - $key - 1);
-
+                $weighting = pow(2, $weightingBaseExponent - $key - 1);
                 if (count($matchingChildrenCategoryIDs) > 0) {
                     $childrenCategorySets[] = [
                         'weighting' => $weighting,
-                        'ids' =>  $matchingChildrenCategoryIDs
+                        'ids' =>  array_values($matchingChildrenCategoryIDs)
                     ];
                 }
             }

@@ -98,6 +98,7 @@ Route::group(
         $defaultController = AuctionLotController::class;
 
         Route::get('/{auction_lot_id}/bids', [$defaultController, 'getBiddingHistory'])->middleware(['pagination']);
+        Route::get('/{auction_lot_id}/bids/all', [$defaultController, 'getAllAuctionLotBids'])->middleware(['pagination']);
 
         Route::group(
             ['middleware' => 'auth:api'],
