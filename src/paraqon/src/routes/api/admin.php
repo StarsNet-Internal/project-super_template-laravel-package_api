@@ -20,6 +20,7 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ShoppingCartController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\LiveBiddingEventController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\NotificationController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\WatchlistItemController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\VerificationCodeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -71,6 +72,21 @@ Route::group(
             function () use ($defaultController) {
                 Route::put('/{id}/verification', [$defaultController, 'updateAccountVerification']);
                 Route::put('/{id}/details', [$defaultController, 'updateAccountDetails']);
+            }
+        );
+    }
+);
+
+// VERIFICATION CODE
+Route::group(
+    ['prefix' => 'verification-codes'],
+    function () {
+        $defaultController = VerificationCodeController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllVerificationCodes'])->middleware(['pagination']);
             }
         );
     }
