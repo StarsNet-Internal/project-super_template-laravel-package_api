@@ -516,12 +516,6 @@ class AuctionLotController extends Controller
                     'current_bid' => $auctionLot->starting_price,
                     'histories' => []
                 ]);
-            } else {
-                // Clear all histories items
-                $bidHistory->update([
-                    'current_bid' => $auctionLot->starting_price,
-                    'histories' => []
-                ]);
             }
 
             // get current bid and winner
@@ -544,6 +538,10 @@ class AuctionLotController extends Controller
             }
 
             // Update BidHistory
+            $bidHistory->update([
+                'current_bid' => $auctionLot->starting_price,
+                'histories' => []
+            ]);
             $bidHistoryItemAttributes = [
                 'winning_bid_customer_id' => $winningCustomerID,
                 'current_bid' => $newCurrentBid
@@ -832,12 +830,6 @@ class AuctionLotController extends Controller
                     'current_bid' => $auctionLot->starting_price,
                     'histories' => []
                 ]);
-            } else {
-                // Clear all histories items
-                $bidHistory->update([
-                    'current_bid' => $auctionLot->starting_price,
-                    'histories' => []
-                ]);
             }
 
             // get current bid and winner
@@ -860,6 +852,10 @@ class AuctionLotController extends Controller
             }
 
             // Update BidHistory
+            $bidHistory->update([
+                'current_bid' => $auctionLot->starting_price,
+                'histories' => []
+            ]);
             $bidHistoryItemAttributes = [
                 'winning_bid_customer_id' => $winningCustomerID,
                 'current_bid' => $newCurrentBid

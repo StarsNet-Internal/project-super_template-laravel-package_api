@@ -200,20 +200,24 @@ class AuctionLot extends Eloquent
         $allBids,
         $bidHistory,
         $newBidCustomerID = null,
-        $newBidValue = null
+        $newBidValue = null,
+        $bidType = null
     ) {
         $startingPrice = $this->starting_price;
         $reservePrice = $this->reserve_price;
 
-        if (count($allBids) > 2 && !is_null($newBidCustomerID)) {
-            $winningBid = $bidHistory->histories()->last();
+        // If customer place an ADVANCED bid, skip filtering from Case 0s
+        if (is_null($bidType) || $bidType != 'ADVANCED') {
+            if (count($allBids) > 2 && !is_null($newBidCustomerID)) {
+                $winningBid = $bidHistory->histories()->last();
 
-            if ($winningBid->winning_bid_customer_id == $newBidCustomerID) {
-                if (
-                    max($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case 0A
-                    || min($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case 0C
-                ) {
-                    return $bidHistory->current_bid;
+                if ($winningBid->winning_bid_customer_id == $newBidCustomerID) {
+                    if (
+                        max($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case 0A
+                        || min($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case 0C
+                    ) {
+                        return $bidHistory->current_bid;
+                    }
                 }
             }
         }
@@ -310,6 +314,7 @@ class AuctionLot extends Eloquent
                 $bidHistory,
                 $newBidCustomerID,
                 $newBidValue,
+                $bidType
             );
             return $maximumMaxBidValue;
         }
@@ -346,6 +351,7 @@ class AuctionLot extends Eloquent
             $bidHistory,
             $newBidCustomerID,
             $newBidValue,
+            $bidType
         );
         return $maximumMaxBidValue;
     }
