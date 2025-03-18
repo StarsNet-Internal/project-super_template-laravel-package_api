@@ -144,14 +144,14 @@ class OfflineStoreManagementController extends Controller
             $locale = $this->getSearchLocale($keyword);
 
             $storeIdsByStoreTitle = $this->getIDsFromSearch(
-                'https://typesense.client.enjoy-face.tinkleex.com',
+                'https://typesense.30s.online',
                 'client_enjoy_face_stores',
                 $keyword,
                 "title.$locale",
                 'id'
             );
             $storeIdsByStoreDescription = $this->getIDsFromSearch(
-                'https://typesense.client.enjoy-face.tinkleex.com',
+                'https://typesense.30s.online',
                 'client_enjoy_face_stores',
                 $keyword,
                 "short_description.$locale",
@@ -159,14 +159,14 @@ class OfflineStoreManagementController extends Controller
             );
 
             $storeIdsByProductTitle = $this->getIDsFromSearch(
-                'https://typesense.client.enjoy-face.tinkleex.com',
+                'https://typesense.30s.online',
                 'client_enjoy_face_products',
                 $keyword,
                 "title.$locale",
                 'store_id'
             );
             $storeIdsByProductDescription = $this->getIDsFromSearch(
-                'https://typesense.client.enjoy-face.tinkleex.com',
+                'https://typesense.30s.online',
                 'client_enjoy_face_products',
                 $keyword,
                 "short_description.$locale",
