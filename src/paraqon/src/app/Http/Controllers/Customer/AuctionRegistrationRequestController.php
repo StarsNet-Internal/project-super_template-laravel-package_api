@@ -177,7 +177,7 @@ class AuctionRegistrationRequestController extends Controller
                 ];
 
                 try {
-                    $url = 'https://payment.paraqon.starsnet.hk/payment-intents';
+                    $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents';
                     $res = Http::post(
                         $url,
                         $data
@@ -300,7 +300,7 @@ class AuctionRegistrationRequestController extends Controller
             ]
         ];
 
-        $url = 'https://payment.paraqon.starsnet.hk/payment-intents';
+        $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents';
         $res = Http::post(
             $url,
             $data

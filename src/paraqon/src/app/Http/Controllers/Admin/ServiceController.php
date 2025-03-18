@@ -106,10 +106,11 @@ class ServiceController extends Controller
                         !is_null($paymentIntentID) &&
                         $depositPermissionType == null
                     ) {
-                        $url = "https://payment.paraqon.starsnet.hk/payment-intents/{$paymentIntentID}/cancel";
+                        $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents/' . $paymentIntentID . '/cancel';
+
                         try {
                             $response = Http::post(
-                                $url,
+                                $url
                             );
 
                             if ($response->status() === 200) {
@@ -419,11 +420,11 @@ class ServiceController extends Controller
         switch ($deposit->payment_method) {
             case 'ONLINE':
                 $paymentIntentID = $deposit->online['payment_intent_id'];
-                $url = "https://payment.paraqon.starsnet.hk/payment-intents/{$paymentIntentID}/cancel";
+                $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents/' . $paymentIntentID . '/cancel';
 
                 try {
                     $response = Http::post(
-                        $url,
+                        $url
                     );
 
                     if ($response->status() === 200) {
@@ -452,7 +453,7 @@ class ServiceController extends Controller
         switch ($deposit->payment_method) {
             case 'ONLINE':
                 $paymentIntentID = $deposit->online['payment_intent_id'];
-                $captureUrl = "https://payment.paraqon.starsnet.hk/payment-intents/{$paymentIntentID}/capture";
+                $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents/' . $paymentIntentID . '/capture';
 
                 try {
                     $data = [
@@ -460,7 +461,7 @@ class ServiceController extends Controller
                     ];
 
                     $response = Http::post(
-                        $captureUrl,
+                        $url,
                         $data
                     );
 
@@ -1111,13 +1112,16 @@ class ServiceController extends Controller
         ];
 
         try {
-            // $response = Http::post('https://socket.paraqon.starsnet.hk/api/publish', [
-            $response = Http::post('https://socket.starsnet.paraqon.com/api/publish', [
-                'site' => 'paraqon',
-                'room' => 'live-' . $storeId,
-                'data' => $data,
-                'event' => 'liveBidding',
-            ]);
+            $url = env('PARAQON_SOCKET_BASE_URL', 'https://socket.paraqon.starsnet.hk') . '/api/publish';
+            $response = Http::post(
+                $url,
+                [
+                    'site' => 'paraqon',
+                    'room' => 'live-' . $storeId,
+                    'data' => $data,
+                    'event' => 'liveBidding',
+                ]
+            );
             return $response;
         } catch (\Throwable $th) {
             return null;

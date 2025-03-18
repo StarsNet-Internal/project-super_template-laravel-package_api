@@ -27,11 +27,11 @@ class TestingController extends Controller
 
     public function healthCheck(Request $request)
     {
-        $customerID = $request->customer_id;
-        $storeID = $request->storeID;
-
-        $customer = Customer::find($customerID);
-        $store = Store::find($storeID);
+        $paymentIntentID = 213;
+        $url = env('PARAQON_STRIPE_BASE_URLSSS', 'https://socket.paraqon.starsnet.hk') . '/payment-intents/' . $paymentIntentID . '/cancel';
+        return [
+            'message' => $url
+        ];
 
         // $now = now();
         // $upcomingStores = Store::where(

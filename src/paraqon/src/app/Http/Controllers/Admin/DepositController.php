@@ -237,10 +237,10 @@ class DepositController extends Controller
 
             try {
                 $paymentIntentID = $deposit->online['payment_intent_id'];
-                $refundUrl = "https://payment.paraqon.starsnet.hk/payment-intents/" + $paymentIntentID + "/cancel";
+                $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents/' . $paymentIntentID . '/cancel';
 
                 $response = Http::post(
-                    $refundUrl,
+                    $url
                 );
 
                 if ($response->status() === 200) {
