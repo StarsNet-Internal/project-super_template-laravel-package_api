@@ -119,7 +119,7 @@ class OrderController extends Controller
                             'to' => $email,
                             'from' => `NO REPLY StarsNet`,
                             'subject' => 'Green360 Video Course',
-                            'content' => 'Your company has purchased a Green360 Video Course. Use the following link to view the course materials. <a href="https://fastgreen360.customer.starsnet.hk/esg-one-spotlights/course-video/list?email=' . $email . '">Link</a>',
+                            'content' => 'Your company has purchased a Green360 Video Course. Use the following link to view the course materials. <a href="https://www.green360.hk/esg-one-spotlights/course-video/list?email=' . $email . '">Link</a>',
                         ]);
                     }
                 }
