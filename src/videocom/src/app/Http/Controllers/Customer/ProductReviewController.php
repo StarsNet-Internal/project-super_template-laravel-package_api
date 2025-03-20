@@ -37,17 +37,33 @@ class ProductReviewController extends Controller
 
         /** @var Collection $reviews */
         $reviews = $reviewQuery->with([
-            'user',
-            'product',
-            'productVariant',
-            'store',
+            // 'user',
+            'product:_id,title,images',
+            // 'productVariant',
+            // 'store',
         ])
             ->get();
 
+        $calculations = [];
+        $productIds = $reviews->pluck('model_type_id')->unique()->all();
+        foreach ($productIds as $productId) {
+            $filtered = $reviews->filter(function ($review, $key) use ($productId) {
+                return $review->model_type_id == $productId;
+            })->values();
+            $calculations[$productId] = [
+                'review_count' => $filtered->count(),
+                'average_rating' => floatval(number_format($filtered->avg('rating'), 1)),
+            ];
+        }
+
+        $userIds = $reviews->pluck('user_id')->unique()->all();
+        $accounts = Account::whereIn('user_id', $userIds)->get()->pluck('username', 'user_id');
+
         foreach ($reviews as $review) {
-            $productID = $review->model_type_id;
-            $review->review_count = $aggregates[$productID]->review_count ?? 0;
-            $review->average_rating = $aggregates[$productID]->average_rating ?? 0;
+            $productId = $review->model_type_id;
+            $review->review_count = $calculations[$productId]['review_count'] ?? 0;
+            $review->average_rating = $calculations[$productId]['average_rating'] ?? 0;
+            $review->username = $accounts[$review->user_id];
         }
 
         return $reviews;
