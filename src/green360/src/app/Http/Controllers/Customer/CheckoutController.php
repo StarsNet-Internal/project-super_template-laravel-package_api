@@ -29,6 +29,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 use App\Events\Common\Order\OrderPaid;
+use App\Http\Controllers\Customer\AuthenticationController;
 
 class CheckoutController extends Controller
 {
@@ -263,6 +264,33 @@ class CheckoutController extends Controller
             }
         } else {
             event(new OrderPaid($order, $customer));
+
+            // Create Employee Account
+            $controller = new AuthenticationController();
+            foreach ($order->delivery_details['remarks'] as $email) {
+                try {
+                    $createRequest = new Request();
+                    $createRequest->replace([
+                        'type' => 'EMAIL',
+                        'username' => $email,
+                        'email' => $email,
+                        'password' => 'Fastgreen360',
+                    ]);
+                    Log::info(['r' => $createRequest]);
+                    $controller->register($createRequest);
+                } catch (\Exception $e) {
+                    Log::info($e->getMessage());
+                    Log::info("Exception at $email");
+                } finally {
+                    $url = 'https://mail.starsnet.com.hk/send';
+                    $response = Http::post($url, [
+                        'to' => $email,
+                        'from' => `NO REPLY StarsNet`,
+                        'subject' => 'Green360 Video Course',
+                        'content' => 'Your company has purchased a Green360 Video Course. Use the following link to view the course materials. <a href="https://www.green360.hk/esg-one-spotlights/course-video/list?email=' . $email . '">Link</a>',
+                    ]);
+                }
+            }
         }
 
         // Update MembershipPoint, for Offline Payment via MINI Store
