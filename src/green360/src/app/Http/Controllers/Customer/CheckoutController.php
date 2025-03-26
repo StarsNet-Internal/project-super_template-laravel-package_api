@@ -15,6 +15,7 @@ use App\Models\DiscountCode;
 use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Models\Configuration;
+use App\Models\User;
 
 use App\Traits\Controller\CheckoutTrait;
 use App\Traits\Controller\ShoppingCartTrait;
