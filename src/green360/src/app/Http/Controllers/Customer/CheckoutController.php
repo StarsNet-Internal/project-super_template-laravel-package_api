@@ -288,13 +288,12 @@ class CheckoutController extends Controller
                     Log::info("Exception at $email");
                 } finally {
                     $url = 'https://mail.green360.com.hk/send';
-                    $response = Http::async()
-                        ->post($url, [
-                            'to' => $email,
-                            'from' => `NO REPLY Green360`,
-                            'subject' => 'Green360 Video Course',
-                            'content' => 'Your company has purchased a Green360 Video Course. Use the following link to view the course materials. <a href="https://www.green360.hk/greenmasters/course-video/list?email=' . $email . '">Link</a>',
-                        ]);
+                    $response = Http::post($url, [
+                        'to' => $email,
+                        'from' => `NO REPLY Green360`,
+                        'subject' => 'Green360 Video Course',
+                        'content' => 'Your company has purchased a Green360 Video Course. Use the following link to view the course materials. <a href="https://www.green360.hk/greenmasters/course-video/list?email=' . $email . '">Link</a>',
+                    ]);
                 }
             }
         }
