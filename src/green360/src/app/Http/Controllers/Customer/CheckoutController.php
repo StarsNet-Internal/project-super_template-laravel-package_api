@@ -267,7 +267,11 @@ class CheckoutController extends Controller
 
             // Create Employee Account
             $controller = new AuthenticationController();
-            foreach ($order->delivery_details['remarks'] as $email) {
+            $emails = $order->delivery_details['remarks'];
+            $existingEmails = User::whereIn('login_id', $emails)->pluck('login_id')->all();
+            $missingEmails = array_diff($emails, $existingEmails);
+
+            foreach ($missingEmails as $email) {
                 try {
                     $createRequest = new Request();
                     $createRequest->replace([
@@ -276,19 +280,20 @@ class CheckoutController extends Controller
                         'email' => $email,
                         'password' => 'Fastgreen360',
                     ]);
-                    Log::info(['r' => $createRequest]);
+                    // Log::info(['r' => $createRequest]);
                     $controller->register($createRequest);
                 } catch (\Exception $e) {
                     Log::info($e->getMessage());
                     Log::info("Exception at $email");
                 } finally {
-                    $url = 'https://mail.starsnet.com.hk/send';
-                    $response = Http::post($url, [
-                        'to' => $email,
-                        'from' => `NO REPLY StarsNet`,
-                        'subject' => 'Green360 Video Course',
-                        'content' => 'Your company has purchased a Green360 Video Course. Use the following link to view the course materials. <a href="https://www.green360.hk/esg-one-spotlights/course-video/list?email=' . $email . '">Link</a>',
-                    ]);
+                    $url = 'https://mail.green360.com.hk/send';
+                    $response = Http::async()
+                        ->post($url, [
+                            'to' => $email,
+                            'from' => `NO REPLY Green360`,
+                            'subject' => 'Green360 Video Course',
+                            'content' => 'Your company has purchased a Green360 Video Course. Use the following link to view the course materials. <a href="https://www.green360.hk/esg-one-spotlights/course-video/list?email=' . $email . '">Link</a>',
+                        ]);
                 }
             }
         }
