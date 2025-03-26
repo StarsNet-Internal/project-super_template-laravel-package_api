@@ -287,7 +287,7 @@ class CheckoutController extends Controller
                     Log::info($e->getMessage());
                     Log::info("Exception at $email");
                 } finally {
-                    $url = 'https://mail.green360.com.hk/send';
+                    $url = 'https://mail.green360.hk/send';
                     $response = Http::post($url, [
                         'to' => $email,
                         'from' => `NO REPLY Green360`,
