@@ -272,9 +272,6 @@ class CheckoutController extends Controller
             $existingEmails = User::whereIn('login_id', $emails)->pluck('login_id')->all();
             $missingEmails = array_diff($emails, $existingEmails);
 
-            $mh = curl_multi_init();
-            $handles = [];
-
             foreach ($missingEmails as $email) {
                 try {
                     $createRequest = new Request();
@@ -290,41 +287,16 @@ class CheckoutController extends Controller
                     Log::info($e->getMessage());
                     Log::info("Exception at $email");
                 } finally {
-                    // $url = 'https://mail.green360.com.hk/send';
-                    // $response = Http::async()
-                    //     ->post($url, [
-                    //         'to' => $email,
-                    //         'from' => `NO REPLY Green360`,
-                    //         'subject' => 'Green360 Video Course',
-                    //         'content' => 'Your company has purchased a Green360 Video Course. Use the following link to view the course materials. <a href="https://www.green360.hk/esg-one-spotlights/course-video/list?email=' . $email . '">Link</a>',
-                    //     ]);
-                    $ch = curl_init('https://mail.green360.com.hk/send');
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, false); // Don't wait for a response
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 1); // Timeout quickly
-                    curl_setopt($ch, CURLOPT_POST, true);
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, [
-                        'to' => $email,
-                        'from' => `NO REPLY Green360`,
-                        'subject' => 'Green360 Video Course',
-                        'content' => 'Your company has purchased a Green360 Video Course. Use the following link to view the course materials. <a href="https://www.green360.hk/esg-one-spotlights/course-video/list?email=' . $email . '">Link</a>',
-                    ]);
-
-                    curl_multi_add_handle($mh, $ch);
-                    $handles[] = $ch;
+                    $url = 'https://mail.green360.com.hk/send';
+                    $response = Http::async()
+                        ->post($url, [
+                            'to' => $email,
+                            'from' => `NO REPLY Green360`,
+                            'subject' => 'Green360 Video Course',
+                            'content' => 'Your company has purchased a Green360 Video Course. Use the following link to view the course materials. <a href="https://www.green360.hk/greenmasters/course-video/list?email=' . $email . '">Link</a>',
+                        ]);
                 }
             }
-
-            // Execute all requests in parallel
-            do {
-                curl_multi_exec($mh, $running);
-            } while ($running);
-
-            // Close all handles
-            foreach ($handles as $ch) {
-                curl_multi_remove_handle($mh, $ch);
-                curl_close($ch);
-            }
-            curl_multi_close($mh);
         }
 
         // Update MembershipPoint, for Offline Payment via MINI Store
