@@ -12,6 +12,7 @@ use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\CustomerGroupControlle
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\PostController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\VerificationCodeController;
 use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\CompanyController;
+use StarsNet\Project\EnjoyFace\App\Http\Controllers\Admin\AuthenticationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,21 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+// AUTH
+Route::group(
+    ['prefix' => 'auth'],
+    function () {
+        $defaultController = AuthenticationController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/user', [$defaultController, 'getAuthUserInfo']);
+            }
+        );
     }
 );
 
