@@ -80,6 +80,7 @@ class StaffManagementController extends Controller
         return response()->json([
             'message' => 'Created Staff successfully',
             '_id' => $user->id,
+            'account_id' => $account->_id,
             'customer_id' => $account->customer->_id
         ], 200);
     }
