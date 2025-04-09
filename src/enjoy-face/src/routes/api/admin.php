@@ -88,6 +88,7 @@ Route::group(
         $defaultController = StaffManagementController::class;
 
         Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+            Route::get('/all', [$defaultController, 'getAllStaffAccounts'])->middleware(['pagination']);
             Route::put('/delete', [$defaultController, 'deleteStaffAccounts']);
             Route::post('/', [$defaultController, 'createStaff']);
 

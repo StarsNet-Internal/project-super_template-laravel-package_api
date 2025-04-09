@@ -24,6 +24,29 @@ class StaffManagementController extends Controller
 {
     use AuthenticationTrait, ProjectAuthenticationTrait;
 
+    public function getAllStaffAccounts(Request $request)
+    {
+        // Get all staff User(s)
+        /** @var User $users */
+        $users = User::whereIsStaff()
+            ->whereIsDeleted(false)
+            ->with([
+                'account',
+                'account.role',
+                'account.customer',
+                'account.customer.groups'
+            ])
+            ->get()
+            ->toArray();
+        foreach ($users as $key => $user) {
+            $users[$key]['role'] = $user['account']['role'];
+            unset($users[$key]['account']['role']);
+        }
+
+        // Return User(s)
+        return $users;
+    }
+
     public function deleteStaffAccounts(Request $request)
     {
         // Extract attributes from $request
