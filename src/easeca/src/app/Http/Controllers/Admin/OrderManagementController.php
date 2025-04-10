@@ -38,46 +38,53 @@ class OrderManagementController extends Controller
     {
         // Extract attributes from $request
         $statuses = (array) $request->input('current_status', []);
+        $limit = $request->input('limit', 300);
 
         $orders = Order::whereIn('store_id', $request->store_id)
             ->when($statuses, function ($query, $statuses) {
                 return $query->whereCurrentStatuses($statuses);
             })
+            ->latest()
+            ->limit($limit)
             ->get()
-            ->makeHidden(
-                [
-                    'cart_items',
-                    'gift_items',
-                ]
-            );
+            ->makeHidden([
+                'cashier_id',
+                'payment_method',
+                'transaction_method',
+                'cart_items',
+                'gift_items',
+                'amount_received',
+                'change',
+                'delivery_info',
+                'documents',
+                'statuses',
+                'store',
+                'image',
+            ]);
+
         $reviews = ProductReview::all()
-            ->unique('order_id')
-            ->makeHidden(
-                [
-                    'user',
-                    'product_title',
-                    'product_variant_title',
-                    'image',
-                ]
-            );
-        $accounts = Account::all();
+            ->keyBy('order_id')
+            ->makeHidden([
+                'user',
+                'product_title',
+                'product_variant_title',
+                'image',
+            ])
+            ->toArray();
+        $accounts = Account::all()->keyBy('user_id')->toArray();
 
         foreach ($orders as $order) {
-            $filtered = $reviews->filter(function ($review) use ($order) {
-                return $review->order_id == $order->_id;
-            });
-            $orderReviews = $filtered->values()->toArray();
-
-            foreach ($orderReviews as $key => $orderReview) {
+            if (array_key_exists($order->_id, $reviews)) {
+                $review = $reviews[$order->_id];
                 $user = [
-                    'username' => $accounts->first(function ($account) use ($orderReview) {
-                        return $account->user_id == $orderReview['user_id'];
-                    })->username,
-                    'avatar' => null,
+                    'user' => [
+                        'username' => $accounts[$review['user_id']]['username']
+                    ]
                 ];
-                $orderReviews[$key]['user'] = $user;
+                $order->product_reviews = [array_merge($review, $user)];
+            } else {
+                $order->product_reviews = [];
             }
-            $order->product_reviews = $orderReviews;
         }
         return $orders;
     }
