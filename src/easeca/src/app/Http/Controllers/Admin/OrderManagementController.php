@@ -27,6 +27,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class OrderManagementController extends Controller
 {
@@ -38,14 +39,17 @@ class OrderManagementController extends Controller
     {
         // Extract attributes from $request
         $statuses = (array) $request->input('current_status', []);
-        $limit = $request->input('limit', 300);
+        // $limit = $request->input('limit', 300);
 
-        $orders = Order::whereIn('store_id', $request->store_id)
+        $orders = Order::when($request->start_date, function ($query) use ($request) {
+            return $query->whereBetween('created_at', [Carbon::parse($request->start_date), Carbon::parse($request->end_date)]);
+        })
+            ->whereIn('store_id', $request->store_id)
             ->when($statuses, function ($query, $statuses) {
                 return $query->whereCurrentStatuses($statuses);
             })
             ->latest()
-            ->limit($limit)
+            // ->limit($limit)
             ->get()
             ->makeHidden([
                 'cashier_id',
