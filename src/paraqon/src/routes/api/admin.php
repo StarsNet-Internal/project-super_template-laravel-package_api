@@ -290,6 +290,7 @@ Route::group(
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getAllAuctionOrders'])->middleware(['pagination']);
                 Route::put('/{order_id}/details', [$defaultController, 'updateOrderDetails']);
+                Route::put('/{id}/offline-payment', [$defaultController, 'approveOrderOfflinePayment']);
             }
         );
     }
