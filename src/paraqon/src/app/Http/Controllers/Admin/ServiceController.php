@@ -245,9 +245,11 @@ class ServiceController extends Controller
                             ->whereIn('product_id', $productIDs)
                             ->update(['is_paid' => true]);
 
-                        Product::objectIDs($productIDs)->update(
-                            ['listing_status' => 'ALREADY_CHECKOUT']
-                        );
+                        Product::objectIDs($productIDs)->update([
+                            'owned_by_customer_id' => $order->customer_id,
+                            'status' => 'ACTIVE',
+                            'listing_status' => 'ALREADY_CHECKOUT'
+                        ]);
                     }
 
                     return response()->json(
