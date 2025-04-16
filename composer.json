@@ -30,7 +30,8 @@
       "StarsNet\\Project\\TripleGaga\\": "src/triple-gaga/src/",
       "StarsNet\\Project\\TuenSir\\": "src/tuen-sir/src/",
       "StarsNet\\Project\\Videocom\\": "src/videocom/src/",
-      "StarsNet\\Project\\WhiskyWhiskers\\": "src/whisky-whiskers/src/"
+      "StarsNet\\Project\\WhiskyWhiskers\\": "src/whisky-whiskers/src/",
+      "StarsNet\\Project\\WhiskyWhiskersUpgrade\\": "src/whisky-whiskers-upgrade/src/"
     }
   },
   "extra": {
@@ -63,7 +64,8 @@
         "StarsNet\\Project\\TuenSir\\ProjectServiceProvider",
         "StarsNet\\Project\\Videocom\\ProjectServiceProvider",
         "StarsNet\\Project\\WhiskyWhiskers\\EventServiceProvider",
-        "StarsNet\\Project\\WhiskyWhiskers\\ProjectServiceProvider"
+        "StarsNet\\Project\\WhiskyWhiskers\\ProjectServiceProvider",
+        "StarsNet\\Project\\WhiskyWhiskersUpgrade\\ProjectServiceProvider"
       ]
     }
   }
