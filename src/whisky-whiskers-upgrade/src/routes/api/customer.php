@@ -4,6 +4,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use StarsNet\Project\WhiskyWhiskersUpgrade\App\Http\Controllers\Customer\AuthenticationController;
 use StarsNet\Project\WhiskyWhiskersUpgrade\App\Http\Controllers\Customer\PaymentController;
 use StarsNet\Project\WhiskyWhiskersUpgrade\App\Http\Controllers\Customer\TestingController;
 
@@ -24,6 +25,20 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+Route::group(
+    ['prefix' => 'auth'],
+    function () {
+        $defaultController = AuthenticationController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/migrate', [$defaultController, 'migrateToRegistered']);
+            }
+        );
     }
 );
 
