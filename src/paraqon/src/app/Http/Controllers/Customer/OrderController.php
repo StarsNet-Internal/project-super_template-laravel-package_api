@@ -14,6 +14,8 @@ use App\Traits\Controller\CheckoutTrait;
 use Illuminate\Http\Request;
 use StarsNet\Project\Paraqon\App\Models\Bid;
 use StarsNet\Project\Paraqon\App\Models\ConsignmentRequest;
+use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
+use Carbon\Carbon;
 
 class OrderController extends Controller
 {
@@ -148,5 +150,36 @@ class OrderController extends Controller
 
         // Return data
         return $orders;
+    }
+
+    public function updateOrderDetails(Request $request)
+    {
+        // Extract attributes from $request
+        $orderID = $request->route('order_id');
+
+        // Get OrderShipmentDeliveryStatus
+        $order = Order::find($orderID);
+
+        if (is_null($order)) {
+            return response()->json([
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        // Get Customer, validate ownership
+        $customer = $this->customer();
+
+        if ($customer->_id !== $order->customer_id) {
+            return response()->json([
+                'message' => 'Customer do not own this order'
+            ], 404);
+        }
+
+        // Update Order
+        $order->update($request->all());
+
+        return response()->json([
+            'message' => "Updated Order Successfully"
+        ], 200);
     }
 }

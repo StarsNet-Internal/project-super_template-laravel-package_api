@@ -167,7 +167,6 @@ class AuctionController extends Controller
         // Extract attributes from $request
         $storeID = $request->route('store_id');
         $customerID = $request->route('customer_id');
-        $paddleID = $request->paddle_id;
 
         // Check if there's existing AuctionRegistrationRequest
         $oldForm =
@@ -175,13 +174,21 @@ class AuctionController extends Controller
             ->where('store_id', $storeID)
             ->first();
 
+        // Check if store exists
+        $store = Store::find($storeID);
+        if (is_null($store)) {
+            return response()->json([
+                'message' => 'Auction not found',
+            ], 404);
+        }
+
         // Auth
         $account = $this->account();
-
         if (!is_null($oldForm)) {
             $oldFormAttributes = [
                 'approved_by_account_id' => $account->_id,
                 'status' => Status::ACTIVE,
+                'paddle_id' => $request->paddle_id ?? $oldForm->paddle_id,
                 'reply_status' => ReplyStatus::APPROVED,
             ];
             $oldForm->update($oldFormAttributes);
@@ -192,20 +199,58 @@ class AuctionController extends Controller
             ], 200);
         }
 
-        $createAttributes = [
-            'requested_by_customer_id' => $customerID,
-            'store_id' => $storeID,
-            'paddle_id' => $paddleID,
-            'status' => Status::ACTIVE,
-            'reply_status' => ReplyStatus::APPROVED
-        ];
-        $newForm = AuctionRegistrationRequest::create($createAttributes);
+        // Auto-assign paddle_id
+        $auctionType = $store->auction_type;
 
-        // Return Auction Store
-        return response()->json([
-            'message' => 'Created New AuctionRegistrationRequest successfully',
-            'id' => $newForm->_id,
-        ], 200);
+        if ($auctionType == 'ONLINE') {
+            $paddleId = null;
+
+            $allPaddles = AuctionRegistrationRequest::where('store_id', $storeID)
+                ->pluck('paddle_id')
+                ->filter(fn($id) => is_numeric($id))
+                ->map(fn($id) => (int) $id)
+                ->sort()
+                ->values();
+            $latestPaddleId = $allPaddles->last();
+
+            if (is_null($latestPaddleId)) {
+                $paddleId = $store->paddle_number_start_from ?? 1;
+            } else {
+                $paddleId = $latestPaddleId + 1;
+            }
+
+            $createAttributes = [
+                'requested_by_customer_id' => $customerID,
+                'store_id' => $storeID,
+                'paddle_id' => $paddleId,
+                'status' => Status::ACTIVE,
+                'reply_status' => ReplyStatus::APPROVED
+            ];
+            $newForm = AuctionRegistrationRequest::create($createAttributes);
+
+            // Return Auction Store
+            return response()->json([
+                'message' => 'Created New AuctionRegistrationRequest successfully',
+                'id' => $newForm->_id,
+            ], 200);
+        }
+
+        if ($auctionType == 'LIVE') {
+            $createAttributes = [
+                'requested_by_customer_id' => $customerID,
+                'store_id' => $storeID,
+                'paddle_id' => $request->paddle_id,
+                'status' => Status::ACTIVE,
+                'reply_status' => ReplyStatus::APPROVED
+            ];
+            $newForm = AuctionRegistrationRequest::create($createAttributes);
+
+            // Return Auction Store
+            return response()->json([
+                'message' => 'Created New AuctionRegistrationRequest successfully',
+                'id' => $newForm->_id,
+            ], 200);
+        }
     }
 
     public function getAllAuctionRegistrationRecords(Request $request)

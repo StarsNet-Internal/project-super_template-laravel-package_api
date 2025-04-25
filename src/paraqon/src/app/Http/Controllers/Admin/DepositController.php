@@ -110,7 +110,6 @@ class DepositController extends Controller
         // Extract attributes from $request
         $depositID = $request->route('id');
         $replyStatus = $request->reply_status;
-        $paddleID = $request->paddle_id;
 
         // Validation 
         $replyStatus = strtoupper($replyStatus);
@@ -165,9 +164,44 @@ class DepositController extends Controller
                 $deposit->update($depositUpdateAttributes);
                 $deposit->updateStatus('on-hold');
 
+                // Get and Update paddle_id
+                $storeID = $auctionRegistrationRequest->store_id;
+                $store = Store::find($storeID);
+
+                $newPaddleID = null;
+                if (!is_null($store)) {
+                    $auctionType = $store->auction_type;
+
+                    if ($auctionType == 'ONLINE') {
+                        if (is_numeric($request->paddle_id)) {
+                            $newPaddleID = $request->paddle_id;
+                        } else if (is_null($auctionRegistrationRequest->paddle_id)) {
+                            $allPaddles = AuctionRegistrationRequest::where('store_id', $storeID)
+                                ->pluck('paddle_id')
+                                ->filter(fn($id) => is_numeric($id))
+                                ->map(fn($id) => (int) $id)
+                                ->sort()
+                                ->values();
+                            $latestPaddleId = $allPaddles->last();
+
+                            if (is_null($latestPaddleId)) {
+                                $newPaddleID = $store->paddle_number_start_from ?? 1;
+                            } else {
+                                $newPaddleID = $latestPaddleId + 1;
+                            }
+                        } else {
+                            $newPaddleID = $auctionRegistrationRequest->paddle_id;
+                        }
+                    } else if ($auctionType == 'LIVE') {
+                        $newPaddleID = $request->paddle_id ?? $auctionRegistrationRequest->paddle_id;
+                    } else {
+                        $newPaddleID = $request->paddle_id ?? $auctionRegistrationRequest->paddle_id;
+                    }
+                }
+
                 $requestUpdateAttributes = [
                     'approved_by_account_id' => $account->_id,
-                    'paddle_id' => $paddleID,
+                    'paddle_id' => $newPaddleID,
                     'status' => Status::ACTIVE,
                     'reply_status' => ReplyStatus::APPROVED
                 ];

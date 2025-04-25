@@ -13,6 +13,7 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\CustomerGroupController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\DepositController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\DocumentController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ProductController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\BidController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\OrderController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\SeederController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\ServiceController;
@@ -289,7 +290,9 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getAllAuctionOrders'])->middleware(['pagination']);
+                Route::put('/{order_id}/upload', [$defaultController, 'uploadPaymentProofAsCustomer']);
                 Route::put('/{order_id}/details', [$defaultController, 'updateOrderDetails']);
+                Route::get('/{id}/invoice/{language}', [$defaultController, 'getInvoiceData']);
                 Route::put('/{id}/offline-payment', [$defaultController, 'approveOrderOfflinePayment']);
             }
         );
@@ -360,6 +363,22 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/customers/all', [$defaultController, 'getAllWatchlistedCustomers'])->middleware(['pagination']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'bids'],
+    function () {
+        $defaultController = BidController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/auction-lots/{auction_lot_id}/max', [$defaultController, 'createOnlineBidByCustomer']);
+                Route::get('/customers/{customer_id}/all', [$defaultController, 'getCustomerAllBids'])->middleware(['pagination']);
+                Route::put('/{bid_id}/cancel', [$defaultController, 'cancelBidByCustomer']);
             }
         );
     }

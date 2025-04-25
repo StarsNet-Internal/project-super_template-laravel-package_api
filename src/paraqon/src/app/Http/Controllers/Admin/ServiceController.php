@@ -97,34 +97,70 @@ class ServiceController extends Controller
                     ]);
                     $deposit->updateOnlineResponse($request->all());
 
-                    // For Auction Registration, immediately refund 
-                    $paymentIntentID = $deposit->online['payment_intent_id'];
-                    $depositPermissionType = $deposit->permission_type;
-
+                    // Automatically assign paddle_id if ONLINE auction
                     if (
-                        $deposit->payment_method == 'ONLINE' &&
-                        !is_null($paymentIntentID) &&
-                        $depositPermissionType == null
+                        in_array($auctionRegistrationRequest->reply_status, [
+                            ReplyStatus::PENDING,
+                            ReplyStatus::REJECTED
+                        ])
                     ) {
-                        $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents/' . $paymentIntentID . '/cancel';
+                        // get Paddle ID
+                        $assignedPaddleId = $auctionRegistrationRequest->paddle_id;
+                        $storeID = $auctionRegistrationRequest->store_id;
 
-                        try {
-                            $response = Http::post(
-                                $url
-                            );
+                        $newPaddleID = $assignedPaddleId;
 
-                            if ($response->status() === 200) {
-                                return true;
+                        if (is_null($assignedPaddleId)) {
+                            $allPaddles = AuctionRegistrationRequest::where('store_id', $storeID)
+                                ->pluck('paddle_id')
+                                ->filter(fn($id) => is_numeric($id))
+                                ->map(fn($id) => (int) $id)
+                                ->sort()
+                                ->values();
+                            $latestPaddleId = $allPaddles->last();
+
+                            if (is_null($latestPaddleId)) {
+                                $newPaddleID = $store->paddle_number_start_from ?? 1;
                             } else {
-                                return false;
+                                $newPaddleID = $latestPaddleId + 1;
                             }
-                        } catch (\Throwable $th) {
-                            Log::error('Failed to cancel deposit, deposit_id: ' . $deposit->_id);
-                            $deposit->updateStatus('return-failed');
-                            return false;
                         }
+
+                        $requestUpdateAttributes = [
+                            'paddle_id' => $newPaddleID,
+                            'status' => Status::ACTIVE,
+                            'reply_status' => ReplyStatus::APPROVED
+                        ];
+                        $auctionRegistrationRequest->update($requestUpdateAttributes);
                     }
+
                     // For Auction Registration, immediately refund 
+                    // $paymentIntentID = $deposit->online['payment_intent_id'];
+                    // $depositPermissionType = $deposit->permission_type;
+
+                    // if (
+                    //     $deposit->payment_method == 'ONLINE' &&
+                    //     !is_null($paymentIntentID) &&
+                    //     $depositPermissionType == null
+                    // ) {
+                    //     $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents/' . $paymentIntentID . '/cancel';
+
+                    //     try {
+                    //         $response = Http::post(
+                    //             $url
+                    //         );
+
+                    //         if ($response->status() === 200) {
+                    //             return true;
+                    //         } else {
+                    //             return false;
+                    //         }
+                    //     } catch (\Throwable $th) {
+                    //         Log::error('Failed to cancel deposit, deposit_id: ' . $deposit->_id);
+                    //         $deposit->updateStatus('return-failed');
+                    //         return false;
+                    //     }
+                    // }
 
                     return response()->json(
                         [

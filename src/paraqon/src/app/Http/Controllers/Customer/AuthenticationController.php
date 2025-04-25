@@ -54,7 +54,23 @@ class AuthenticationController extends Controller
                 'password' => $request->password
             ];
 
+        // Check if too many failed login attempts
+        $account = $user->account;
+
+        if (
+            isset($account->failed_login_count)
+            && $account->failed_login_count >= 5
+        ) {
+            return response()->json([
+                'message' => 'Too many failed attempts. Your account has been temporarily locked for security reasons.'
+            ], 423);
+        }
+
         if (!Auth::attempt($credentials)) {
+            // For incorrect password, increment failed_login_count on account
+            $newFailedLoginCount = $account->failed_login_count + 1;
+            $account->update(['failed_login_count' => $newFailedLoginCount]);
+
             return response()->json([
                 'message' => 'Credentials are not valid.'
             ], 404);
@@ -95,10 +111,17 @@ class AuthenticationController extends Controller
             $loginType
         );
 
+        // Clear failed login count
+        $account->update(['failed_login_count' => 0]);
+
+        // Check is_2fa_verification_required
+        $is2faVerificationRequired = $account->is_2fa_verification_required ?? true;
+
         // Return response
         return response()->json([
             'message' => 'Login credentials are valid, we have sent you a 2FA verification code',
-            'code' => $code
+            'code' => $code,
+            'is_2fa_verification_required' => $is2faVerificationRequired
         ], 200);
     }
 
@@ -288,6 +311,10 @@ class AuthenticationController extends Controller
             // Account Verification
             'address_proof_verification' => $request->input('address_proof_verification'),
             'photo_id_verification' => $request->input('photo_id_verification'),
+            'legal_name_verification' => $request->input('legal_name_verification'),
+
+            // Boolean
+            'is_2fa_verification_required' => $request->input('is_2fa_verification_required'),
 
             // Admin Created Accounts
             'is_created_by_admin' => $request->input('is_created_by_admin', false),

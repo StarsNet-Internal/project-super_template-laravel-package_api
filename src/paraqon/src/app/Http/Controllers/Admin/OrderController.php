@@ -4,6 +4,8 @@ namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
 use App\Constants\Model\CheckoutApprovalStatus;
 use App\Constants\Model\StoreType;
+use App\Constants\Model\CheckoutType;
+use App\Constants\Model\ShipmentDeliveryStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Address;
@@ -13,6 +15,8 @@ use App\Models\Store;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+
+use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
 
 // Validator
 use Illuminate\Support\Facades\Validator;
@@ -49,7 +53,7 @@ class OrderController extends Controller
         // Extract attributes from $request
         $orderID = $request->route('order_id');
 
-        // Get Order
+        // Get OrderShipmentDeliveryStatus
         $order = Order::find($orderID);
 
         if (is_null($order)) {
@@ -150,5 +154,149 @@ class OrderController extends Controller
         return response()->json([
             'message' => 'Reviewed Order successfully'
         ], 200);
+    }
+
+
+    public function uploadPaymentProofAsCustomer(Request $request)
+    {
+        // Validate RequestShipmentDeliveryStatus
+        $orderID = $request->route('order_id');
+
+        // Get Order
+        /** @var Order $order */
+        $order = Order::find($orderID);
+
+        if (is_null($order)) {
+            return response()->json([
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        // Get Checkout
+        /** @var Checkout $checkout */
+        $checkout = $order->checkout()->latest()->first();
+
+        if ($checkout->payment_method != CheckoutType::OFFLINE) {
+            return response()->json([
+                'message' => 'Order does not accept OFFLINE payment'
+            ], 403);
+        }
+
+        // Update Checkout
+        $checkout->updateOfflineImage($request->image);
+
+        // // Update Order
+        // if ($order->current_status !== ShipmentDeliveryStatus::PENDING) {
+        //     $order->updateStatus(ShipmentDeliveryStatus::PENDING);
+        // }
+
+        // Return data
+        return response()->json([
+            'message' => 'Uploaded image successfully'
+        ], 200);
+    }
+
+    public function getInvoiceData(Request $request)
+    {
+        $orderId = $request->route('id');
+        $language = $request->route('language');
+
+        $document = Order::find($orderId);
+        if (!$document) {
+            return response()->json(['error' => 'Order not found'], 404);
+        }
+
+        $storeId = $document['store_id'];
+        $customerId = $document['customer_id'];
+
+        $store = $document->store;
+        $customer = $document->customer;
+        $account = $customer->account;
+
+        $registrationRequest = AuctionRegistrationRequest::where('store_id', $storeId)
+            ->where('requested_by_customer_id', $customerId)
+            ->first();
+
+        $paddleId = $registrationRequest['paddle_id'];
+        $storeName = $store['title'][$language];
+
+        $dateText = $this->formatDateRange($store['start_datetime'], $store['display_end_datetime']);
+        $storeNameText = $storeName . ' ' . $dateText;
+
+        $buyerName = $account['username'];
+        if ($document['is_system'] === false && isset($document['delivery_details']['recipient_name'])) {
+            $first = $document['delivery_details']['recipient_name']['first_name'] ?? '';
+            $last = $document['delivery_details']['recipient_name']['last_name'] ?? '';
+            if ($last) {
+                $buyerName = "$last, $first";
+            }
+        }
+
+        $createdAt = Carbon::parse($document['created_at'])->addHours(8);
+        $formattedIssueDate = $createdAt->format('d/m/Y');
+
+        $itemsData = collect($document['cart_items'])->map(function ($item) use ($language) {
+            $formatted = number_format($item['winning_bid'], 2, '.', ',');
+            return [
+                'lotNo' => $item['lot_number'],
+                'lotImage' => $item['image'],
+                'description' => $item['product_title'][$language],
+                'hammerPrice' => $formatted,
+                'commission' => number_format(0, 2, '.', ','),
+                'otherFees' => number_format(0, 2, '.', ','),
+                'totalOrSum' => $formatted
+
+            ];
+        })->toArray();
+
+        $total = floatval($document['calculations']['price']['total'] ?? 0);
+        $deposit = floatval($document['calculations']['deposit'] ?? 0);
+        $totalAmount = $total + $deposit;
+        $totalFormatted = number_format($totalAmount, 2, '.', ',');
+
+        $creditChargeText = $language === 'zh'
+            ? "包括3.5%信用卡收費"
+            : "Includes 3.5% credit card charge";
+
+        $totalPriceText = $document['payment_method'] === "ONLINE"
+            ? "$totalFormatted ($creditChargeText)"
+            : $totalFormatted;
+
+        $newCustomerId = substr($customerId, -6);
+        $invoiceID = "OA1-{$paddleId}";
+
+
+        return response()->json([
+            'model' => "INVOICE",
+            'type' => "Buyer",
+            'data' => [
+                'lang' => $language,
+                'buyerName' => $buyerName,
+                'date' => $formattedIssueDate,
+                'clientNo' => $newCustomerId,
+                'paddleNo' => "#$paddleId",
+                'auctionTitle' => $storeNameText,
+                'shipTo' => "In-store pick up",
+                'invoiceNum' => $invoiceID,
+                'items' => $itemsData,
+                'tableTotal' => $totalPriceText
+            ]
+        ]);
+    }
+
+    private function formatDateRange($startDateTime, $endDateTime)
+    {
+        if (!$startDateTime || !$endDateTime) return "";
+
+        $start = Carbon::parse($startDateTime)->utc();
+        $end = Carbon::parse($endDateTime)->utc();
+
+        if ($start->format('M') === $end->format('M') && $start->year === $end->year) {
+            return $start->format('d') . '-' . $end->format('d') . ' ' . $start->format('M Y');
+        } elseif ($start->year === $end->year) {
+            return $start->format('d M') . ' - ' . $end->format('d M Y');
+        } else {
+            return $start->format('d M Y') . ' - ' . $end->format('d M Y');
+        }
     }
 }
