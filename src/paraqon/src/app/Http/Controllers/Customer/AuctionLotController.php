@@ -260,6 +260,7 @@ class AuctionLotController extends Controller
         $auctionLotId = $request->route('auction_lot_id');
         $requestedBid = $request->bid;
         $bidType = $request->input('type', 'MAX');
+        $isPlacedByAdmin = $request->boolean('is_placed_by_admin');
 
         // Validation for the request body
         if (!in_array($bidType, ['MAX', 'DIRECT', 'ADVANCED'])) {
@@ -412,7 +413,8 @@ class AuctionLotController extends Controller
             'product_id' => $auctionLot->product_id,
             'product_variant_id' => $auctionLot->product_variant_id,
             'bid' => $requestedBid,
-            'type' => $bidType
+            'type' => $bidType,
+            'is_placed_by_admin' => $isPlacedByAdmin
         ]);
 
         // Update current_bid

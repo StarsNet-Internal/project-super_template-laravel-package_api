@@ -56,6 +56,7 @@ class Bid extends Eloquent
         // Default
         'bid' => 0,
         'is_hidden' => false,
+        'is_placed_by_admin' => false
 
         // Timestamps
     ];

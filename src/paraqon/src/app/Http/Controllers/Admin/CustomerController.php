@@ -103,11 +103,10 @@ class CustomerController extends Controller
         $customerId = $request->route('customer_id');
 
         $bids = Bid::where('customer_id', $customerId)
-            ->where('is_hidden', false)
             ->with([
-                'product',
-                'productVariant',
                 'store',
+                'product',
+                'auctionLot'
             ])
             ->get();
 
