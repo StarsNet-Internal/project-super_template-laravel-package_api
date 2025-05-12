@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Customer\TestingController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Customer\TenantController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Customer\ShoppingCartController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Customer\CheckoutController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,5 +37,33 @@ Route::group(
         Route::get('/{account_id}/details', [$defaultController, 'getTenantDetails']);
         Route::get('/{account_id}/categories/hierarchy', [$defaultController, 'getTenantCategoryHierarchy'])->middleware(['pagination']);
         Route::get('/{account_id}/stores/{store_id}/products', [$defaultController, 'filterTenantProductsByCategories'])->middleware(['pagination']);
+    }
+);
+
+// STORE
+Route::group(
+    ['prefix' => '/stores/{store_id}/'],
+    function () {
+
+        // SHOPPING_CART
+        Route::group(['prefix' => 'shopping-cart'], function () {
+            $defaultController = ShoppingCartController::class;
+
+            Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                Route::post('/all', [$defaultController, 'getAll']);
+            });
+        });
+
+        // CHECKOUT
+        Route::group(
+            ['prefix' => 'checkouts'],
+            function () {
+                $defaultController = CheckoutController::class;
+
+                Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
+                    Route::post('/', [$defaultController, 'checkOut']);
+                });
+            }
+        );
     }
 );
