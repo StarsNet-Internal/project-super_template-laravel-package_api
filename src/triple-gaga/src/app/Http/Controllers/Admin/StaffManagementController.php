@@ -33,7 +33,11 @@ class StaffManagementController extends Controller
         $accountID = $request->route('account_id');
         $account = Account::find($accountID);
 
-        $account->update($request->all());
+        $account->update($request->except(['password']));
+
+        // Update password
+        $user = $account->user;
+        $user->updatePassword($request->input('password'));
 
         return response()->json([
             'message' => 'Updated Tenant successfully'
