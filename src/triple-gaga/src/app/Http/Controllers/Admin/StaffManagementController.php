@@ -36,8 +36,11 @@ class StaffManagementController extends Controller
         $account->update($request->except(['password']));
 
         // Update password
-        $user = $account->user;
-        $user->updatePassword($request->input('password'));
+        $newPassword = $request->input('password');
+        if (!empty($newPassword)) {
+            $user = $account->user;
+            $user->updatePassword($newPassword);
+        }
 
         return response()->json([
             'message' => 'Updated Tenant successfully'
