@@ -45,7 +45,8 @@ class ProductController extends Controller
             'images',
             'status',
             'updated_at',
-            'created_at'
+            'created_at',
+            'product_interface'
         ]);
 
         foreach ($products as $key => $product) {
@@ -87,6 +88,7 @@ class ProductController extends Controller
             $product['inventory_count'] = collect($product->warehouseInventories)->sum('qty') ?? 0;
             $product['wishlist_item_count'] = collect($product->wishlistItems)->count() ?? 0;
             $product['first_variant_id'] = optional($collectedVariants->first())->_id;
+            $product['product_interface'] = $product->product_interface;
 
             unset($product['variants'], $product['reviews'], $product['warehouseInventories'], $product['wishlistItems']);
         }
