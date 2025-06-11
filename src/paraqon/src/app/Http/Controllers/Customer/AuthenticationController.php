@@ -734,7 +734,7 @@ class AuthenticationController extends Controller
 
         // Return data
         $data = [
-            'user' => $user,
+            'user' => $user
         ];
 
         return response()->json($data, 200);

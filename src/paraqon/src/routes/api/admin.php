@@ -194,6 +194,7 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::post('/login', [$defaultController, 'loginAsCustomer']);
                 Route::get('/all', [$defaultController, 'getAllCustomers'])->middleware(['pagination']);
                 Route::get('/{id}/details', [$defaultController, 'getCustomerDetails']);
                 Route::get('/{customer_id}/products/all', [$defaultController, 'getAllOwnedProducts'])->middleware(['pagination']);

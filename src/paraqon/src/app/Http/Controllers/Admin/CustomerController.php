@@ -2,12 +2,15 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
+use Illuminate\Support\Facades\Auth;
 use App\Constants\Model\LoginType;
 use App\Constants\Model\Status;
 use App\Http\Controllers\Controller;
 use App\Models\Configuration;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\User;
+use App\Models\Account;
 use Illuminate\Http\Request;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use StarsNet\Project\Paraqon\App\Models\AuctionRequest;
@@ -123,5 +126,77 @@ class CustomerController extends Controller
         return response()->json([
             'message' => 'Bid updated is_hidden as true'
         ], 200);
+    }
+
+    public function loginAsCustomer(Request $request)
+    {
+        // Declare local constants
+        $roleName = 'customer';
+
+        // Extract attributes from $request
+        $loginType = $request->input('type', LoginType::EMAIL);
+        $loginType = strtoupper($loginType);
+
+        // Attempt to find User via Account Model
+        $user = $this->findUserByCredentials(
+            $loginType,
+            $request->email,
+            $request->area_code,
+            $request->phone,
+        );
+
+        if (is_null($user)) {
+            return response()->json([
+                'message' => 'User not found.'
+            ], 404);
+        }
+
+        // Create token
+        $accessToken = $user->createToken($roleName)->accessToken;
+
+        // Return data
+        $data = [
+            'token' => $accessToken,
+            'user' => $user
+        ];
+
+        return response()->json($data, 200);
+    }
+
+    private function findUserByCredentials(
+        string $loginType,
+        ?string $email,
+        ?string $areaCode,
+        ?string $phone
+    ) {
+        $userID = $this->findUserIDByCredentials(
+            $loginType,
+            $email,
+            $areaCode,
+            $phone
+        );
+        return User::find($userID);
+    }
+
+    private function findUserIDByCredentials(
+        string $loginType,
+        ?string $email,
+        ?string $areaCode,
+        ?string $phone
+    ) {
+        switch ($loginType) {
+            case LoginType::EMAIL:
+            case LoginType::TEMP:
+                $account = Account::where('email', $email)
+                    ->first();
+                return optional($account)->user_id;
+            case LoginType::PHONE:
+                $account = Account::where('area_code', $areaCode)
+                    ->where('phone', $phone)
+                    ->first();
+                return optional($account)->user_id;
+            default:
+                return null;
+        }
     }
 }
