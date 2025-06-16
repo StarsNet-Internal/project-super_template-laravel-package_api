@@ -105,8 +105,12 @@ class ShoppingCartController extends Controller
             $winningBid = (float) optional($lot)->current_bid ?? 0;
             $item->winning_bid = $winningBid;
 
+            // Add new keys
+            $item->sold_price = optional($lot)->sold_price ?? optional($lot)->current_bid;
+            $item->commission = optional($lot)->commission ?? 0;
+
             if ($item->is_checkout) {
-                $subtotalPrice += $winningBid;
+                $subtotalPrice += $item->sold_price;
             }
 
             // Service Charge
@@ -362,8 +366,12 @@ class ShoppingCartController extends Controller
             $winningBid = (float) optional($lot)->current_bid ?? 0;
             $item->winning_bid = $winningBid;
 
+            // Add new keys
+            $item->sold_price = optional($lot)->sold_price ?? optional($lot)->current_bid;
+            $item->commission = optional($lot)->commission ?? 0;
+
             if ($item->is_checkout) {
-                $subtotalPrice += $winningBid;
+                $subtotalPrice += $item->sold_price;
             }
 
             // Service Charge

@@ -249,7 +249,7 @@ Route::group(
         Route::put('/auction-lots/{auction_lot_id}/extend', [$defaultController, 'extendAuctionLotEndDateTime']);
 
         Route::post('/payment/callback', [$defaultController, 'paymentCallback']);
-        Route::get('/auctions/{store_id}/orders/create', [$defaultController, 'generateAuctionOrdersAndRefundDeposits']);
+        Route::post('/auctions/{store_id}/orders/create', [$defaultController, 'generateAuctionOrdersAndRefundDeposits']);
         Route::post('/auctions/{store_id}/orders/create-live', [$defaultController, 'generateLiveAuctionOrdersAndRefundDeposits']);
 
         Route::post('/deposits/return', [$defaultController, 'returnDeposit']);

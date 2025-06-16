@@ -539,6 +539,8 @@ class ServiceController extends Controller
                 'qty' => 1,
                 'lot_number' => $lot->lot_number,
                 'winning_bid' => $lot->current_bid,
+                'sold_price' => $lot->sold_price ?? $lot->current_bid,
+                'commission' => $lot->commission ?? 0
             ];
             $customer->shoppingCartItems()->create($attributes);
         }
@@ -556,8 +558,8 @@ class ServiceController extends Controller
             $item->is_refundable = false;
             $item->global_discount = null;
 
-            // Get winning_bid, update subtotal_price
-            $itemTotalPrice += $item->winning_bid;
+            // Get sold_price, update subtotal_price
+            $itemTotalPrice += $item->sold_price;
         }
 
         // Get total price
@@ -877,7 +879,9 @@ class ServiceController extends Controller
                 AuctionLot::where('_id', $lot['lot_id'])
                     ->update([
                         'winning_bid_customer_id' => $result['customer_id'],
-                        'current_bid' => $lot['price']
+                        'current_bid' => $lot['price'],
+                        'sold_price' => $lot['sold_price'],
+                        'commission' => $lot['commission'],
                     ]);
             }
         }

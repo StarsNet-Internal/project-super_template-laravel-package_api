@@ -141,6 +141,9 @@ class WatchlistItemController extends Controller
             $product->is_disabled = $auctionLot->is_disabled;
             $product->is_closed = $auctionLot->is_closed;
 
+            $product->sold_price = $auctionLot->sold_price ?? $product->current_bid;
+            $product->commission = $auctionLot->commission ?? 0;
+
             // is_watching
             $product->is_watching = true;
 
