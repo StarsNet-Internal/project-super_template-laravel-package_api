@@ -134,8 +134,8 @@ class ProductManagementController extends Controller
             $product->is_disabled = $auctionLot->is_disabled;
             $product->is_closed = $auctionLot->is_closed;
 
-            $product->sold_price = $auctionLot->sold_price ?? $product->current_bid;
-            $product->commission = $auctionLot->commission ?? 0;
+            $product->sold_price = $auctionLot->sold_price;
+            $product->commission = $auctionLot->commission;
 
             $product->max_estimated_price = data_get($auctionLot, 'bid_incremental_settings.estimate_price.max') ?? 0;
             $product->min_estimated_price = data_get($auctionLot, 'bid_incremental_settings.estimate_price.min') ?? 0;
@@ -327,8 +327,8 @@ class ProductManagementController extends Controller
             $product->is_disabled = $auctionLot->is_disabled;
             $product->is_closed = $auctionLot->is_closed;
 
-            $product->sold_price = $auctionLot->sold_price ?? $product->current_bid;
-            $product->commission = $auctionLot->commission ?? 0;
+            $product->sold_price = $auctionLot->sold_price;
+            $product->commission = $auctionLot->commission;
 
             $product->max_estimated_price = data_get($auctionLot, 'bid_incremental_settings.estimate_price.max') ?? 0;
             $product->min_estimated_price = data_get($auctionLot, 'bid_incremental_settings.estimate_price.min') ?? 0;
