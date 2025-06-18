@@ -137,6 +137,9 @@ class ProductManagementController extends Controller
             $product->sold_price = $auctionLot->sold_price ?? $product->current_bid;
             $product->commission = $auctionLot->commission ?? 0;
 
+            $product->max_estimated_price = data_get($auctionLot, 'bid_incremental_settings.estimate_price.max') ?? 0;
+            $product->min_estimated_price = data_get($auctionLot, 'bid_incremental_settings.estimate_price.min') ?? 0;
+
             // is_watching
             $auctionLot->is_watching = in_array($auctionLotID, $watchingAuctionIDs);
 
@@ -326,6 +329,9 @@ class ProductManagementController extends Controller
 
             $product->sold_price = $auctionLot->sold_price ?? $product->current_bid;
             $product->commission = $auctionLot->commission ?? 0;
+
+            $product->max_estimated_price = data_get($auctionLot, 'bid_incremental_settings.estimate_price.max') ?? 0;
+            $product->min_estimated_price = data_get($auctionLot, 'bid_incremental_settings.estimate_price.min') ?? 0;
 
             // is_watching
             $product->is_watching = in_array($auctionLotID, $watchingAuctionLotIDs);
