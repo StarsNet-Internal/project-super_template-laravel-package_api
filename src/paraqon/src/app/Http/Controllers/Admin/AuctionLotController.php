@@ -92,6 +92,8 @@ class AuctionLotController extends Controller
 
             'brand' => $request->brand,
             'saleroom_notice' => $request->saleroom_notice,
+
+            'commission_rate' => $request->commission_rate
         ];
 
         $auctionLot = AuctionLot::create($auctionLotAttributes);
