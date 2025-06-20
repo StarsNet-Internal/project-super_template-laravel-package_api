@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\Auction\App\Http\Controllers\Admin\TestingController;
+use StarsNet\Project\Auction\App\Http\Controllers\Admin\ServiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,5 +29,15 @@ Route::group(
         $defaultController = TestingController::class;
 
         Route::get('/health-check', [$defaultController, 'healthCheck']);
+    }
+);
+
+Route::group(
+    ['prefix' => 'services'],
+    function () {
+        $defaultController = ServiceController::class;
+
+        Route::post('/payment/callback', [$defaultController, 'paymentCallback']);
+        Route::post('/auction-orders/create', [$defaultController, 'createAuctionOrder']);
     }
 );

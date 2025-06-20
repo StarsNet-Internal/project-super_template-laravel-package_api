@@ -4,7 +4,8 @@
 use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\Auction\App\Http\Controllers\Customer\TestingController;
-use StarsNet\Project\Auction\App\Http\Controllers\Customer\ProductManagementController;
+use StarsNet\Project\Auction\App\Http\Controllers\Customer\CreditCardController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -38,21 +39,12 @@ Route::group(
 |--------------------------------------------------------------------------
 */
 
-// STORE
 Route::group(
-    ['prefix' => '/stores/{store_id}/'],
+    ['prefix' => 'credit-cards'],
     function () {
+        $defaultController = CreditCardController::class;
 
-        // PRODUCT_MANAGEMENT
-        Route::group(
-            ['prefix' => 'product-management'],
-            function () {
-                $defaultController = ProductManagementController::class;
-
-                Route::get('/products/filter', [$defaultController, 'filterProductsByCategories'])->middleware(['pagination']);
-
-                Route::get('/products/{product_variant_id}/history', [$defaultController, 'getAuctionHistory'])->middleware(['pagination']);
-            }
-        );
+        Route::post('/bind', [$defaultController, 'bindCard'])->middleware(['auth:api']);
+        Route::get('/validate', [$defaultController, 'validateCard'])->middleware(['auth:api']);
     }
 );

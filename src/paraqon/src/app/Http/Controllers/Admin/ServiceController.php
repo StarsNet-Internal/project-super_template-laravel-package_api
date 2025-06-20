@@ -174,6 +174,7 @@ class ServiceController extends Controller
 
                     $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
                     $amountRefunded = $request->data['object']['amount_refunded'] ?? 0;
+
                     $deposit->update([
                         'amount_captured' => $amountCaptured / 100,
                         'amount_refunded' => $amountRefunded / 100,
