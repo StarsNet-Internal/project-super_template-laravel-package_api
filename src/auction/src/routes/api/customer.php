@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\Auction\App\Http\Controllers\Customer\TestingController;
 use StarsNet\Project\Auction\App\Http\Controllers\Customer\CreditCardController;
+use StarsNet\Project\Auction\App\Http\Controllers\Customer\AuctionRegistrationRequestController;
 
 
 /*
@@ -38,6 +39,16 @@ Route::group(
 | Product related
 |--------------------------------------------------------------------------
 */
+
+Route::group(
+    ['prefix' => 'auction-registration-requests'],
+    function () {
+        $defaultController = AuctionRegistrationRequestController::class;
+
+        Route::put('/{auction_registration_request_id}/details', [$defaultController, 'updateAuctionRegistrationRequest'])->middleware(['auth:api']);
+    }
+);
+
 
 Route::group(
     ['prefix' => 'credit-cards'],
