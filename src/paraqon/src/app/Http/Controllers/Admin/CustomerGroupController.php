@@ -26,6 +26,8 @@ use Illuminate\Support\Str;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use StarsNet\Project\Paraqon\App\Models\ProductStorageRecord;
 
+use App\Constants\Model\LoginType;
+
 // Validator
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -81,8 +83,13 @@ class CustomerGroupController extends Controller
         $assignedCustomerIDs = $category->customers()->pluck('_id')->all();
         /** @var Collection $posts */
         $customers = Customer::excludeIDs($assignedCustomerIDs)
+            ->whereHas('account', function ($query) {
+                $query->whereHas('user', function ($query2) {
+                    $query2->where('type', '!=', LoginType::TEMP);
+                });
+            })
             ->with([
-                'account',
+                'account'
             ])
             ->get();
 
