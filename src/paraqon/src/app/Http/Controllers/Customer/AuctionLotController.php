@@ -302,7 +302,7 @@ class AuctionLotController extends Controller
 
         // Check winner
         // $bidHistory = BidHistory::where('auction_lot_id', $auctionLotId)->first();
-        // if (!is_null($bidHistory)) {
+        // if (!is_null($bidHistory) && $bidType == 'DIRECT') {
         //     if ($bidHistory->histories()->count() > 0) {
         //         $lastItem = $bidHistory->histories()->last();
         //         $winningBidCustomerID = $lastItem->winning_bid_customer_id;

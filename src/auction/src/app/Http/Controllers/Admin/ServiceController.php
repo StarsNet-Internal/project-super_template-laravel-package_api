@@ -352,8 +352,8 @@ class ServiceController extends Controller
         // Create Order
         $newOrderAttributes = [
             'payment_method' => CheckoutType::ONLINE,
-            'cart_items' => $originalOrder['cart_items'],
-            'gift_items' => $originalOrder['gift_items'],
+            'cart_items' => $originalOrder['cart_items']->toArray(),
+            'gift_items' => $originalOrder['gift_items']->toArray(),
             'discounts' => $originalOrder['discounts'],
             'calculations' => $originalOrder['calculations'],
             'delivery_info' => $originalOrder['delivery_info'],
@@ -377,6 +377,7 @@ class ServiceController extends Controller
             'payment_method' => CheckoutType::ONLINE
         ];
         $checkout = $newOrder->checkout()->create($attributes);
+        return;
 
         // Validate charge
         $totalPrice = $originalOrder['calculations']['price']['total'];
