@@ -328,7 +328,7 @@ class AuthenticationController extends Controller
         $notificationChannels = ["EMAIL", "SMS"];
         switch ($request->area_code) {
             case '852': {
-                    $notificationChannels = ["EMAIL", "SMS"];
+                    $notificationChannels = ["EMAIL"];
                     break;
                 }
             case '86':
