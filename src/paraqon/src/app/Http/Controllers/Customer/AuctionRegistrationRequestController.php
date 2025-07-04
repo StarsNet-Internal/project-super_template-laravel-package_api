@@ -68,62 +68,20 @@ class AuctionRegistrationRequestController extends Controller
             ], 200);
         }
 
-        // Auto-assign paddle_id
-        $auctionType = $store->auction_type;
+        $newFormAttributes = [
+            'requested_by_customer_id' => $customer->_id,
+            'store_id' => $storeID,
+            'status' => Status::ACTIVE,
+            'paddle_id' => null,
+            'reply_status' => $replyStatus,
+        ];
+        $newForm = AuctionRegistrationRequest::create($newFormAttributes);
 
-        if ($auctionType == 'ONLINE') {
-            $paddleId = null;
-
-            $allPaddles = AuctionRegistrationRequest::where('store_id', $storeID)
-                ->pluck('paddle_id')
-                ->filter(fn($id) => is_numeric($id))
-                ->map(fn($id) => (int) $id)
-                ->sort()
-                ->values();
-            $latestPaddleId = $allPaddles->last();
-
-            if (is_null($latestPaddleId)) {
-                $paddleId = $store->paddle_number_start_from ?? 1;
-            } else {
-                $paddleId = $latestPaddleId + 1;
-            }
-
-            $newFormAttributes = [
-                'requested_by_customer_id' => $customer->_id,
-                'store_id' => $storeID,
-                'status' => Status::ACTIVE,
-                'paddle_id' => $paddleId,
-                'reply_status' => $replyStatus,
-            ];
-            $newForm = AuctionRegistrationRequest::create($newFormAttributes);
-
-            // Return Auction Store
-            return response()->json([
-                'message' => 'Created New AuctionRegistrationRequest successfully',
-                'id' => $newForm->_id,
-            ], 200);
-        }
-
-        if ($auctionType == 'LIVE') {
-            $newFormAttributes = [
-                'requested_by_customer_id' => $customer->_id,
-                'store_id' => $storeID,
-                'status' => Status::ACTIVE,
-                'paddle_id' => null,
-                'reply_status' => $replyStatus,
-            ];
-            $newForm = AuctionRegistrationRequest::create($newFormAttributes);
-
-            // Return Auction Store
-            return response()->json([
-                'message' => 'Created New AuctionRegistrationRequest successfully',
-                'id' => $newForm->_id,
-            ], 200);
-        }
-
+        // Return Auction Store
         return response()->json([
-            'message' => 'Auction auction_type is neither ONLINE nor LIVE, unable to create AuctionRegistrationRequest'
-        ], 404);
+            'message' => 'Created New AuctionRegistrationRequest successfully',
+            'id' => $newForm->_id,
+        ], 200);
     }
 
     public function createDeposit(Request $request)
