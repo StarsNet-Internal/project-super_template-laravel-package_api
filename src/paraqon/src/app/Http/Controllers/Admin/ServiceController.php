@@ -50,6 +50,7 @@ class ServiceController extends Controller
             'charge.refunded',
             'charge.captured',
             'charge.expired',
+            'charge.failed'
         ];
 
         if (!in_array($eventType, $acceptableEventTypes)) {
@@ -219,6 +220,21 @@ class ServiceController extends Controller
                     return response()->json(
                         [
                             'message' => 'Deposit status updated as returned',
+                            'deposit_id' => $deposit->_id
+                        ],
+                        200
+                    );
+                } else if ($eventType == 'charge.failed') {
+                    $deposit->updateStatus('cancelled');
+
+                    $deposit->update([
+                        'reply_status' => ReplyStatus::REJECTED,
+                        'stripe_api_reponse' => $request->data['object']
+                    ]);
+
+                    return response()->json(
+                        [
+                            'message' => 'Deposit status updated as cancelled',
                             'deposit_id' => $deposit->_id
                         ],
                         200
