@@ -301,19 +301,19 @@ class AuctionLotController extends Controller
         }
 
         // Check winner
-        // $bidHistory = BidHistory::where('auction_lot_id', $auctionLotId)->first();
-        // if (!is_null($bidHistory) && $bidType == 'DIRECT') {
-        //     if ($bidHistory->histories()->count() > 0) {
-        //         $lastItem = $bidHistory->histories()->last();
-        //         $winningBidCustomerID = $lastItem->winning_bid_customer_id;
+        $bidHistory = BidHistory::where('auction_lot_id', $auctionLotId)->first();
+        if (!is_null($bidHistory) && $bidType == 'DIRECT') {
+            if ($bidHistory->histories()->count() > 0) {
+                $lastItem = $bidHistory->histories()->last();
+                $winningBidCustomerID = $lastItem->winning_bid_customer_id;
 
-        //         if ($winningBidCustomerID == $this->customer()->_id) {
-        //             return response()->json([
-        //                 'message' => 'You cannot place bid on the lot you are already winning'
-        //             ], 404);
-        //         }
-        //     }
-        // }
+                if ($winningBidCustomerID == $this->customer()->_id) {
+                    return response()->json([
+                        'message' => 'You cannot place bid on the lot you are already winning'
+                    ], 404);
+                }
+            }
+        }
 
         // Get current_bid price
         $now = now();
