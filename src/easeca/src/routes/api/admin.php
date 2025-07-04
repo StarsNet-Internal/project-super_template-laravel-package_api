@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\DevelopmentController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\GeneralDeliveryScheduleController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\ProductController;
+use StarsNet\Project\Easeca\App\Http\Controllers\Admin\ProductReviewController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\OnlineStoreManagementController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\OfflineStoreManagementController;
 use StarsNet\Project\Easeca\App\Http\Controllers\Admin\OrderManagementController;
@@ -56,6 +57,16 @@ Route::group(
                 Route::post('/copy', [$defaultController, 'copyProducts']);
             }
         );
+    }
+);
+
+// PRODUCT_REVIEW
+Route::group(
+    ['prefix' => 'reviews'],
+    function () {
+        $defaultController = ProductReviewController::class;
+
+        Route::get('/{id}/details', [$defaultController, 'getReviewDetails']);
     }
 );
 
