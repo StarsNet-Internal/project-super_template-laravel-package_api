@@ -240,6 +240,7 @@ Route::group(
 
                 Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
                     Route::get('/products/filter', [$defaultController, 'filterAuctionProductsByCategories'])->middleware(['pagination']);
+                    Route::get('/products/filter/v2', [$defaultController, 'filterAuctionProductsByCategoriesV2'])->middleware(['pagination']);
                     Route::get('/related-products-urls', [$defaultController, 'getRelatedAuctionProductsUrls'])->middleware(['pagination']);
                     Route::get('/products/ids', [$defaultController, 'getAuctionProductsByIDs'])->name('paraqon.products.ids')->middleware(['pagination']);
                 });
