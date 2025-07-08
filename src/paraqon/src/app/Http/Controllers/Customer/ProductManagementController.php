@@ -32,123 +32,106 @@ class ProductManagementController extends Controller
         $this->store = self::getStoreByValue($request->route('store_id'));
     }
 
+
     public function filterAuctionProductsByCategories(Request $request)
     {
         // Extract attributes from $request
         $categoryIDs = $request->input('category_ids', []);
         $categoryIDs = array_unique($categoryIDs);
-        $keyword = $request->input('keyword');
-        if ($keyword === "") $keyword = null;
-        $slug = $request->input('slug', 'by-keyword-relevance');
-
-        // Get sorting attributes via slugs
-        if (!is_null($slug)) {
-            $sortingValue = $this->getProductSortingAttributesBySlug('product-sorting', $slug);
-            switch ($sortingValue['type']) {
-                case 'KEY':
-                    $request['sort_by'] = $sortingValue['key'];
-                    $request['sort_order'] = $sortingValue['ordering'];
-                    break;
-                case 'KEYWORD':
-                    break;
-                default:
-                    break;
-            }
-        }
 
         // Get all ProductCategory(s)
         if (count($categoryIDs) === 0) {
             $categoryIDs = $this->store
                 ->productCategories()
                 ->statusActive()
-                ->get()
-                ->pluck('_id')
-                ->all();
+                ->pluck('_id');
         }
 
         // Get Product(s) from selected ProductCategory(s)
         $productIDs = AuctionLot::where('store_id', $this->store->id)
             ->statuses([Status::ACTIVE, Status::ARCHIVED])
-            ->get()
-            ->pluck('product_id')
-            ->all();
+            ->pluck('product_id');
 
-        if (count($categoryIDs) > 0) {
-            $allProductCategoryIDs = Category::slug('all-products')->pluck('_id')->all();
-            if (!array_intersect($categoryIDs, $allProductCategoryIDs)) {
-                $productIDs = Product::objectIDs($productIDs)
+        // Use as Collection here, and use ->all() only if needed later
+        if (!empty($categoryIDs)) {
+            $allProductCategoryIDs = Category::slug('all-products')->pluck('_id');
+
+            if ($categoryIDs && !$allProductCategoryIDs->intersect($categoryIDs)->isNotEmpty()) {
+                $productIDs = Product::whereIn('_id', $productIDs)
                     ->whereHas('categories', function ($query) use ($categoryIDs) {
                         $query->whereIn('_id', $categoryIDs);
                     })
                     ->statuses([Status::ACTIVE, Status::ARCHIVED])
-                    ->when(!$keyword, function ($query) {
-                        $query->limit(250);
-                    })
-                    ->get()
-                    ->pluck('_id')
-                    ->all();
+                    ->pluck('_id');
             }
         }
 
-        // Get matching keywords from Typesense
-        if (!is_null($keyword)) {
-            $typesense = new TypeSenseSearchEngine('products');
-            $productIDsByKeyword = $typesense->getIDsFromSearch(
-                $keyword,
-                'title.en,title.zh,title.cn'
-            );
-            if (count($productIDsByKeyword) === 0) return new Collection();
-            $productIDs = array_intersect($productIDs, $productIDsByKeyword);
-        }
-        if (count($productIDs) === 0) return new Collection();
-
         // Filter Product(s)
-        $products = $this->getProductsInfoByAggregation($productIDs, $this->store->_id);
-        $products = $products->filter(function ($item) {
-            return $item->auction_lot_id != '0';
-        })->values();
+        $products = Product::objectIDs($productIDs)->get();
+        $auctionLots = AuctionLot::whereIn('product_id', $productIDs)
+            ->with([
+                'watchlistItems'
+            ])
+            ->get()
+            ->map(function ($lot) {
+                $lot->watchlist_item_count = $lot->watchlistItems->count();
+                unset($lot->watchlistItems);
+                return $lot;
+            })
+            ->keyBy('product_id');
 
         // Get WatchlistItem 
         $customer = $this->customer();
         $watchingAuctionIDs = WatchlistItem::where('customer_id', $customer->id)
             ->where('item_type', 'auction-lot')
-            ->get()
             ->pluck('item_id')
             ->all();
 
-        foreach ($products as $product) {
-            $auctionLotID = $product->auction_lot_id;
-            $auctionLot = AuctionLot::find($auctionLotID);
+        $products = $products->map(
+            function ($product)
+            use ($auctionLots, $watchingAuctionIDs) {
+                $auctionLot = $auctionLots[$product->_id];
 
-            $product->current_bid = $auctionLot->getCurrentBidPrice();
-            $product->is_reserve_price_met = $product->current_bid >= $product->reserve_price;
+                // Safely extract nested values with null checks
+                $bidSettings = $auctionLot->bid_incremental_settings ?? [];
+                $estimatePrice = $bidSettings['estimate_price'] ?? [];
 
-            $product->title = $auctionLot->title;
-            $product->short_description = $auctionLot->short_description;
-            $product->long_description = $auctionLot->long_description;
-            $product->bid_incremental_settings = $auctionLot->bid_incremental_settings;
-            $product->start_datetime = $auctionLot->start_datetime;
-            $product->end_datetime = $auctionLot->end_datetime;
-            $product->lot_number = $auctionLot->lot_number;
-            $product->status = $auctionLot->status;
-            $product->is_disabled = $auctionLot->is_disabled;
-            $product->is_closed = $auctionLot->is_closed;
+                $product->fill([
+                    'auction_lot_id' => $auctionLot->_id,
+                    'current_bid' => $auctionLot->current_bid,
+                    'is_reserve_price_met' => $auctionLot->current_bid >= $product->reserve_price,
+                    'title' => $auctionLot->title,
+                    'short_description' => $auctionLot->short_description,
+                    'long_description' => $auctionLot->long_description,
+                    'bid_incremental_settings' => $bidSettings,
+                    'start_datetime' => $auctionLot->start_datetime,
+                    'end_datetime' => $auctionLot->end_datetime,
+                    'lot_number' => $auctionLot->lot_number,
+                    // 'status' => $auctionLot->status,
+                    // 'is_disabled' => $auctionLot->is_disabled,
+                    // 'is_closed' => $auctionLot->is_closed,
+                    'sold_price' => $auctionLot->sold_price,
+                    'commission' => $auctionLot->commission,
+                    'max_estimated_price' => $estimatePrice['max'] ?? 0,
+                    'min_estimated_price' => $estimatePrice['min'] ?? 0,
+                    'auction_lots' => [$auctionLot],
+                    'starting_price' => $auctionLot->starting_price,
+                    // 'local_discount_type' => null,
+                    // 'global_discount' => null,
+                    // 'rating' => null,
+                    // 'review_count' => 0,
+                    // 'inventory_count' => 0,
+                    // 'is_liked' => false,
+                    // 'discounted_price' => "0",
+                    'is_bid_placed' => $auctionLot->is_bid_placed,
+                    'watchlist_item_count' => $auctionLot->watchlist_item_count,
+                    'is_watching' => in_array($auctionLot->_id, $watchingAuctionIDs, true),
+                    'store' => $this->store
+                ]);
 
-            $product->sold_price = $auctionLot->sold_price;
-            $product->commission = $auctionLot->commission;
-
-            $product->max_estimated_price = data_get($auctionLot, 'bid_incremental_settings.estimate_price.max') ?? 0;
-            $product->min_estimated_price = data_get($auctionLot, 'bid_incremental_settings.estimate_price.min') ?? 0;
-
-            // is_watching
-            $auctionLot->is_watching = in_array($auctionLotID, $watchingAuctionIDs);
-
-            unset(
-                $product->bids,
-                $product->valid_bid_values,
-                $product->reserve_price
-            );
-        }
+                return $product;
+            }
+        );
 
         // Return data
         return $products;
