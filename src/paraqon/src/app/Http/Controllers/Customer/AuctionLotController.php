@@ -309,7 +309,8 @@ class AuctionLotController extends Controller
 
                 if ($winningBidCustomerID == $this->customer()->_id) {
                     return response()->json([
-                        'message' => 'You cannot place bid on the lot you are already winning'
+                        'message' => 'You cannot place bid on the lot you are already winning',
+                        'error_status' => 4
                     ], 404);
                 }
             }
