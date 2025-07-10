@@ -377,7 +377,6 @@ class ServiceController extends Controller
             'payment_method' => CheckoutType::ONLINE
         ];
         $checkout = $newOrder->checkout()->create($attributes);
-        return;
 
         // Validate charge
         $totalPrice = $originalOrder['calculations']['price']['total'];
