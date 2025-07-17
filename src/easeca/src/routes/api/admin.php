@@ -94,6 +94,7 @@ Route::group(
         Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
+                Route::get('/offline/all', [$defaultController, 'getAllOfflineStores'])->middleware(['pagination']);
                 Route::put('/delete', [$defaultController, 'deleteStores']);
             }
         );
