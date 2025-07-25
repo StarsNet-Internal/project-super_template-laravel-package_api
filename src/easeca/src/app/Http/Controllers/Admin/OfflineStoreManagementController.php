@@ -18,6 +18,28 @@ use Illuminate\Http\Request;
 
 class OfflineStoreManagementController extends Controller
 {
+    public function getAllOfflineStores(Request $request)
+    {
+        // Extract attributes from $request
+        $statuses = (array) $request->input('status', Status::$typesForAdmin);
+
+        // Get all Store(s)
+        $stores = Store::whereType(StoreType::OFFLINE)
+            ->statusesAllowed(Status::$typesForAdmin, $statuses)
+            ->with([
+                'warehouses' => function ($query) {
+                    $query->statuses(Status::$typesForAdmin);
+                },
+                'cashiers' => function ($query) {
+                    $query->statuses(Status::$typesForAdmin);
+                },
+            ])
+            ->get();
+
+        // Return Store(s)
+        return $stores;
+    }
+
     public function deleteStores(Request $request)
     {
         // Extract attributes from $request
