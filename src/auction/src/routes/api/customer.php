@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\Auction\App\Http\Controllers\Customer\TestingController;
+use StarsNet\Project\Auction\App\Http\Controllers\Customer\ConsignmentRequestController;
 use StarsNet\Project\Auction\App\Http\Controllers\Customer\CreditCardController;
 use StarsNet\Project\Auction\App\Http\Controllers\Customer\AuctionRegistrationRequestController;
 use StarsNet\Project\Auction\App\Http\Controllers\Customer\SiteMapController;
@@ -58,6 +59,20 @@ Route::group(
 
         Route::post('/bind', [$defaultController, 'bindCard'])->middleware(['auth:api']);
         Route::get('/validate', [$defaultController, 'validateCard'])->middleware(['auth:api']);
+    }
+);
+
+Route::group(
+    ['prefix' => 'consignments'],
+    function () {
+        $defaultController = ConsignmentRequestController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::post('/', [$defaultController, 'createConsignmentRequest']);
+            }
+        );
     }
 );
 
