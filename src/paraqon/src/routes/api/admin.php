@@ -22,6 +22,7 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\LiveBiddingEventControll
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\NotificationController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\WatchlistItemController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\VerificationCodeController;
+use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\LocationHistoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -380,6 +381,22 @@ Route::group(
                 Route::post('/auction-lots/{auction_lot_id}/max', [$defaultController, 'createOnlineBidByCustomer']);
                 Route::get('/customers/{customer_id}/all', [$defaultController, 'getCustomerAllBids'])->middleware(['pagination']);
                 Route::put('/{bid_id}/cancel', [$defaultController, 'cancelBidByCustomer']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'locations-histories'],
+    function () {
+        $defaultController = LocationHistoryController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/all', [$defaultController, 'getAllLocationHistories'])->middleware(['pagination']);
+                Route::post('/products/{product_id}', [$defaultController, 'createHistory']);
+                Route::put('/mass-update', [$defaultController, 'massUpdateLocationHistories']);
             }
         );
     }
