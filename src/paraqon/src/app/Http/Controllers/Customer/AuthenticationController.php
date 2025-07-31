@@ -312,6 +312,8 @@ class AuthenticationController extends Controller
             'address_proof_verification' => $request->input('address_proof_verification'),
             'photo_id_verification' => $request->input('photo_id_verification'),
             'legal_name_verification' => $request->input('legal_name_verification'),
+            'first_name' => $request->input('first_name'),
+            'last_name' => $request->input('last_name'),
 
             // Boolean
             'is_2fa_verification_required' => $request->input('is_2fa_verification_required'),
