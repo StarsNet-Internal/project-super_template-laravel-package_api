@@ -311,7 +311,9 @@ class AuctionController extends Controller
             ->get();
 
         foreach ($stores as $store) {
-            $store->auction_lot_count = AuctionLot::where('store_id', $store->_id)->count();
+            $store->auction_lot_count = AuctionLot::where('store_id', $store->_id)
+                ->statusesAllowed([Status::ACTIVE, Status::ARCHIVED])
+                ->count();
 
             $store->registered_user_count = AuctionRegistrationRequest::where('store_id', $store->_id)
                 ->where('reply_status', ReplyStatus::APPROVED)
