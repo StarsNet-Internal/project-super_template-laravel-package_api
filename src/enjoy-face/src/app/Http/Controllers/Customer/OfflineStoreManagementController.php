@@ -117,9 +117,9 @@ class OfflineStoreManagementController extends Controller
             ->when(count($ratingIds), function ($query) use ($ratingIds) {
                 $query->whereIn('category_ids', $ratingIds);
             })
-            ->when(!$keyword, function ($query) {
-                $query->limit(250);
-            })
+            // ->when(!$keyword, function ($query) {
+            //     $query->limit(250);
+            // })
             ->get()
             ->unique('_id')
             ->pluck('_id')
@@ -130,9 +130,9 @@ class OfflineStoreManagementController extends Controller
             $query->whereIn('category_ids', $categoryIds);
         })
             ->statusActive()
-            ->when(!$keyword, function ($query) {
-                $query->limit(250);
-            })
+            // ->when(!$keyword, function ($query) {
+            //     $query->limit(250);
+            // })
             ->get()
             ->unique('store_id')
             ->pluck('store_id')
