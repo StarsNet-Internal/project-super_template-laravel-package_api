@@ -36,7 +36,28 @@ class OrderManagementController extends AdminOrderManagementController
 
     public function getAllOrdersByStore(Request $request)
     {
-        $orders = parent::getAllOrdersByStore($request)->toArray();
+        $statuses = (array) $request->input('current_status', []);
+        $storeIds = $request->store_ids;
+        if (is_array($storeIds) && count($storeIds) == 0) return new Collection();
+        if (!is_array($storeIds)) $storeIds = [$request->store_id];
+
+        // Get Store(s)
+        /** @var Store $store */
+        $stores = [];
+        foreach ($storeIds as $storeId) {
+            $store = $this->getStoreByValue($storeId);
+            if (!is_null($store)) $stores[] = $store;
+        }
+        if (count($stores) == 0) return new Collection();
+        $stores = collect($stores);
+
+        // Get Order(s)
+        $orders = Order::byStores($stores)
+            ->when($statuses, function ($query, $statuses) {
+                return $query->whereCurrentStatuses($statuses);
+            })
+            ->get()
+            ->toArray();
 
         $allOrders = $this->getAllOrders();
         foreach ($orders as $key => $order) {
