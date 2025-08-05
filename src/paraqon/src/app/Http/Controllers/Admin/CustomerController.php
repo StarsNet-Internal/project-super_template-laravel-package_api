@@ -22,21 +22,28 @@ class CustomerController extends Controller
 {
     public function getAllCustomers(Request $request)
     {
-        // Get Customer(s)
-        /** @var Collection $customers */
-        $customers = Customer::whereIsDeleted(false)
-            ->whereHas('account', function ($query) {
-                $query->whereHas('user', function ($query2) {
-                    $query2->where('type', '!=', LoginType::TEMP);
-                });
-            })
-            ->with([
-                'account',
-                'account.user'
-            ])
-            ->get();
+        $users = User::where('type', '!=', 'TEMP')
+            ->where('is_deleted', false)
+            ->get()
+            ->makeHidden(['account'])
+            ->keyBy('id')
+            ->toArray();
+        $userIds = array_keys($users);
 
-        // Return Customer(s)
+        $accounts = Account::whereIn('user_id', $userIds)
+            ->get()
+            ->keyBy('_id')
+            ->toArray();
+        $accountIds = array_keys($accounts);
+
+        $customers = Customer::whereIn('account_id', $accountIds)->get()->toArray();
+
+        foreach ($customers as $key => $customer) {
+            $account = $accounts[$customer['account_id']];
+            $user = $users[$account['user_id']];
+            $customers[$key]['account'] = array_merge($account, ['user' => $user]);
+        }
+
         return $customers;
     }
 

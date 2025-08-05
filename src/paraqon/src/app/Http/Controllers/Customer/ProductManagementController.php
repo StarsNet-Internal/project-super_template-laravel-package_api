@@ -220,7 +220,7 @@ class ProductManagementController extends Controller
                 $product->fill([
                     'auction_lot_id' => $auctionLot->_id,
                     'current_bid' => $auctionLot->current_bid,
-                    'is_reserve_price_met' => $auctionLot->current_bid >= $product->reserve_price,
+                    'is_reserve_price_met' => $auctionLot->current_bid >= $auctionLot->reserve_price,
                     'title' => $auctionLot->title,
                     'short_description' => $auctionLot->short_description,
                     'long_description' => $auctionLot->long_description,
@@ -249,6 +249,8 @@ class ProductManagementController extends Controller
                     'is_watching' => in_array($auctionLot->_id, $watchingAuctionIDs, true),
                     'store' => $this->store
                 ]);
+
+                unset($product->reserve_price);
 
                 return $product;
             }
