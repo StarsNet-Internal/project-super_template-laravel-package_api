@@ -174,7 +174,7 @@ class ProductManagementController extends Controller
             ->pluck('product_id');
 
         // Use as Collection here, and use ->all() only if needed later
-        if (!empty($categoryIDs)) {
+        if (count($categoryIDs) > 0) {
             $allProductCategoryIDs = Category::slug('all-products')->pluck('_id');
 
             if ($categoryIDs && !$allProductCategoryIDs->intersect($categoryIDs)->isNotEmpty()) {
