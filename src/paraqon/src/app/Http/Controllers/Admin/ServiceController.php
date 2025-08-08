@@ -121,6 +121,7 @@ class ServiceController extends Controller
                             $latestPaddleId = $allPaddles->last();
 
                             if (is_null($latestPaddleId)) {
+                                $store = Store::find($storeID);
                                 $newPaddleID = $store->paddle_number_start_from ?? 1;
                             } else {
                                 $newPaddleID = $latestPaddleId + 1;

@@ -48,10 +48,11 @@ class ProductController extends Controller
             'created_at',
             'product_interface',
             'prefix',
-            'stock_no'
+            'stock_no',
+            'owned_by_customer_id'
         ]);
 
-        foreach ($products as $key => $product) {
+        foreach ($products as $product) {
             // Collect ProductVariants, and calculate the discountedPrice
             $collectedVariants = collect($product->variants->map(
                 function ($variant) {
@@ -94,6 +95,7 @@ class ProductController extends Controller
 
             $product['prefix'] = $product->prefix;
             $product['stock_no'] = $product->stock_no;
+            $product['owned_by_customer_id'] = $product->owned_by_customer_id;
 
             unset($product['variants'], $product['reviews'], $product['warehouseInventories'], $product['wishlistItems']);
         }

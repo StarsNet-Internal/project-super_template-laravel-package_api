@@ -156,43 +156,42 @@ class ProductManagementController extends Controller
 
     public function filterAuctionProductsByCategoriesV2(Request $request)
     {
-        // Extract attributes from $request
-        $categoryIDs = $request->input('category_ids', []);
-        $categoryIDs = array_unique($categoryIDs);
-
-        // Get all ProductCategory(s)
-        if (count($categoryIDs) === 0) {
-            $categoryIDs = $this->store
-                ->productCategories()
-                ->statusActive()
-                ->pluck('_id');
-        }
-
-        // Get Product(s) from selected ProductCategory(s)
+        // Get all product_id from all AuctionLot in this Store
         $productIDs = AuctionLot::where('store_id', $this->store->id)
             ->statuses([Status::ACTIVE, Status::ARCHIVED])
-            ->pluck('product_id');
+            ->pluck('product_id')
+            ->all();
 
-        // Use as Collection here, and use ->all() only if needed later
+        // Get all product_id assigned to category_ids[] input from Request
+        $categoryProductIDs = [];
+
+        $categoryIDs = array_filter(array_unique((array) $request->category_ids));
         if (count($categoryIDs) > 0) {
-            $allProductCategoryIDs = Category::slug('all-products')->pluck('_id');
+            $categoryProductIDs = Category::whereIn('id', $categoryIDs)
+                ->pluck('item_ids')
+                ->flatten()
+                ->filter(fn($id) => !is_null($id))
+                ->unique()
+                ->values()
+                ->all();
 
-            if ($categoryIDs && !$allProductCategoryIDs->intersect($categoryIDs)->isNotEmpty()) {
-                $productIDs = Product::whereIn('_id', $productIDs)
-                    ->whereHas('categories', function ($query) use ($categoryIDs) {
-                        $query->whereIn('_id', $categoryIDs);
-                    })
-                    ->statuses([Status::ACTIVE, Status::ARCHIVED])
-                    ->pluck('_id');
+            // Override $productIDs only, with array intersection
+            if (count($categoryProductIDs) > 0) {
+                $productIDs = array_intersect($productIDs, $categoryProductIDs);
             }
         }
 
-        // Filter Product(s)
-        $products = Product::objectIDs($productIDs)->get();
+        // Get Product(s)
+        /** @var Collection $products */
+        $products = Product::whereIn('id', $productIDs)
+            ->statuses([Status::ACTIVE, Status::ARCHIVED])
+            ->get();
+
+        // Get AuctionLot(s)
+        /** @var Collection $auctionLots */
         $auctionLots = AuctionLot::whereIn('product_id', $productIDs)
-            ->with([
-                'watchlistItems'
-            ])
+            ->where('store_id', $this->store->id)
+            ->with(['watchlistItems'])
             ->get()
             ->map(function ($lot) {
                 $lot->watchlist_item_count = $lot->watchlistItems->count();
@@ -202,8 +201,7 @@ class ProductManagementController extends Controller
             ->keyBy('product_id');
 
         // Get WatchlistItem 
-        $customer = $this->customer();
-        $watchingAuctionIDs = WatchlistItem::where('customer_id', $customer->id)
+        $watchingAuctionIDs = WatchlistItem::where('customer_id', $this->customer()->id)
             ->where('item_type', 'auction-lot')
             ->pluck('item_id')
             ->all();
