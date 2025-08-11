@@ -111,6 +111,7 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::get('/all', [$defaultController, 'getAllOrdersByStore'])->middleware(['pagination']);
+                Route::get('/all-by-id', [$defaultController, 'getAllOrdersById'])->middleware(['pagination']);
 
                 Route::put('/{id}/address', [$defaultController, 'updateDeliveryAddress']);
             }

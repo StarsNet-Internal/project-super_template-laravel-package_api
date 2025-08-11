@@ -93,6 +93,54 @@ class OrderManagementController extends Controller
         return $orders;
     }
 
+    public function getAllOrdersById(Request $request)
+    {
+        $orderIds = (array) $request->input('order_ids', []);
+
+        $orders = Order::find($orderIds)
+            ->makeHidden([
+                'cashier_id',
+                'payment_method',
+                'transaction_method',
+                'cart_items',
+                'gift_items',
+                'amount_received',
+                'change',
+                'delivery_info',
+                'documents',
+                'statuses',
+                'store',
+                'image',
+            ]);
+
+        $reviews = ProductReview::whereIn('order_id', $orderIds)
+            ->get()
+            ->keyBy('order_id')
+            ->makeHidden([
+                'user',
+                'product_title',
+                'product_variant_title',
+                'image',
+            ])
+            ->toArray();
+        $accounts = Account::all()->keyBy('user_id')->toArray();
+
+        foreach ($orders as $order) {
+            if (array_key_exists($order->_id, $reviews)) {
+                $review = $reviews[$order->_id];
+                $user = [
+                    'user' => [
+                        'username' => $accounts[$review['user_id']]['username']
+                    ]
+                ];
+                $order->product_reviews = [array_merge($review, $user)];
+            } else {
+                $order->product_reviews = [];
+            }
+        }
+        return $orders;
+    }
+
     public function updateDeliveryAddress(Request $request)
     {
         // Validate Request
