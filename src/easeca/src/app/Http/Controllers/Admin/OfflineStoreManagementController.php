@@ -26,14 +26,14 @@ class OfflineStoreManagementController extends Controller
         // Get all Store(s)
         $stores = Store::whereType(StoreType::OFFLINE)
             ->statusesAllowed(Status::$typesForAdmin, $statuses)
-            ->with([
-                'warehouses' => function ($query) {
-                    $query->statuses(Status::$typesForAdmin);
-                },
-                'cashiers' => function ($query) {
-                    $query->statuses(Status::$typesForAdmin);
-                },
-            ])
+            // ->with([
+            //     'warehouses' => function ($query) {
+            //         $query->statuses(Status::$typesForAdmin);
+            //     },
+            //     'cashiers' => function ($query) {
+            //         $query->statuses(Status::$typesForAdmin);
+            //     },
+            // ])
             ->get();
 
         // Return Store(s)
