@@ -40,6 +40,27 @@ class OfflineStoreManagementController extends Controller
         return $stores;
     }
 
+    public function massUpdateStores(Request $request)
+    {
+        $storeAttributes = $request->stores;
+
+        foreach ($storeAttributes as $storeAttribute) {
+            $storeId = $storeAttribute['id'];
+            $store = Store::find($storeId);
+
+            // Check if the Store exists
+            if (!is_null($store)) {
+                $updateAttributes = $storeAttribute;
+                unset($updateAttributes['id']);
+                $store->update($updateAttributes);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Stores updated successfully'
+        ], 200);
+    }
+
     public function deleteStores(Request $request)
     {
         // Extract attributes from $request
