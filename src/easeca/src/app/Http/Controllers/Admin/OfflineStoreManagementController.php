@@ -26,18 +26,39 @@ class OfflineStoreManagementController extends Controller
         // Get all Store(s)
         $stores = Store::whereType(StoreType::OFFLINE)
             ->statusesAllowed(Status::$typesForAdmin, $statuses)
-            ->with([
-                'warehouses' => function ($query) {
-                    $query->statuses(Status::$typesForAdmin);
-                },
-                'cashiers' => function ($query) {
-                    $query->statuses(Status::$typesForAdmin);
-                },
-            ])
+            // ->with([
+            //     'warehouses' => function ($query) {
+            //         $query->statuses(Status::$typesForAdmin);
+            //     },
+            //     'cashiers' => function ($query) {
+            //         $query->statuses(Status::$typesForAdmin);
+            //     },
+            // ])
             ->get();
 
         // Return Store(s)
         return $stores;
+    }
+
+    public function massUpdateStores(Request $request)
+    {
+        $storeAttributes = $request->stores;
+
+        foreach ($storeAttributes as $storeAttribute) {
+            $storeId = $storeAttribute['id'];
+            $store = Store::find($storeId);
+
+            // Check if the Store exists
+            if (!is_null($store)) {
+                $updateAttributes = $storeAttribute;
+                unset($updateAttributes['id']);
+                $store->update($updateAttributes);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Stores updated successfully'
+        ], 200);
     }
 
     public function deleteStores(Request $request)

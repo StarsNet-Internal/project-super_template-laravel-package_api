@@ -25,6 +25,12 @@ class OfflineStoreManagementController extends Controller
             ->whereType(StoreType::OFFLINE)
             ->get();
 
+        foreach ($stores as $key => $value) {
+            $stores[$key]['addresses'] = array_map(function ($address) {
+                return ['en' => $address['en'], 'zh' => $address['zh'], 'cn' => $address['cn']];
+            }, $stores[$key]['addresses']);
+        }
+
         // Return Store(s)
         return $stores;
     }

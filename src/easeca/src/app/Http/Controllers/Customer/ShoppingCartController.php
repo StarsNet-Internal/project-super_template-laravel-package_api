@@ -16,6 +16,7 @@ use App\Traits\Controller\ShoppingCartTrait;
 use App\Traits\Controller\StoreDependentTrait;
 use App\Traits\Controller\WarehouseInventoryTrait;
 use App\Traits\Utils\RoundingTrait;
+use StarsNet\Project\Easeca\App\Traits\Controller\ProjectScheduleTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
@@ -29,7 +30,8 @@ class ShoppingCartController extends CustomerShoppingCartController
         ShoppingCartTrait,
         WarehouseInventoryTrait,
         StoreDependentTrait,
-        RoundingTrait;
+        RoundingTrait,
+        ProjectScheduleTrait;
 
     /** @var Store $store */
     protected $store;
@@ -65,14 +67,20 @@ class ShoppingCartController extends CustomerShoppingCartController
             return $item;
         }, $data['cart_items']);
 
-        try {
-            $url = 'https://timetable.easeca.tinkleex.com/customer/schedules/cut-off?store_id=' . $this->store->_id;
-            $response = Http::get($url);
-            $hour = json_decode($response->getBody()->getContents(), true);
-            $data['calculations']['currency'] = $hour['hour'];
-        } catch (\Throwable $th) {
-            $data['calculations']['currency'] = '17';
-        }
+        // try {
+        //     $url = 'https://timetable.easeca.tinkleex.com/customer/schedules/cut-off?store_id=' . $this->store->_id;
+        //     $response = Http::get($url);
+        //     $hour = json_decode($response->getBody()->getContents(), true);
+        //     $data['calculations']['currency'] = $hour['hour'];
+        // } catch (\Throwable $th) {
+        //     $data['calculations']['currency'] = '17';
+        // }
+
+        $dayName = $this->getCurrentDayOfWeek();
+        $schedule = $this->getScheduleByAccount();
+
+        $hour = strval($schedule[$dayName]['hour']);
+        $data['calculations']['currency'] = $hour;
 
         return response()->json($data);
     }
