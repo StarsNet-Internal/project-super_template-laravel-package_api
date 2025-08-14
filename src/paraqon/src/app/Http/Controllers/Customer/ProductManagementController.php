@@ -167,7 +167,7 @@ class ProductManagementController extends Controller
 
         $categoryIDs = array_filter(array_unique((array) $request->category_ids));
         if (count($categoryIDs) > 0) {
-            $categoryProductIDs = Category::whereIn('id', $categoryIDs)
+            $categoryProductIDs = Category::whereIn('_id', $categoryIDs)
                 ->pluck('item_ids')
                 ->flatten()
                 ->filter(fn($id) => !is_null($id))
@@ -176,14 +176,12 @@ class ProductManagementController extends Controller
                 ->all();
 
             // Override $productIDs only, with array intersection
-            if (count($categoryProductIDs) > 0) {
-                $productIDs = array_intersect($productIDs, $categoryProductIDs);
-            }
+            $productIDs = array_intersect($productIDs, $categoryProductIDs);
         }
 
         // Get Product(s)
         /** @var Collection $products */
-        $products = Product::whereIn('id', $productIDs)
+        $products = Product::whereIn('_id', $productIDs)
             ->statuses([Status::ACTIVE, Status::ARCHIVED])
             ->get();
 

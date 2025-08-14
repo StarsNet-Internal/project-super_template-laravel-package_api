@@ -48,13 +48,10 @@ class ServiceController extends Controller
         ];
 
         if (!in_array($eventType, $acceptableEventTypes)) {
-            return response()->json(
-                [
-                    'message' => 'Callback success, but event type does not belong to any of the acceptable values',
-                    'acceptable_values' => $acceptableEventTypes
-                ],
-                200
-            );
+            return response()->json([
+                'message' => 'Callback success, but event type does not belong to any of the acceptable values',
+                'acceptable_values' => $acceptableEventTypes
+            ],  200);
         }
 
         // Extract metadata from $request

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 use StarsNet\Project\Auction\App\Http\Controllers\Admin\TestingController;
 use StarsNet\Project\Auction\App\Http\Controllers\Admin\ServiceController;
+use StarsNet\Project\Auction\App\Http\Controllers\Admin\ReferralCodeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,5 +40,13 @@ Route::group(
 
         Route::post('/payment/callback', [$defaultController, 'paymentCallback']);
         Route::post('/auction-orders/create', [$defaultController, 'createAuctionOrder']);
+    }
+);
+
+Route::group(
+    ['prefix' => 'referral-codes'],
+    function () {
+        Route::post('/mass-generate', [ReferralCodeController::class, 'massGenerateReferralCodes']);
+        Route::put('/use', [ReferralCodeController::class, 'randomlyUseCode']);
     }
 );

@@ -60,6 +60,27 @@ class AuctionRegistrationRequestController extends Controller
                 'status' => Status::ACTIVE,
                 'reply_status' => $replyStatus,
             ];
+
+            // Calculate paddle_id if not exists in original AuctionRegistrationRequest yet
+            if ($oldForm->paddle_id === null) {
+                $newPaddleID = null;
+                $allPaddles = AuctionRegistrationRequest::where('store_id', $store->id)
+                    ->pluck('paddle_id')
+                    ->filter(fn($id) => is_numeric($id))
+                    ->map(fn($id) => (int) $id)
+                    ->sort()
+                    ->values();
+                $latestPaddleId = $allPaddles->last();
+                if (is_null($latestPaddleId)) {
+                    $newPaddleID = $store->paddle_number_start_from ?? 1;
+                } else {
+                    $newPaddleID = $latestPaddleId + 1;
+                }
+                if (is_numeric($newPaddleID)) {
+                    $oldFormAttributes['paddle_id'] = $newPaddleID;
+                }
+            }
+
             $oldForm->update($oldFormAttributes);
 
             return response()->json([
@@ -75,6 +96,27 @@ class AuctionRegistrationRequestController extends Controller
             'paddle_id' => null,
             'reply_status' => $replyStatus,
         ];
+
+        // Calculate paddle_id if APPROVED
+        if ($replyStatus === ReplyStatus::APPROVED) {
+            $newPaddleID = null;
+            $allPaddles = AuctionRegistrationRequest::where('store_id', $store->id)
+                ->pluck('paddle_id')
+                ->filter(fn($id) => is_numeric($id))
+                ->map(fn($id) => (int) $id)
+                ->sort()
+                ->values();
+            $latestPaddleId = $allPaddles->last();
+            if (is_null($latestPaddleId)) {
+                $newPaddleID = $store->paddle_number_start_from ?? 1;
+            } else {
+                $newPaddleID = $latestPaddleId + 1;
+            }
+            if (is_numeric($newPaddleID)) {
+                $newFormAttributes['paddle_id'] = $newPaddleID;
+            }
+        }
+
         $newForm = AuctionRegistrationRequest::create($newFormAttributes);
 
         // Return Auction Store

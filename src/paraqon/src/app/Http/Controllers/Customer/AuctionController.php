@@ -16,61 +16,52 @@ class AuctionController extends Controller
 {
     public function getAllAuctions(Request $request)
     {
+        // Get attributes
+        $customer = $this->customer();
+        $watchingAuctionIDs = WatchlistItem::where('customer_id', $customer->id)
+            ->where('item_type', 'store')
+            ->pluck('item_id')
+            ->unique()
+            ->values()
+            ->all();
+
         // Extract attributes from $request
-        $statuses = (array) $request->input('status', [
-            // Status::DRAFT,
-            Status::ACTIVE,
-            Status::ARCHIVED
-        ]);
+        $statuses = (array) $request->input('status', [Status::ACTIVE, Status::ARCHIVED]);
 
         // Get Auction Store(s)
         $auctions = Store::whereType(StoreType::OFFLINE)
             ->statuses($statuses)
-            ->get();
-
-        // Append keys
-        $customer = $this->customer();
-        $watchingAuctionIDs = WatchlistItem::where('customer_id', $customer->id)
-            ->where('item_type', 'store')
             ->get()
-            ->pluck('item_id')
-            ->all();
-        // $registeredAuctionIDs = AuctionRegistrationRequest::where('requested_by_customer_id', $customer->id)
-        //     ->where('reply_status', ReplyStatus::APPROVED)
-        //     ->get()
-        //     ->pluck('store_id')
-        //     ->all();
+            ->each(function ($auction) use ($watchingAuctionIDs) {
+                $auction->is_watching = in_array($auction->id, $watchingAuctionIDs);
+                $auction->auction_registration_request = null;
+                $auction->is_registered = false;
+            });
+
+        // Get AuctionRegistrationRequest(s)
+        $auctionRegistrationRequests = AuctionRegistrationRequest::where(
+            'requested_by_customer_id',
+            $customer->id
+        )
+            ->get()
+            ->keyBy('store_id');
+
+        $deposits = Deposit::where('requested_by_customer_id', $customer->id)
+            ->where('status', '!=', Status::DELETED)
+            ->latest()
+            ->get();
 
         foreach ($auctions as $auction) {
             $storeID = $auction->id;
-            $auction->is_watching = in_array($storeID, $watchingAuctionIDs);
+            $auctionRegistrationRequest = $auctionRegistrationRequests[$storeID] ?? null;
+            $auctionRegistrationRequestID = optional($auctionRegistrationRequest)->id;
 
-            $auctionRegistrationRequest = AuctionRegistrationRequest::where(
-                'requested_by_customer_id',
-                $customer->id
-            )
-                ->where('store_id', $auction->id)
-                ->first();
-
-            $auction->auction_registration_request = null;
-            $auction->is_registered = false;
-
-            if (
-                !is_null($auctionRegistrationRequest)
-                && in_array($auctionRegistrationRequest->reply_status, [ReplyStatus::APPROVED, ReplyStatus::PENDING])
-                && $auctionRegistrationRequest->status === Status::ACTIVE
-            ) {
-                $auction->is_registered = $auctionRegistrationRequest->reply_status == ReplyStatus::APPROVED;
+            if ($auctionRegistrationRequest  && in_array($auctionRegistrationRequest->reply_status, [ReplyStatus::APPROVED, ReplyStatus::PENDING])) {
                 $auction->auction_registration_request = $auctionRegistrationRequest;
+                $auction->is_registered = $auctionRegistrationRequest->reply_status == ReplyStatus::APPROVED;
             }
 
-            $auction->deposits = Deposit::where('requested_by_customer_id', $customer->id)
-                ->where('status', '!=', Status::DELETED)
-                ->whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
-                    $query->where('store_id', $storeID);
-                })
-                ->latest()
-                ->get();
+            $auction->deposits = $deposits->where('auction_registration_request_id', $auctionRegistrationRequestID)->all();
         }
 
         return $auctions;

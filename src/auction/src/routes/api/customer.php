@@ -8,7 +8,8 @@ use StarsNet\Project\Auction\App\Http\Controllers\Customer\ConsignmentRequestCon
 use StarsNet\Project\Auction\App\Http\Controllers\Customer\CreditCardController;
 use StarsNet\Project\Auction\App\Http\Controllers\Customer\AuctionRegistrationRequestController;
 use StarsNet\Project\Auction\App\Http\Controllers\Customer\SiteMapController;
-
+use StarsNet\Project\Auction\App\Http\Controllers\Customer\ReferralCodeController;
+use StarsNet\Project\Auction\App\Http\Controllers\Customer\AuthenticationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,6 +43,20 @@ Route::group(
 |--------------------------------------------------------------------------
 */
 
+
+Route::group(
+    ['prefix' => 'auth'],
+    function () {
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () {
+                Route::post('/migrate', [AuthenticationController::class, 'migrateToRegistered']);
+            }
+        );
+    }
+);
+
+
 Route::group(
     ['prefix' => 'auction-registration-requests'],
     function () {
@@ -71,6 +86,19 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::post('/', [$defaultController, 'createConsignmentRequest']);
+            }
+        );
+    }
+);
+
+Route::group(
+    ['prefix' => 'referral-codes'],
+    function () {
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () {
+                Route::get('/details', [ReferralCodeController::class, 'getReferralCodeDetails']);
+                Route::get('/histories/all', [ReferralCodeController::class, 'getAllReferralCodeHistories'])->middleware(['pagination']);
             }
         );
     }

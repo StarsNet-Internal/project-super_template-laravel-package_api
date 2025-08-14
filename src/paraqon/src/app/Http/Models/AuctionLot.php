@@ -217,14 +217,11 @@ class AuctionLot extends Eloquent
         if (is_null($bidType) || $bidType != 'ADVANCED') {
             if (count($allBids) > 2 && !is_null($newBidCustomerID)) {
                 $winningBid = $bidHistory->histories()->last();
-
                 if ($winningBid->winning_bid_customer_id == $newBidCustomerID) {
-                    if (
-                        max($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case 0A
-                        || min($reservePrice, $winningBid->current_bid, $newBidValue) == $reservePrice // Case 0C
-                    ) {
-                        return $bidHistory->current_bid;
-                    }
+                    $currentBid = $winningBid->current_bid;
+                    if ($currentBid < $newBidValue && $newBidValue < $reservePrice) return $currentBid; // Case 0A
+                    if ($newBidValue > $currentBid && $currentBid > $reservePrice) return $currentBid; // Case 0B
+                    if ($newBidValue >= $reservePrice && $reservePrice > $currentBid) return $reservePrice; // Case 0C
                 }
             }
         }
