@@ -102,4 +102,35 @@ class ProductController extends Controller
 
         return $products;
     }
+
+    public function createProduct(Request $request)
+    {
+        // Create Product
+        /** @var Product $product */
+        $product = Product::create($request->except(['stock_no']));
+
+        $yearPrefix = date('y'); // e.g. "25"
+        $pattern = '/^' . $yearPrefix . '\d{6}$/';
+
+        // Get the largest stock_no matching {yy}{6 digits}
+        $maxStockNo = Product::where('stock_no', 'regexp', $pattern)
+            ->max('stock_no');
+
+        if ($maxStockNo) {
+            $increment = (int) substr($maxStockNo, 2);
+            $nextIncrement = $increment + 1;
+        } else {
+            $nextIncrement = 1;
+        }
+
+        $stockNo = $yearPrefix . str_pad($nextIncrement, 6, '0', STR_PAD_LEFT);
+
+        $product->update(['stock_no' => $stockNo]);
+
+        // Return success message
+        return response()->json([
+            'message' => 'Created New Product successfully',
+            '_id' => $product->_id
+        ], 200);
+    }
 }

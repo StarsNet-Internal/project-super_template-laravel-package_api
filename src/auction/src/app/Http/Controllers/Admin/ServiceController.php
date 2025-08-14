@@ -398,7 +398,7 @@ class ServiceController extends Controller
                 ]
             ];
 
-            $url = env('TCG_BID_STRIPE_BASE_URL', 'http://192.168.0.83:8082') . '/bind-card/charge';
+            $url = env('TCG_BID_STRIPE_BASE_URL', 'http://192.168.0.83:8083') . '/bind-card/charge';
             $response = Http::post(
                 $url,
                 $stripeData

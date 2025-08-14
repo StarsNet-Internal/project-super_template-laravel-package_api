@@ -336,6 +336,7 @@ Route::group(
         $defaultController = ProductController::class;
 
         Route::get('/all', [$defaultController, 'getAllProducts'])->middleware(['pagination']);
+        Route::post('/', [$defaultController, 'createProduct']);
     }
 );
 

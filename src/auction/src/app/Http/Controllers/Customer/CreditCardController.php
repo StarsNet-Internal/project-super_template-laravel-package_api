@@ -31,7 +31,8 @@ class CreditCardController extends Controller
         ];
 
         // Create Stripe setup intent
-        $url = env('TCG_BID_STRIPE_BASE_URL', 'http://192.168.0.83:8082') . '/setup-intents';
+        $url = env('TCG_BID_STRIPE_BASE_URL', 'http://192.168.0.83:8083') . '/setup-intents';
+
         $response = Http::post(
             $url,
             $data
