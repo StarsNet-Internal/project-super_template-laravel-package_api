@@ -47,6 +47,6 @@ Route::group(
     ['prefix' => 'referral-codes'],
     function () {
         Route::post('/mass-generate', [ReferralCodeController::class, 'massGenerateReferralCodes']);
-        Route::put('/use', [ReferralCodeController::class, 'randomlyUseCode']);
+        // Route::put('/use', [ReferralCodeController::class, 'randomlyUseCode']);
     }
 );
