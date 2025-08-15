@@ -16,7 +16,7 @@ use StarsNet\Project\Paraqon\App\Models\Deposit;
 
 class ReferralCodeController extends Controller
 {
-    protected $storeID = '689c364f52a2520e5e0b1126';
+    protected $storeID = '689578c16a72a5fd1f0ee7c6';
 
     private function getReferralCodeInfo($customerIDs, ?string $storeID = null): Collection
     {
