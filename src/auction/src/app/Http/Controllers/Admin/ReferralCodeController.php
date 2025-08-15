@@ -15,6 +15,7 @@ class ReferralCodeController extends Controller
         $quotaLeft = (int) $request->input('quota_left', 3);
 
         $validCustomerIDs = User::where('type', '!=', 'TEMP')
+            ->where('is_staff', false)
             ->with(['account.customer'])
             ->get()
             ->pluck('account.customer.id')

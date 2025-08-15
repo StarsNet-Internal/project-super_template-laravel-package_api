@@ -20,7 +20,7 @@ class AuthenticationController extends Controller
     public function migrateToRegistered(Request $request)
     {
         // Validate if referral_code is filled in
-        $now = now();
+        $now = now()->addHours(8);
         $user = $this->user();
         $customer = $this->customer();
 
