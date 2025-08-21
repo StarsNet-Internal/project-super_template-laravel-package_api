@@ -49,7 +49,9 @@ class ProductController extends Controller
             'product_interface',
             'prefix',
             'stock_no',
-            'owned_by_customer_id'
+            'owned_by_customer_id',
+            'reserve_price',
+            'bid_incremental_settings'
         ]);
 
         foreach ($products as $product) {
@@ -96,6 +98,8 @@ class ProductController extends Controller
             $product['prefix'] = $product->prefix;
             $product['stock_no'] = $product->stock_no;
             $product['owned_by_customer_id'] = $product->owned_by_customer_id;
+            $product['reserve_price'] = $product->reserve_price;
+            $product['bid_incremental_settings'] = $product->bid_incremental_settings;
 
             unset($product['variants'], $product['reviews'], $product['warehouseInventories'], $product['wishlistItems']);
         }
