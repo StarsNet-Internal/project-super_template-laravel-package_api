@@ -2,6 +2,7 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
+use App\Constants\Model\CheckoutApprovalStatus;
 use App\Constants\Model\CheckoutType;
 use App\Constants\Model\ShipmentDeliveryStatus;
 use App\Constants\Model\Status;
@@ -16,6 +17,7 @@ use StarsNet\Project\Paraqon\App\Models\Bid;
 use StarsNet\Project\Paraqon\App\Models\ConsignmentRequest;
 use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
 
 class OrderController extends Controller
 {
@@ -181,5 +183,55 @@ class OrderController extends Controller
         return response()->json([
             'message' => "Updated Order Successfully"
         ], 200);
+    }
+
+    public function cancelOrderPayment(Request $request)
+    {
+        /** @var ?Order $order */
+        $order = Order::find($request->route('order_id'));
+
+        if (is_null($order)) {
+            return response()->json([
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        if ($order->customer_id !== $this->customer()->id) {
+            return response()->json([
+                'message' => 'Order does not belong to you'
+            ], 403);
+        }
+
+        if (is_null($order->scheduled_payment_at)) {
+            return response()->json([
+                'message' => 'Order does not have scheduled_payment_at'
+            ], 400);
+        }
+
+        if (now()->gt($order->scheduled_payment_at)) {
+            return response()->json([
+                'message' => 'The scheduled payment time has already passed.'
+            ], 403);
+        }
+
+        /** @var ?Checkout $checkout */
+        $checkout = $order->checkout()->latest()->first();
+        $paymentIntentID = $checkout->online['payment_intent_id'];
+
+        $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents/' . $paymentIntentID . '/cancel';
+        $response = Http::post($url);
+
+        if ($response->status() === 200) {
+            $order->updateStatus(ShipmentDeliveryStatus::CANCELLED);
+            $checkout->updateApprovalStatus(CheckoutApprovalStatus::REJECTED);
+
+            return response()->json([
+                'message' => 'Update Order status as cancelled'
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Unable to cancel payment from Stripe, paymentIntent might have been closed'
+            ]);
+        }
     }
 }

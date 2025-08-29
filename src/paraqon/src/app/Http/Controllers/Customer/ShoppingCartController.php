@@ -2,6 +2,7 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
+use App\Constants\Model\CheckoutApprovalStatus;
 use App\Constants\Model\CheckoutType;
 use App\Constants\Model\OrderDeliveryMethod;
 use App\Constants\Model\ShipmentDeliveryStatus;
@@ -31,16 +32,19 @@ use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Collection;
+use MongoDB\BSON\UTCDateTime;
 
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 use App\Constants\Model\OrderPaymentMethod;
 use App\Events\Common\Order\OrderPaid;
+use App\Models\CheckoutApproval;
+use App\Traits\Controller\ShoppingCartTrait;
 
 class ShoppingCartController extends Controller
 {
-    use RoundingTrait;
+    use RoundingTrait, ShoppingCartTrait;
 
     private function getStore(string $storeID): ?Store
     {
@@ -535,10 +539,7 @@ class ShoppingCartController extends Controller
                     ];
 
                     $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents';
-                    $res = Http::post(
-                        $url,
-                        $data
-                    );
+                    $res = Http::post($url, $data);
 
                     $paymentIntentID = $res['id'];
                     $clientSecret = $res['clientSecret'];
@@ -611,113 +612,68 @@ class ShoppingCartController extends Controller
             $deliveryInfo['warehouse_id'] :
             null;
 
-        // getShoppingCartDetails calculations
-        // get subtotal Price
-        $subtotalPrice = 0;
-        $totalPrice = 0;
-        $storageFee = 0;
-        $shippingFee = 0;
-
+        // Get Checkout information
         foreach ($cartItems as $item) {
-            // Add keys
-            $item->is_checkout = true;
+            $item->is_checkout = in_array($item->product_variant_id, $checkoutVariantIDs);
             $item->is_refundable = false;
             $item->global_discount = null;
-
-            // Calculations
-            // $winningBid = $item->winning_bid ?? 0;
-            // $subtotalPrice += $winningBid;
-
-            // $storageFee += $item->storage_fee ?? 0;
         }
-        // $totalPrice = $subtotalPrice + $storageFee;
 
-        // get shippingFee
-        // $courier = Courier::find($courierID);
-        // $shippingFee =
-        //     !is_null($courier) ?
-        //     $courier->getShippingFeeByTotalFee($totalPrice) :
-        //     0;
-        // $totalPrice += $shippingFee;
+        $subtotalPrice = $cartItems->sum('subtotal_price');
+        $localPriceDiscount = 0;
+        $totalPrice = $subtotalPrice - $localPriceDiscount;
 
-        // form calculation data object
+        $shippingFee = 0;
+        if (!is_null($courierID)) {
+            $courier = Courier::find($courierID);
+            $shippingFee = !is_null($courier) ?
+                $courier->getShippingFeeByTotalFee($totalPrice) :
+                0;
+        }
+        $totalPrice += $shippingFee;
+
         $rawCalculation = [
             'currency' => 'HKD',
             'price' => [
-                'subtotal' => $subtotalPrice,
-                'total' => $totalPrice, // Deduct price_discount.local and .global
+                'subtotal' => number_format($subtotalPrice, 2, '.', ','),
+                'total' => number_format($totalPrice, 2, '.', ','),
             ],
             'price_discount' => [
-                'local' => 0,
-                'global' => 0,
+                'local' => number_format($localPriceDiscount, 2, '.', ','),
+                'global' => '0.00',
             ],
             'point' => [
-                'subtotal' => 0,
-                'total' => 0,
+                'subtotal' => '0.00',
+                'total' => '0.00',
             ],
-            'service_charge' => 0,
-            'storage_fee' => $storageFee,
             'shipping_fee' => $shippingFee
         ];
 
-        $rationalizedCalculation = $this->rationalizeRawCalculation($rawCalculation);
-        $roundedCalculation = $this->roundingNestedArray($rationalizedCalculation); // Round off values
-
-        // Return data
-        $checkoutDetails = [
-            'cart_items' => $cartItems,
-            'gift_items' => [],
-            'discounts' => [],
-            'calculations' => $roundedCalculation,
-            'is_voucher_applied' => false,
-            'is_enough_membership_points' => true,
-
-            'paid_order_id' => null,
-            'is_storage' => false
-        ];
-
         // Validate, and update attributes
-        $totalPrice = $checkoutDetails['calculations']['price']['total'];
         if ($totalPrice <= 0) $paymentMethod = CheckoutType::OFFLINE;
 
         // Create Order
         $orderAttributes = [
             'is_paid' => $request->input('is_paid', false),
             'payment_method' => $paymentMethod,
-            'discounts' => $checkoutDetails['discounts'],
-            'calculations' => $checkoutDetails['calculations'],
+            'discounts' => [],
+            'calculations' => $rawCalculation,
             'delivery_info' => $this->getDeliveryInfo($deliveryInfo),
             'delivery_details' => $deliveryDetails,
-            'is_voucher_applied' => $checkoutDetails['is_voucher_applied'],
+            'is_voucher_applied' => [],
+            'scheduled_payment_at' => new UTCDateTime(now()->addDay(1))
         ];
         $order = $customer->createOrder($orderAttributes, $store);
 
         // Create OrderCartItem(s)
-        $checkoutItems = collect($checkoutDetails['cart_items'])
-            ->filter(function ($item) {
-                return $item->is_checkout;
-            })->values();
+        $checkoutItems = collect($cartItems)->filter(function ($item) {
+            return $item->is_checkout;
+        })
+            ->values();
 
         foreach ($checkoutItems as $item) {
             $attributes = $item->toArray();
-            unset(
-                $attributes['_id'],
-                $attributes['is_checkout']
-            );
-
-            // Update WarehouseInventory(s)
-            $variantID = $attributes['product_variant_id'];
-            $qty = $attributes['qty'];
-            /** @var ProductVariant $variant */
-            $variant = ProductVariant::find($variantID);
-            $this->deductWarehouseInventoriesByStore(
-                $store,
-                $variant,
-                $qty,
-                WarehouseInventoryHistoryType::SALES,
-                $customer->getUser()
-            );
-
+            unset($attributes['_id'], $attributes['is_checkout']);
             $order->createCartItem($attributes);
         }
 
@@ -728,19 +684,56 @@ class ShoppingCartController extends Controller
         // Create Checkout
         $checkout = $this->createBasicCheckout($order, $paymentMethod);
 
-        if ($order->getTotalPrice() > 0) {
+        if ($totalPrice > 0) {
             switch ($paymentMethod) {
                 case CheckoutType::ONLINE:
-                    $returnUrl = $this->updateAsOnlineCheckout(
-                        $checkout,
-                        $successUrl,
-                        $cancelUrl
-                    );
-                    break;
+                    $stripeAmount = (float) $totalPrice * 100;
+
+                    $data = [
+                        'amount' => $stripeAmount,
+                        'currency' => 'HKD',
+                        'captureMethod' => 'manual',
+                        'metadata' => [
+                            'model_type' => 'checkout',
+                            'model_id' => $checkout->_id,
+                            'custom_event_type' => 'one_day_delay'
+                        ]
+                    ];
+
+                    $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents';
+                    $res = Http::post($url, $data);
+
+                    $paymentIntentID = $res['id'];
+                    $clientSecret = $res['clientSecret'];
+
+                    $checkout->update([
+                        'amount' => number_format($totalPrice, 2, '.', ','),
+                        'currency' => 'HKD',
+                        'online' => [
+                            'payment_intent_id' => $paymentIntentID,
+                            'client_secret' => $clientSecret,
+                            'api_response' => null
+                        ],
+                    ]);
+
+                    return response()->json([
+                        'message' => 'Submitted Order successfully',
+                        'checkout' => $checkout,
+                        'order_id' => $order->_id
+                    ]);
                 case CheckoutType::OFFLINE:
                     $imageUrl = $request->input('image');
                     $this->updateAsOfflineCheckout($checkout, $imageUrl);
-                    break;
+
+                    // Clear ShoppingCart
+                    $variants = ProductVariant::objectIDs($request->checkout_product_variant_ids)->get();
+                    $customer->clearCartByStore($store, $variants);
+
+                    return response()->json([
+                        'message' => 'Submitted Order successfully',
+                        'checkout' => $checkout,
+                        'order_id' => $order->_id
+                    ]);
                 default:
                     return response()->json([
                         'message' => 'Invalid payment_method'
@@ -748,29 +741,21 @@ class ShoppingCartController extends Controller
             }
         }
 
-        if ($paymentMethod === CheckoutType::OFFLINE) {
-            // Delete ShoppingCartItem(s)
-            $variants = ProductVariant::objectIDs($request->checkout_product_variant_ids)->get();
-            $customer->clearCartByStore($store, $variants);
+        // If no need to pay or totalPrice is 0
+        $order->update(['is_paid' => true]);
+        $checkout->update([
+            'approval' => [
+                'status' => CheckoutApprovalStatus::APPROVED,
+                'reason' => 'Automatically approved by system',
+                'updated_at' => new UTCDateTime(now())
+            ]
+        ]);
 
-            // Update product
-            foreach ($variants as $variant) {
-                $product = $variant->product;
-                $product->update([
-                    // 'status' => Status::ACTIVE,
-                    'listing_status' => 'ALREADY_CHECKOUT'
-                ]);
-            }
-        }
-
-        // Return data
-        $data = [
+        return response()->json([
             'message' => 'Submitted Order successfully',
-            'return_url' => $returnUrl ?? null,
+            'checkout' => $checkout,
             'order_id' => $order->_id
-        ];
-
-        return response()->json($data);
+        ]);
     }
 
     public function checkOut(Request $request)
@@ -983,10 +968,6 @@ class ShoppingCartController extends Controller
             'is_enough_membership_points' => $customer->isEnoughMembershipPoints($rawCalculation['point']['total'])
         ];
 
-        //
-        //
-        //
-
         // Validate Customer membership points
         $requiredPoints = $checkoutDetails['calculations']['point']['total'];
         if (!$customer->isEnoughMembershipPoints($requiredPoints)) {
@@ -1085,7 +1066,7 @@ class ShoppingCartController extends Controller
                         "captureMethod" => "automatic_async",
                         "metadata" => [
                             "model_type" => "checkout",
-                            "model_id" => $checkout->_id
+                            "model_id" => $checkout->_id,
                         ]
                     ];
 
@@ -1224,7 +1205,7 @@ class ShoppingCartController extends Controller
             $warehouseInfo = [
                 'title' => optional($warehouse)->title ?? null,
                 'image' => $warehouse->images[0] ?? null,
-                'location' => $warehouse->location
+                'location' => $warehouse->location ?? null
             ];
             $rawInfo['warehouse'] = $warehouseInfo;
         }

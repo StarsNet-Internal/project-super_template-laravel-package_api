@@ -14,15 +14,10 @@ use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use StarsNet\Project\Paraqon\App\Models\Deposit;
 use StarsNet\Project\Paraqon\App\Models\ProductStorageRecord;
 
-use function PHPSTORM_META\map;
-
 class TestingController extends Controller
 {
     public function healthCheck()
     {
-        $deposit = Deposit::find('670dee20cabe9346e20b9291');
-        return $deposit->online['payment_intent_id'];
-
         return response()->json([
             'message' => 'OK from package/paraqon'
         ], 200);

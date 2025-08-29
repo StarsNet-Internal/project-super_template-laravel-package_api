@@ -30,14 +30,6 @@ class WatchlistItemController extends Controller
         // Extract attributes from $request
         $itemType = $request->item_type;
 
-        // Validation
-        $validItemTypes = ['store', 'auction-lot'];
-        if (!in_array($itemType, $validItemTypes)) {
-            return response()->json([
-                'message' => $itemType . ' is not a valid value for item_type'
-            ], 404);
-        }
-
         // Get authenticated User information
         $customer = $this->customer();
 
@@ -99,10 +91,6 @@ class WatchlistItemController extends Controller
 
     public function getWatchedAuctionLots(Request $request)
     {
-        // Extract attributes from $request
-        $keyword = $request->input('keyword');
-        if ($keyword === "") $keyword = "*";
-
         // Get authenticated User information
         $customer = $this->customer();
 
@@ -150,6 +138,34 @@ class WatchlistItemController extends Controller
             // is_watching
             $product->is_watching = true;
 
+            unset(
+                $product->bids,
+                $product->valid_bid_values,
+                $product->reserve_price
+            );
+        }
+
+        return $products;
+    }
+
+    public function getCompareItems(Request $request)
+    {
+        // Extract attributes from $request
+        $itemType = $request->item_type;
+
+        // Get authenticated User information
+        $customer = $this->customer();
+
+        // Get Items
+        $compareItemIDs = WatchlistItem::where('customer_id', $customer->_id)
+            ->where('item_type', $itemType)
+            ->pluck('item_id')
+            ->all();
+
+        // Get Products
+        $products = $this->getProductsInfoByAggregation($compareItemIDs);
+
+        foreach ($products as $product) {
             unset(
                 $product->bids,
                 $product->valid_bid_values,

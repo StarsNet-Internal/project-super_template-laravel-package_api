@@ -257,11 +257,7 @@ Route::group(
         Route::post('/orders/paid', [$defaultController, 'confirmOrderPaid']);
 
         Route::get('/auctions/{store_id}/state', [$defaultController, 'getAuctionCurrentState']);
-
-        // Route::group(
-        //     ['middleware' => 'auth:api'],
-        //     function () use ($defaultController) {}
-        // );
+        Route::put('/orders/capture', [$defaultController, 'captureOrderPayment']);
     }
 );
 
@@ -294,6 +290,7 @@ Route::group(
                 Route::get('/all', [$defaultController, 'getAllAuctionOrders'])->middleware(['pagination']);
                 Route::put('/{order_id}/upload', [$defaultController, 'uploadPaymentProofAsCustomer']);
                 Route::put('/{order_id}/details', [$defaultController, 'updateOrderDetails']);
+                Route::put('/{order_id}/cancel', [$defaultController, 'cancelOrderPayment']);
                 Route::get('/{id}/invoice/{language}', [$defaultController, 'getInvoiceData']);
                 Route::put('/{id}/offline-payment', [$defaultController, 'approveOrderOfflinePayment']);
             }

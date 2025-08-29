@@ -34,6 +34,7 @@ use StarsNet\Project\Paraqon\App\Models\LiveBiddingEvent;
 
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AuctionLotController as AdminAuctionLotController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\AuctionLotController as CustomerAuctionLotController;
+use MongoDB\BSON\UTCDateTime;
 
 class ServiceController extends Controller
 {
@@ -54,13 +55,10 @@ class ServiceController extends Controller
         ];
 
         if (!in_array($eventType, $acceptableEventTypes)) {
-            return response()->json(
-                [
-                    'message' => 'Callback success, but event type does not belong to any of the acceptable values',
-                    'acceptable_values' => $acceptableEventTypes
-                ],
-                200
-            );
+            return response()->json([
+                'message' => 'Callback success, but event type does not belong to any of the acceptable values',
+                'acceptable_values' => $acceptableEventTypes
+            ],  200);
         }
 
         // Extract attributes from $request
@@ -76,259 +74,218 @@ class ServiceController extends Controller
 
         // Find Model and Update
         switch ($model) {
-            case 'deposit':
-                // Get Deposit
-                $deposit = Deposit::find($modelID);
+            case 'deposit': {
+                    /** @var ?Deposit $deposit */
+                    $deposit = Deposit::find($modelID);
 
-                if (is_null($deposit)) {
-                    return response()->json(
-                        ['message' => 'Deposit not found'],
-                        404
-                    );
-                }
+                    if (is_null($deposit)) {
+                        return response()->json(['message' => 'Deposit not found'], 404);
+                    }
 
-                // Update AuctionRegistrationRequest
-                $auctionRegistrationRequest = $deposit->auctionRegistrationRequest;
+                    // Get AuctionRegistrationRequest
+                    /** @var ?AuctionRegistrationRequest $auctionRegistrationRequest */
+                    $auctionRegistrationRequest = $deposit->auctionRegistrationRequest;
 
-                // Update Deposit
-                if ($eventType == 'charge.succeeded') {
-                    $deposit->updateStatus('on-hold');
-                    $deposit->update([
-                        'reply_status' => ReplyStatus::APPROVED
-                    ]);
-                    $deposit->updateOnlineResponse($request->all());
+                    // Update Deposit
+                    if ($eventType == 'charge.succeeded') {
+                        $deposit->updateStatus('on-hold');
+                        $deposit->update(['reply_status' => ReplyStatus::APPROVED]);
+                        $deposit->updateOnlineResponse($request->all());
 
-                    // Automatically assign paddle_id if ONLINE auction
-                    if (
-                        in_array($auctionRegistrationRequest->reply_status, [
+                        // Automatically assign paddle_id if ONLINE auction
+                        if (in_array($auctionRegistrationRequest->reply_status, [
                             ReplyStatus::PENDING,
                             ReplyStatus::REJECTED
-                        ])
-                    ) {
-                        // get Paddle ID
-                        $assignedPaddleId = $auctionRegistrationRequest->paddle_id;
-                        $storeID = $auctionRegistrationRequest->store_id;
+                        ])) {
+                            // get Paddle ID
+                            $assignedPaddleId = $auctionRegistrationRequest->paddle_id;
+                            $storeID = $auctionRegistrationRequest->store_id;
 
-                        $newPaddleID = $assignedPaddleId;
+                            $newPaddleID = $assignedPaddleId;
 
-                        if (is_null($assignedPaddleId)) {
-                            $allPaddles = AuctionRegistrationRequest::where('store_id', $storeID)
-                                ->pluck('paddle_id')
-                                ->filter(fn($id) => is_numeric($id))
-                                ->map(fn($id) => (int) $id)
-                                ->sort()
-                                ->values();
-                            $latestPaddleId = $allPaddles->last();
+                            if (is_null($assignedPaddleId)) {
+                                $allPaddles = AuctionRegistrationRequest::where('store_id', $storeID)
+                                    ->pluck('paddle_id')
+                                    ->filter(fn($id) => is_numeric($id))
+                                    ->map(fn($id) => (int) $id)
+                                    ->sort()
+                                    ->values();
+                                $latestPaddleId = $allPaddles->last();
 
-                            if (is_null($latestPaddleId)) {
-                                $store = Store::find($storeID);
-                                $newPaddleID = $store->paddle_number_start_from ?? 1;
-                            } else {
-                                $newPaddleID = $latestPaddleId + 1;
+                                if (is_null($latestPaddleId)) {
+                                    $store = Store::find($storeID);
+                                    $newPaddleID = $store->paddle_number_start_from ?? 1;
+                                } else {
+                                    $newPaddleID = $latestPaddleId + 1;
+                                }
                             }
+
+                            $auctionRegistrationRequest->update([
+                                'paddle_id' => $newPaddleID,
+                                'status' => Status::ACTIVE,
+                                'reply_status' => ReplyStatus::APPROVED
+                            ]);
                         }
 
-                        $requestUpdateAttributes = [
-                            'paddle_id' => $newPaddleID,
-                            'status' => Status::ACTIVE,
-                            'reply_status' => ReplyStatus::APPROVED
-                        ];
-                        $auctionRegistrationRequest->update($requestUpdateAttributes);
-                    }
-
-                    // For Auction Registration, immediately refund 
-                    // $paymentIntentID = $deposit->online['payment_intent_id'];
-                    // $depositPermissionType = $deposit->permission_type;
-
-                    // if (
-                    //     $deposit->payment_method == 'ONLINE' &&
-                    //     !is_null($paymentIntentID) &&
-                    //     $depositPermissionType == null
-                    // ) {
-                    //     $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents/' . $paymentIntentID . '/cancel';
-
-                    //     try {
-                    //         $response = Http::post(
-                    //             $url
-                    //         );
-
-                    //         if ($response->status() === 200) {
-                    //             return true;
-                    //         } else {
-                    //             return false;
-                    //         }
-                    //     } catch (\Throwable $th) {
-                    //         Log::error('Failed to cancel deposit, deposit_id: ' . $deposit->_id);
-                    //         $deposit->updateStatus('return-failed');
-                    //         return false;
-                    //     }
-                    // }
-
-                    return response()->json(
-                        [
+                        return response()->json([
                             'message' => 'Deposit status updated as on-hold',
                             'deposit_id' => $deposit->_id
-                        ],
-                        200
-                    );
-                } else if ($eventType == 'charge.refunded') {
-                    $deposit->updateStatus('returned');
+                        ], 200);
+                    } else if ($eventType == 'charge.refunded') {
+                        $deposit->updateStatus('returned');
 
-                    $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
-                    $amountRefunded = $request->data['object']['amount_refunded'] ?? 0;
+                        $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
+                        $amountRefunded = $request->data['object']['amount_refunded'] ?? 0;
 
-                    $deposit->update([
-                        'amount_captured' => $amountCaptured / 100,
-                        'amount_refunded' => $amountRefunded / 100,
-                    ]);
+                        $deposit->update([
+                            'amount_captured' => $amountCaptured / 100,
+                            'amount_refunded' => $amountRefunded / 100,
+                        ]);
 
-                    return response()->json(
-                        [
+                        return response()->json([
                             'message' => 'Deposit status updated as returned',
                             'deposit_id' => $deposit->_id
-                        ],
-                        200
-                    );
-                } else if ($eventType == 'charge.captured') {
-                    $deposit->updateStatus('returned');
+                        ], 200);
+                    } else if ($eventType == 'charge.captured') {
+                        $deposit->updateStatus('returned');
 
-                    $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
-                    $amountRefunded = $request->data['object']['amount_refunded'] ?? 0;
+                        $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
+                        $amountRefunded = $request->data['object']['amount_refunded'] ?? 0;
 
-                    $deposit->update([
-                        'amount_captured' => $amountCaptured / 100,
-                        'amount_refunded' => $amountRefunded / 100,
-                    ]);
+                        $deposit->update([
+                            'amount_captured' => $amountCaptured / 100,
+                            'amount_refunded' => $amountRefunded / 100,
+                        ]);
 
-                    return response()->json(
-                        [
-                            'message' => 'Deposit status updated as returned',
+                        return response()->json([
+                            'message' => 'Deposit status updated as captured',
                             'deposit_id' => $deposit->_id
-                        ],
-                        200
-                    );
-                } else if ($eventType == 'charge.expired') {
-                    $deposit->updateStatus('returned');
+                        ], 200);
+                    } else if ($eventType == 'charge.expired') {
+                        $deposit->updateStatus('returned');
 
-                    $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
-                    $amountRefunded = $request->data['object']['amount_refunded'] ?? 0;
+                        $amountCaptured = $request->data['object']['amount_captured'] ?? 0;
+                        $amountRefunded = $request->data['object']['amount_refunded'] ?? 0;
 
-                    $deposit->update([
-                        'amount_captured' => $amountCaptured / 100,
-                        'amount_refunded' => $amountRefunded / 100,
-                    ]);
+                        $deposit->update([
+                            'amount_captured' => $amountCaptured / 100,
+                            'amount_refunded' => $amountRefunded / 100,
+                        ]);
 
-                    return response()->json(
-                        [
-                            'message' => 'Deposit status updated as returned',
+                        return response()->json([
+                            'message' => 'Deposit status updated as expired',
                             'deposit_id' => $deposit->_id
-                        ],
-                        200
-                    );
-                } else if ($eventType == 'charge.failed') {
-                    $deposit->updateStatus('cancelled');
+                        ], 200);
+                    } else if ($eventType == 'charge.failed') {
+                        $deposit->updateStatus('cancelled');
 
-                    $deposit->update([
-                        'reply_status' => ReplyStatus::REJECTED,
-                        'stripe_api_reponse' => $request->data['object']
-                    ]);
+                        $deposit->update([
+                            'reply_status' => ReplyStatus::REJECTED,
+                            'stripe_api_reponse' => $request->data['object']
+                        ]);
 
-                    return response()->json(
-                        [
+                        return response()->json([
                             'message' => 'Deposit status updated as cancelled',
                             'deposit_id' => $deposit->_id
-                        ],
-                        200
-                    );
-                }
-
-                return response()->json(
-                    [
-                        'message' => 'Invalid Stripe event type',
-                        'deposit_id' => null
-                    ],
-                    400
-                );
-            case 'checkout':
-                // Get Checkout
-                /** Checkout $checkout */
-                $checkout = Checkout::find($modelID);
-
-                if (is_null($checkout)) {
-                    return response()->json(
-                        ['message' => 'Checkout not found'],
-                        200
-                    );
-                }
-
-                // Get Order
-                $order = $checkout->order;
-
-                if (is_null($order)) {
-                    return response()->json(
-                        ['message' => 'Order not found'],
-                        200
-                    );
-                }
-
-                // Update Checkout and Order
-                if ($eventType == 'charge.succeeded') {
-                    // Update Checkout
-                    $checkout->updateOnlineResponse((object) $request->all());
-                    $checkout->createApproval(
-                        CheckoutApprovalStatus::APPROVED,
-                        'Payment verified by Stripe'
-                    );
-
-                    // Update Order
-                    if ($order->current_status !== ShipmentDeliveryStatus::PROCESSING) {
-                        $order->updateStatus(ShipmentDeliveryStatus::PROCESSING);
+                        ], 200);
                     }
 
-                    // Update Product and AuctionLot
-                    $storeID = $order->store_id;
-                    $store = Store::find($storeID);
+                    return response()->json([
+                        'message' => 'Invalid Stripe event type',
+                        'deposit_id' => null
+                    ], 400);
+                }
+            case 'checkout': {
+                    // Get Checkout
+                    /** Checkout $checkout */
+                    $checkout = Checkout::find($modelID);
 
-                    if (
-                        !is_null($store) &&
-                        in_array($store->auction_type, ['LIVE', 'ONLINE'])
-                    ) {
-                        $productIDs = collect($order->cart_items)->pluck('product_id')->all();
+                    if (is_null($checkout)) {
+                        return response()->json(
+                            ['message' => 'Checkout not found'],
+                            200
+                        );
+                    }
 
-                        AuctionLot::where('store_id', $storeID)
-                            ->whereIn('product_id', $productIDs)
-                            ->update(['is_paid' => true]);
+                    // Get Order
+                    $order = $checkout->order;
 
-                        Product::objectIDs($productIDs)->update([
-                            'owned_by_customer_id' => $order->customer_id,
-                            'status' => 'ACTIVE',
-                            'listing_status' => 'ALREADY_CHECKOUT'
-                        ]);
+                    if (is_null($order)) {
+                        return response()->json(
+                            ['message' => 'Order not found'],
+                            200
+                        );
+                    }
+
+                    $customEventType = $request->data['object']['metadata']['custom_event_type'] ?? null;
+
+                    if ($customEventType === 'one_day_delay') {
+                        return response()->json([
+                            'message' => 'custom_event_type is one_day_delay, capture skipped',
+                            'order_id' => null
+                        ], 200);
+                    }
+
+                    // Update Checkout and Order
+                    if ($eventType == 'charge.succeeded' && is_null($customEventType)) {
+                        // Update Checkout
+                        $checkout->updateOnlineResponse((object) $request->all());
+                        $checkout->createApproval(
+                            CheckoutApprovalStatus::APPROVED,
+                            'Payment verified by Stripe'
+                        );
+
+                        // Update Order
+                        if ($order->current_status !== ShipmentDeliveryStatus::PROCESSING) {
+                            $order->updateStatus(ShipmentDeliveryStatus::PROCESSING);
+                        }
+
+                        // Update Product and AuctionLot
+                        $storeID = $order->store_id;
+                        $store = Store::find($storeID);
+
+                        if (
+                            !is_null($store) &&
+                            in_array($store->auction_type, ['LIVE', 'ONLINE'])
+                        ) {
+                            $productIDs = collect($order->cart_items)->pluck('product_id')->all();
+
+                            AuctionLot::where('store_id', $storeID)
+                                ->whereIn('product_id', $productIDs)
+                                ->update(['is_paid' => true]);
+
+                            Product::objectIDs($productIDs)->update([
+                                'owned_by_customer_id' => $order->customer_id,
+                                'status' => 'ACTIVE',
+                                'listing_status' => 'ALREADY_CHECKOUT'
+                            ]);
+                        }
+
+                        return response()->json(
+                            [
+                                'message' => 'Checkout approved, and Order status updated',
+                                'order_id' => $order->_id
+                            ],
+                            200
+                        );
                     }
 
                     return response()->json(
                         [
-                            'message' => 'Checkout approved, and Order status updated',
-                            'order_id' => $order->_id
+                            'message' => 'Invalid Stripe event type',
+                            'order_id' => null
                         ],
-                        200
+                        400
                     );
                 }
-
-                return response()->json(
-                    [
-                        'message' => 'Invalid Stripe event type',
-                        'order_id' => null
-                    ],
-                    400
-                );
-            default:
-                return response()->json(
-                    [
-                        'message' => 'Invalid model_type for metadata',
-                    ],
-                    400
-                );
+            default: {
+                    return response()->json(
+                        [
+                            'message' => 'Invalid model_type for metadata',
+                        ],
+                        400
+                    );
+                }
         }
     }
 
@@ -741,96 +698,6 @@ class ServiceController extends Controller
         return $newOrder;
     }
 
-    // public function generateAuctionOrdersAndRefundDeposits(Request $request)
-    // {
-    //     // Extract attributes from request
-    //     $storeID = $request->route('store_id');
-
-    //     // Check Store status, for validation before mass-generating Order(s)
-    //     $store = Store::find($storeID);
-
-    //     if ($store->status === Status::ACTIVE) {
-    //         return response()->json([
-    //             'message' => "Store is still ACTIVE. Skipping generating auction order sequences."
-    //         ], 200);
-    //     }
-
-    //     if ($store->status === Status::DELETED) {
-    //         return response()->json([
-    //             'message' => "Store is already DELETED. Skipping generating auction order sequences."
-    //         ], 200);
-    //     }
-
-    //     // Get AuctionLot(s) from Store
-    //     $unpaidAuctionLots = AuctionLot::where('store_id', $storeID)
-    //         ->where('status', Status::ARCHIVED)
-    //         ->whereNotNull('winning_bid_customer_id')
-    //         ->get()
-    //         ->filter(function ($item) {
-    //             return $item->current_bid >= $item->reserve_price;
-    //         });
-
-    //     // Get unique winning_bid_customer_id from all AuctionLot(s)
-    //     $winningCustomerIDs = $unpaidAuctionLots
-    //         ->pluck('winning_bid_customer_id')
-    //         ->unique()
-    //         ->values()
-    //         ->all();
-
-    //     // Get all Deposit(s), with on-hold current_deposit_status, from non-winning Customer(s)
-    //     $allFullRefundDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
-    //         $query->whereHas('store', function ($query2) use ($storeID) {
-    //             $query2->where('_id', $storeID);
-    //         });
-    //     })
-    //         ->whereNotIn('requested_by_customer_id', $winningCustomerIDs)
-    //         ->where('current_deposit_status', 'on-hold')
-    //         ->get();
-
-    //     // Full-refund all Deposit(s) from all non-winning Customer(s)
-    //     foreach ($allFullRefundDeposits as $deposit) {
-    //         $this->cancelDeposit($deposit);
-    //     }
-
-    //     // Generate OFFLINE order by system
-    //     $generatedOrderCount = 0;
-
-    //     foreach ($winningCustomerIDs as $customerID) {
-    //         try {
-    //             $customer = Customer::find($customerID);
-
-    //             // Find all winning Auction Lots
-    //             $winningLots = $unpaidAuctionLots->where('winning_bid_customer_id', $customerID);
-
-    //             // Get all Deposit(s), with on-hold current_deposit_status, from this Customer
-    //             $customerOnHoldDeposits = Deposit::whereHas('auctionRegistrationRequest', function ($query) use ($storeID) {
-    //                 $query->whereHas('store', function ($query2) use ($storeID) {
-    //                     $query2->where('_id', $storeID);
-    //                 });
-    //             })
-    //                 ->where('requested_by_customer_id', $customer->_id)
-    //                 ->where('current_deposit_status', 'on-hold')
-    //                 ->get();
-
-    //             // Create Order, and capture/refund deposits
-    //             $this->createAuctionOrder(
-    //                 $store,
-    //                 $customer,
-    //                 $winningLots,
-    //                 $customerOnHoldDeposits
-    //             );
-
-    //             $generatedOrderCount++;
-    //         } catch (\Throwable $th) {
-    //             print($th);
-    //         }
-    //     }
-
-    //     return response()->json([
-    //         'message' => "Generated {$generatedOrderCount} Auction Store Orders Successfully"
-    //     ], 200);
-    // }
-
     public function generateAuctionOrdersAndRefundDeposits(Request $request)
     {
         // Extract attributes from request
@@ -1136,7 +1003,6 @@ class ServiceController extends Controller
         ]);
     }
 
-
     public function getAuctionCurrentState(Request $request)
     {
         $storeId = $request->route('store_id');
@@ -1230,5 +1096,33 @@ class ServiceController extends Controller
         })->sortByDesc('updated_at')->first();
 
         return $latestActiveLot;
+    }
+
+    public function captureOrderPayment(Request $request)
+    {
+        $orders = Order::where('scheduled_payment_at', '<=', now())
+            ->whereNull('scheduled_payment_received_at')
+            ->get();
+
+        $orderIDs = [];
+        foreach ($orders as $order) {
+            try {
+                $checkout = $order->checkout()->latest()->first();
+                $paymentIntentID = $checkout->online['payment_intent_id'];
+                $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents/' . $paymentIntentID . '/capture';
+                $response = Http::post($url, ['amount' => null]);
+                if ($response->status() == 200) {
+                    $orderIDs[] = $order->_id;
+                    $order->update(['scheduled_payment_received_at' => new UTCDateTime(now())]);
+                }
+            } catch (\Throwable $th) {
+                Log::error('Failed to capture order, order_id: ' . $order->_id);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Approved order count: ' . count($orderIDs),
+            'order_ids' => $orderIDs
+        ], 200);
     }
 }

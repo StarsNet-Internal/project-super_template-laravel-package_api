@@ -116,7 +116,6 @@ Route::group(
     }
 );
 
-
 Route::group(
     ['prefix' => 'auth'],
     function () {
@@ -194,24 +193,6 @@ Route::group(
 );
 
 Route::group(
-    ['prefix' => 'orders'],
-    function () {
-        $defaultController = OrderController::class;
-
-        Route::group(
-            ['middleware' => 'auth:api'],
-            function () use ($defaultController) {
-                Route::get('/stores/{store_id}/all', [$defaultController, 'getOrdersByStoreID'])->middleware(['pagination']);
-                Route::get('/all/offline', [$defaultController, 'getAllOfflineOrders'])->middleware(['pagination']);
-                Route::put('/{order_id}/upload', [$defaultController, 'uploadPaymentProofAsCustomer']);
-                Route::post('/{order_id}/payment', [$defaultController, 'payPendingOrderByOnlineMethod']);
-                Route::put('/{order_id}/details', [$defaultController, 'updateOrderDetails']);
-            }
-        );
-    }
-);
-
-Route::group(
     ['prefix' => 'products'],
     function () {
         $defaultController = ProductController::class;
@@ -278,6 +259,25 @@ Route::group(
 );
 
 Route::group(
+    ['prefix' => 'orders'],
+    function () {
+        $defaultController = OrderController::class;
+
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () use ($defaultController) {
+                Route::get('/stores/{store_id}/all', [$defaultController, 'getOrdersByStoreID'])->middleware(['pagination']);
+                Route::get('/all/offline', [$defaultController, 'getAllOfflineOrders'])->middleware(['pagination']);
+                Route::put('/{order_id}/upload', [$defaultController, 'uploadPaymentProofAsCustomer']);
+                Route::post('/{order_id}/payment', [$defaultController, 'payPendingOrderByOnlineMethod']);
+                Route::put('/{order_id}/cancel', [$defaultController, 'cancelOrderPayment']);
+                Route::put('/{order_id}/details', [$defaultController, 'updateOrderDetails']);
+            }
+        );
+    }
+);
+
+Route::group(
     ['prefix' => 'payments'],
     function () {
         $defaultController = PaymentController::class;
@@ -297,6 +297,7 @@ Route::group(
                 Route::post('/add-to-watchlist', [$defaultController, 'addAndRemoveItem']);
                 Route::get('/stores', [$defaultController, 'getWatchedStores'])->middleware(['pagination']);
                 Route::get('/auction-lots', [$defaultController, 'getWatchedAuctionLots'])->middleware(['pagination']);
+                Route::get('/compare', [$defaultController, 'getCompareItems'])->middleware(['pagination']);
             }
         );
     }

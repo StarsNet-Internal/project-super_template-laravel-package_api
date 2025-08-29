@@ -2,24 +2,23 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
-use App\Constants\Model\CheckoutApprovalStatus;
-use App\Constants\Model\StoreType;
-use App\Constants\Model\CheckoutType;
-use App\Constants\Model\ShipmentDeliveryStatus;
 use App\Http\Controllers\Controller;
-use App\Models\Account;
-use App\Models\Address;
-use App\Models\Order;
-use App\Models\Product;
-use App\Models\Store;
-use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
+use App\Constants\Model\CheckoutApprovalStatus;
+use App\Constants\Model\CheckoutType;
+use App\Constants\Model\ShipmentDeliveryStatus;
+
+use App\Models\Order;
+use App\Models\Product;
+
 use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
+use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 
 // Validator
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
@@ -155,7 +154,6 @@ class OrderController extends Controller
             'message' => 'Reviewed Order successfully'
         ], 200);
     }
-
 
     public function uploadPaymentProofAsCustomer(Request $request)
     {
@@ -297,6 +295,50 @@ class OrderController extends Controller
             return $start->format('d M') . ' - ' . $end->format('d M Y');
         } else {
             return $start->format('d M Y') . ' - ' . $end->format('d M Y');
+        }
+    }
+
+    public function cancelOrderPayment(Request $request)
+    {
+        /** @var ?Order $order */
+        $order = Order::find($request->route('order_id'));
+
+        if (is_null($order)) {
+            return response()->json([
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        if (is_null($order->scheduled_payment_at)) {
+            return response()->json([
+                'message' => 'Order does not have scheduled_payment_at'
+            ], 400);
+        }
+
+        if (now()->gt($order->scheduled_payment_at)) {
+            return response()->json([
+                'message' => 'The scheduled payment time has already passed.'
+            ], 403);
+        }
+
+        /** @var ?Checkout $checkout */
+        $checkout = $order->checkout()->latest()->first();
+        $paymentIntentID = $checkout->online['payment_intent_id'];
+
+        $url = env('PARAQON_STRIPE_BASE_URL', 'https://payment.paraqon.starsnet.hk') . '/payment-intents/' . $paymentIntentID . '/cancel';
+        $response = Http::post($url);
+
+        if ($response->status() === 200) {
+            $order->updateStatus(ShipmentDeliveryStatus::CANCELLED);
+            $checkout->updateApprovalStatus(CheckoutApprovalStatus::REJECTED);
+
+            return response()->json([
+                'message' => 'Update Order status as cancelled'
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Unable to cancel payment from Stripe, paymentIntent might have been closed'
+            ]);
         }
     }
 }
