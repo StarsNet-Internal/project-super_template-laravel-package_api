@@ -179,33 +179,61 @@ class ServiceController extends Controller
                         }
 
                         // Update Checkout
-                        $checkout->updateOnlineResponse((object) $request->all());
-                        $checkout->createApproval(
-                            CheckoutApprovalStatus::APPROVED,
-                            'Payment verified by Stripe'
-                        );
+                        $checkout->updateNestedAttributes([
+                            'approval.status' => CheckoutApprovalStatus::APPROVED,
+                            'approval.reason' => 'Payment verified by Stripe',
+                            'online.api_response' => (object) $request->all()
+                        ]);
 
-                        // Update Order
-                        if ($order->current_status !== ShipmentDeliveryStatus::PROCESSING) {
-                            $order->updateStatus(ShipmentDeliveryStatus::PROCESSING);
+                        $customEventType = $request->data['object']['metadata']['custom_event_type'] ?? null;
+
+                        if ($customEventType === null || $customEventType === 'full_capture') {
+                            // $order->update(['is_paid' => true]);
+
+                            // Update Order
+                            if ($order->current_status !== ShipmentDeliveryStatus::PROCESSING) {
+                                $order->updateStatus(ShipmentDeliveryStatus::PROCESSING);
+                            }
+
+                            // Update Product and AuctionLot
+                            $storeID = $order->store_id;
+                            $store = Store::find($storeID);
+
+                            if (!is_null($store) && in_array($store->auction_type, ['LIVE', 'ONLINE'])) {
+                                $productIDs = collect($order->cart_items)->pluck('product_id')->all();
+
+                                AuctionLot::where('store_id', $storeID)
+                                    ->whereIn('product_id', $productIDs)
+                                    ->update(['is_paid' => true]);
+
+                                Product::objectIDs($productIDs)->update([
+                                    'owned_by_customer_id' => $order->customer_id,
+                                    'status' => 'ACTIVE',
+                                    'listing_status' => 'ALREADY_CHECKOUT'
+                                ]);
+                            }
                         }
 
-                        // Update Product and AuctionLot
-                        $storeID = $order->store_id;
-                        $store = Store::find($storeID);
+                        if ($customEventType === 'full_capture' || $customEventType === 'partial_capture') {
+                            $updateData = [];
 
-                        if (!is_null($store) && in_array($store->auction_type, ['LIVE', 'ONLINE'])) {
-                            $productIDs = collect($order->cart_items)->pluck('product_id')->all();
+                            if (isset($request->data['object']['metadata']['deposit_amount'])) {
+                                $updateData['calculations.deposit'] = $request->data['object']['metadata']['deposit_amount'];
+                            }
 
-                            AuctionLot::where('store_id', $storeID)
-                                ->whereIn('product_id', $productIDs)
-                                ->update(['is_paid' => true]);
+                            if (isset($request->data['object']['metadata']['new_total'])) {
+                                $updateData['calculations.price.total'] = $request->data['object']['metadata']['new_total'];
+                            }
 
-                            Product::objectIDs($productIDs)->update([
-                                'owned_by_customer_id' => $order->customer_id,
-                                'status' => 'ACTIVE',
-                                'listing_status' => 'ALREADY_CHECKOUT'
-                            ]);
+                            if (!empty($updateData)) {
+                                $order->updateNestedAttributes($updateData);
+
+                                $originalOrderID = $request->data['object']['metadata']['original_order_id'] ?? null;
+                                $originalOrder = Order::find($originalOrderID);
+                                if (!is_null($originalOrder)) {
+                                    $originalOrder->updateNestedAttributes($updateData);
+                                }
+                            }
                         }
 
                         return [
@@ -377,7 +405,18 @@ class ServiceController extends Controller
 
         // Validate charge
         $totalPrice = $originalOrder['calculations']['price']['total'];
+
+        // Update for starting from 2025/09 Auction, partial capture
+        $MINIMUM_CHARGE_AMOUNT = 1000;
+        $chargeAmount = $totalPrice < $MINIMUM_CHARGE_AMOUNT
+            ? $totalPrice
+            : (int) $MINIMUM_CHARGE_AMOUNT + ($totalPrice % $MINIMUM_CHARGE_AMOUNT);
+
         $stripeAmount = (int) $totalPrice * 100;
+        $newTotalPrice = max(0, floor($totalPrice - $chargeAmount));
+        $customEventType = $newTotalPrice === 0
+            ? 'full_capture'
+            : 'partial_capture';
 
         if ($stripeAmount < 400) {
             return response()->json([
@@ -388,13 +427,17 @@ class ServiceController extends Controller
         // Create and force payment via Stripe
         try {
             $stripeData = [
-                "amount" => $stripeAmount,
-                "currency" => 'hkd',
-                "customer_id" => $stripeCustomerID,
-                "payment_method_id" => $stripePaymentMethodID,
-                "metadata" => [
-                    "model_type" => 'checkout',
-                    "model_id" => $checkout->_id
+                'amount' => $stripeAmount,
+                'currency' => 'hkd',
+                'customer_id' => $stripeCustomerID,
+                'payment_method_id' => $stripePaymentMethodID,
+                'metadata' => [
+                    'model_type' => 'checkout',
+                    'model_id' => $checkout->_id,
+                    'custom_event_type' => $customEventType,
+                    'original_order_id' => $originalOrder->id,
+                    'deposit_amount' => number_format($chargeAmount, 2, '.', ''),
+                    'new_total' => number_format($newTotalPrice, 2, '.', '')
                 ]
             ];
 
