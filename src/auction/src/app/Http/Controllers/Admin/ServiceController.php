@@ -188,7 +188,7 @@ class ServiceController extends Controller
                         $customEventType = $request->data['object']['metadata']['custom_event_type'] ?? null;
 
                         if ($customEventType === null || $customEventType === 'full_capture') {
-                            // $order->update(['is_paid' => true]);
+                            $order->update(['is_paid' => true]);
 
                             // Update Order
                             if ($order->current_status !== ShipmentDeliveryStatus::PROCESSING) {
@@ -407,12 +407,15 @@ class ServiceController extends Controller
         $totalPrice = $originalOrder['calculations']['price']['total'];
 
         // Update for starting from 2025/09 Auction, partial capture
-        $MINIMUM_CHARGE_AMOUNT = 1000;
-        $chargeAmount = $totalPrice < $MINIMUM_CHARGE_AMOUNT
-            ? $totalPrice
-            : (int) $MINIMUM_CHARGE_AMOUNT + ($totalPrice % $MINIMUM_CHARGE_AMOUNT);
+        $chargeCalculator = function ($amount): int {
+            if ($amount <= 1000) return $amount; // For 0 - 1000
+            return $amount <= 10000
+                ? $amount % 1000 + (intval($amount / 1000)) * 1000 / 5 // remainder + thousands
+                : $amount % 1000 + (intval($amount / 1000)) * 1000 / 4; // remainder + thousands
+        };
 
-        $stripeAmount = (int) $totalPrice * 100;
+        $chargeAmount = $chargeCalculator((float) $totalPrice);
+        $stripeAmount = (int) $chargeAmount * 100;
         $newTotalPrice = max(0, floor($totalPrice - $chargeAmount));
         $customEventType = $newTotalPrice === 0
             ? 'full_capture'
