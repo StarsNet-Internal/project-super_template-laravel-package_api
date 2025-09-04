@@ -39,7 +39,6 @@ use Illuminate\Validation\Rule;
 
 use App\Constants\Model\OrderPaymentMethod;
 use App\Events\Common\Order\OrderPaid;
-use App\Models\CheckoutApproval;
 use App\Traits\Controller\ShoppingCartTrait;
 
 class ShoppingCartController extends Controller
@@ -102,6 +101,8 @@ class ShoppingCartController extends Controller
             // Find AuctionLot
             $lot = AuctionLot::where('store_id', $storeID)
                 ->where('product_id', $item->product_id)
+                ->where('status', '!=', Status::DELETED)
+                ->latest()
                 ->first();
 
             // Calculations
@@ -360,6 +361,8 @@ class ShoppingCartController extends Controller
             // Find AuctionLot
             $lot = AuctionLot::where('store_id', $storeID)
                 ->where('product_id', $item->product_id)
+                ->where('status', '!=', Status::DELETED)
+                ->latest()
                 ->first();
 
             // Add keys
