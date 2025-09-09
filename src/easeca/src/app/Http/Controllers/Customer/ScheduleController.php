@@ -14,7 +14,7 @@ class ScheduleController extends Controller
 
     public function getSchedule(Request $request)
     {
-        $cutOff = $this->getScheduleByAccount();
+        $cutOff = $this->getScheduleByAccount($request->input('address', ''));
 
         $startDate = Carbon::now('Asia/Hong_Kong');
         $currentHour = $startDate->hour;

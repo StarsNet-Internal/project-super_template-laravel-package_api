@@ -14,13 +14,15 @@ trait ProjectScheduleTrait
         return strtolower(Carbon::now('Asia/Hong_Kong')->format('l'));
     }
 
-    private function getScheduleByAccount()
+    private function getScheduleByAccount(string $address = '')
     {
         $account = $this->account();
         $customer = $this->customer();
 
         $store = Store::find($account->store_id);
-        $address = $customer->delivery_recipient['address'];
+        if ($address === '') {
+            $address = $customer->delivery_recipient['address'];
+        }
 
         if (isset($store) && isset($store->addresses[0])) {
             $schedule = $store->addresses[0];
