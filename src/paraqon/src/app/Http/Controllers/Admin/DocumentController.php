@@ -2,10 +2,15 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
-use App\Constants\Model\Status;
+// Laravel built-in
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+
+// Models
 use StarsNet\Project\Paraqon\App\Models\Document;
+
+// Constants
+use App\Constants\Model\Status;
 
 class DocumentController extends Controller
 {

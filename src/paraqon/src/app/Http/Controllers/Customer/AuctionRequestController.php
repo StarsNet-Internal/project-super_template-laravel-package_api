@@ -2,43 +2,39 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
+// Laravel built-in
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
-use App\Constants\Model\ReplyStatus;
-use App\Constants\Model\Status;
-use App\Constants\Model\StoreType;
-
+// Models
 use App\Models\ProductVariant;
 use App\Models\Store;
-use Carbon\Carbon;
-
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use StarsNet\Project\Paraqon\App\Models\AuctionRequest;
 use StarsNet\Project\Paraqon\App\Models\BidHistory;
 
-use Illuminate\Http\Request;
+// Constants
+use App\Constants\Model\ReplyStatus;
+use App\Constants\Model\Status;
+use App\Constants\Model\StoreType;
 
 class AuctionRequestController extends Controller
 {
     public function getAllAuctionRequests(Request $request)
     {
-        $customer = $this->customer();
-
-        $forms = AuctionRequest::where('requested_by_customer_id', $customer->_id)
+        return AuctionRequest::where('requested_by_customer_id', $this->customer()->_id)
             ->with(['store', 'product'])
             ->get();
-
-        return $forms;
     }
 
     public function createAuctionRequest(Request $request)
     {
         // Extract attributes from $request
-        $productvariantId = $request->product_variant_id;
         $storeId = $request->store_id;
 
         // Get ProductVariant
-        $variant = ProductVariant::find($productvariantId);
+        $variant = ProductVariant::find($request->product_variant_id);
 
         if (is_null($variant)) {
             return response()->json([

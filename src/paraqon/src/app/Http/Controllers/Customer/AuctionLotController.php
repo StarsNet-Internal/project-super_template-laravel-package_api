@@ -2,27 +2,21 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
-use App\Constants\Model\Status;
-use App\Constants\Model\StoreType;
+// Laravel built-in
 use App\Http\Controllers\Controller;
-use App\Models\Configuration;
-use App\Models\Store;
-use App\Models\Customer;
 use Carbon\Carbon;
-use App\Models\WishlistItem;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+
+// Models
+use App\Models\Customer;
+use App\Models\WishlistItem;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use StarsNet\Project\Paraqon\App\Models\Bid;
-use Illuminate\Support\Facades\Http;
-
-// Validator
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use StarsNet\Project\Paraqon\App\Models\BidHistory;
 use StarsNet\Project\Paraqon\App\Models\WatchlistItem;
-use MongoDB\BSON\UTCDateTime;
-use DateTime;
+
+// Constants
+use App\Constants\Model\Status;
 
 class AuctionLotController extends Controller
 {

@@ -2,20 +2,8 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
-use App\Constants\Model\CheckoutApprovalStatus;
-use App\Constants\Model\CheckoutType;
-use App\Constants\Model\ReplyStatus;
-use App\Constants\Model\ShipmentDeliveryStatus;
-use App\Constants\Model\Status;
+// Laravel built-in
 use App\Http\Controllers\Controller;
-use App\Models\Checkout;
-use App\Models\Customer;
-use App\Models\Order;
-
-use App\Models\Product;
-use App\Models\ProductVariant;
-use App\Models\Store;
-use App\Traits\Utils\RoundingTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -23,18 +11,36 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
+// MongoDB
+use MongoDB\BSON\UTCDateTime;
+
+// Models
+use App\Models\Checkout;
+use App\Models\Customer;
+use App\Models\Order;
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\ShoppingCartItem;
+use App\Models\Store;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
-use StarsNet\Project\Paraqon\App\Models\AuctionRequest;
-use StarsNet\Project\Paraqon\App\Models\Bid;
-use StarsNet\Project\Paraqon\App\Models\ConsignmentRequest;
 use StarsNet\Project\Paraqon\App\Models\Deposit;
-use StarsNet\Project\Paraqon\App\Models\PassedAuctionRecord;
 use StarsNet\Project\Paraqon\App\Models\LiveBiddingEvent;
 
+// Controllers
+use App\Http\Controllers\Customer\ProductManagementController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\AuctionLotController as AdminAuctionLotController;
 use StarsNet\Project\Paraqon\App\Http\Controllers\Customer\AuctionLotController as CustomerAuctionLotController;
-use MongoDB\BSON\UTCDateTime;
+
+// Constants
+use App\Constants\Model\CheckoutApprovalStatus;
+use App\Constants\Model\CheckoutType;
+use App\Constants\Model\ReplyStatus;
+use App\Constants\Model\ShipmentDeliveryStatus;
+use App\Constants\Model\Status;
+
+// Traits
+use App\Traits\Utils\RoundingTrait;
 
 class ServiceController extends Controller
 {
@@ -220,6 +226,22 @@ class ServiceController extends Controller
                     $customEventType = $request->data['object']['metadata']['custom_event_type'] ?? null;
 
                     if ($customEventType === 'one_day_delay') {
+                        $order->update([
+                            'scheduled_payment_at' => new UTCDateTime(now()->addDay(1))
+                        ]);
+
+                        // Clear ShoppingCartItem
+                        $productVariantIDs = collect($order->cart_items)
+                            ->pluck('product_variant_id')
+                            ->filter()
+                            ->unique()
+                            ->values()
+                            ->toArray();
+                        ShoppingCartItem::where('customer_id', $order->customer_id)
+                            ->where('store_id', $order->store_id)
+                            ->whereIn('product_variant_id', $productVariantIDs)
+                            ->delete();
+
                         return response()->json([
                             'message' => 'custom_event_type is one_day_delay, capture skipped',
                             'order_id' => null
@@ -350,12 +372,10 @@ class ServiceController extends Controller
             $endTime = Carbon::parse($lot->end_datetime)->startOfMinute();
 
             if ($now >= $startTime && $now < $endTime) {
-                // Log::info("Updating lot id " . $lot->id);
                 $lot->update(['status' => Status::ACTIVE]);
                 $archivedLotsUpdateCount++;
             }
         }
-        // Log::info("Updated Count: " . $archivedLotsUpdateCount);
 
         // Make lots ARCHIVED
         $activeLots = AuctionLot::where('status', Status::ACTIVE)
@@ -645,9 +665,8 @@ class ServiceController extends Controller
         return $order;
     }
 
-    private function createPaidAuctionOrder(
-        Order $originalOrder
-    ) {
+    private function createPaidAuctionOrder(Order $originalOrder)
+    {
         // Replicate new Order
         $newOrder = $originalOrder->replicate();
 
@@ -1113,7 +1132,14 @@ class ServiceController extends Controller
                 $response = Http::post($url, ['amount' => null]);
                 if ($response->status() == 200) {
                     $orderIDs[] = $order->_id;
-                    $order->update(['scheduled_payment_received_at' => new UTCDateTime(now())]);
+                    $order->update([
+                        'is_paid' => true,
+                        'scheduled_payment_received_at' => new UTCDateTime(now())
+                    ]);
+
+                    if ($order->current_status !== ShipmentDeliveryStatus::PROCESSING) {
+                        $order->updateStatus(ShipmentDeliveryStatus::PROCESSING);
+                    }
                 }
             } catch (\Throwable $th) {
                 Log::error('Failed to capture order, order_id: ' . $order->_id);
@@ -1124,5 +1150,33 @@ class ServiceController extends Controller
             'message' => 'Approved order count: ' . count($orderIDs),
             'order_ids' => $orderIDs
         ], 200);
+    }
+
+    public function synchronizeAllProductsWithAlgolia(Request $request)
+    {
+        $controller = new ProductManagementController($request);
+        $data = $controller->filterProductsByCategories($request);
+        // $data = $data->map(function ($datum) {
+        //     $dateFields = ['created_at', 'updated_at', 'scheduled_at', 'published_at'];
+        //     foreach ($dateFields as $field) {
+        //         if (isset($datum[$field])) {
+        //             $datum[$field] = Carbon::parse($datum[$field])->timestamp;
+
+        //             echo $field . "\n";
+        //             echo $datum[$field] . "\n";
+        //             echo Carbon::parse($datum[$field])->timestamp . "\n";
+        //             echo $datum[$field] . "\n";
+        //             echo "\n";
+        //         }
+        //     }
+        //     return $datum;
+        // });
+
+        $url = env('PARAQON_ALGOLIA_NODE_BASE_URL') . '/algolia/mass-update';
+        $res = Http::post($url, [
+            'index_name' => 'test_products',
+            'data' => $data
+        ]);
+        return $res;
     }
 }

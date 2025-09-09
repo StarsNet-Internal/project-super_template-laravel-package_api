@@ -224,6 +224,7 @@ Route::group(
                     Route::get('/products/filter/v2', [$defaultController, 'filterAuctionProductsByCategoriesV2'])->middleware(['pagination']);
                     Route::get('/related-products-urls', [$defaultController, 'getRelatedAuctionProductsUrls'])->middleware(['pagination']);
                     Route::get('/products/ids', [$defaultController, 'getAuctionProductsByIDs'])->name('paraqon.products.ids')->middleware(['pagination']);
+                    Route::get('/products/{product_id}/details', [$defaultController, 'getProductDetails']);
                 });
             }
         );

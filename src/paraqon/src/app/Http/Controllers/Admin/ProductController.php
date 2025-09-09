@@ -2,13 +2,14 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
+// Laravel built-in
 use App\Http\Controllers\Controller;
-use App\Constants\Model\ProductVariantDiscountType;
-use App\Constants\Model\ReplyStatus;
-use App\Constants\Model\Status;
-
 use Illuminate\Http\Request;
+
+// Models
 use App\Models\Product;
+use App\Constants\Model\ProductVariantDiscountType;
+use App\Constants\Model\Status;
 
 class ProductController extends Controller
 {

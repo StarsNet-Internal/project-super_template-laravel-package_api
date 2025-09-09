@@ -2,15 +2,13 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
+// Laravel built-in
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
+// Models
 use App\Models\Product;
 use StarsNet\Project\Paraqon\App\Models\LocationHistory;
-use Carbon\Carbon;
-
-// Validator
-use Illuminate\Support\Facades\Validator;
 
 class LocationHistoryController extends Controller
 {

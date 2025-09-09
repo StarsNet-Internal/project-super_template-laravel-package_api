@@ -2,22 +2,15 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
+// Laravel built-in
 use App\Http\Controllers\Controller;
-
-use App\Constants\Model\ReplyStatus;
-use App\Constants\Model\Status;
-use App\Constants\Model\StoreType;
-
-use App\Models\ProductVariant;
-use App\Models\Store;
-use Carbon\Carbon;
-
-use StarsNet\Project\Paraqon\App\Models\AuctionLot;
-use StarsNet\Project\Paraqon\App\Models\AuctionRequest;
-use StarsNet\Project\Paraqon\App\Models\BidHistory;
-
 use Illuminate\Http\Request;
+
+// Models
 use StarsNet\Project\Paraqon\App\Models\Notification;
+
+// Constants
+use App\Constants\Model\Status;
 
 class NotificationController extends Controller
 {

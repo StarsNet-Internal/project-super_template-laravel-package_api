@@ -2,26 +2,21 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
+// Laravel built-in
 use App\Http\Controllers\Controller;
-
-use App\Constants\Model\ReplyStatus;
-use App\Constants\Model\Status;
-use App\Constants\Model\StoreType;
-use App\Constants\Model\ProductVariantDiscountType;
-
-use App\Models\ProductVariant;
-use App\Models\Store;
-use App\Models\Product;
-
-use Carbon\Carbon;
-
-use StarsNet\Project\Paraqon\App\Models\AuctionLot;
-use StarsNet\Project\Paraqon\App\Models\AuctionRequest;
-use StarsNet\Project\Paraqon\App\Models\WatchlistItem;
-use Illuminate\Support\Facades\Auth;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+
+// Models
+use App\Models\Product;
+use App\Models\Store;
+use StarsNet\Project\Paraqon\App\Models\AuctionLot;
+use StarsNet\Project\Paraqon\App\Models\WatchlistItem;
+
+// Constants
+use App\Constants\Model\ProductVariantDiscountType;
+use App\Constants\Model\Status;
 
 class WatchlistItemController extends Controller
 {

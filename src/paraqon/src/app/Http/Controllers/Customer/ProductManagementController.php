@@ -2,22 +2,25 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
+// Laravel built-in
 use App\Constants\Model\ProductVariantDiscountType;
 use App\Constants\Model\Status;
 use App\Http\Controllers\Controller;
-use App\Models\Category;
-use App\Models\Configuration;
-use App\Models\Product;
-use App\Models\ProductCategory;
-use App\Models\Store;
-use App\Traits\Controller\Sortable;
-use App\Traits\Controller\StoreDependentTrait;
-use App\Traits\StarsNet\TypeSenseSearchEngine;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
+// Models
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\Store;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use StarsNet\Project\Paraqon\App\Models\WatchlistItem;
+
+// Traits
+use App\Traits\Controller\Sortable;
+use App\Traits\Controller\StoreDependentTrait;
+use App\Traits\StarsNet\TypeSenseSearchEngine;
 
 class ProductManagementController extends Controller
 {
@@ -529,6 +532,34 @@ class ProductManagementController extends Controller
 
         // Return data
         return $products;
+    }
+
+    public function getProductDetails(Request $request)
+    {
+        /** @var Product $product */
+        $product = Product::find($request->route('product_id'));
+        if (is_null($product)) return response()->json(['message' => 'Product not found'], 404);
+        if ($product->status !== Status::ACTIVE) return response()->json(['message' => 'Product is not available for public'], 404);
+
+        // Append attributes for Product
+        $product->is_liked = $this->customer()->isWishlistItemExists($product, $this->store);
+        $product->appendDisplayableFieldsForCustomer($this->store);
+
+        // Append Categories
+        $product->categories = Category::find($product->category_ids, ['_id', 'title']);
+
+        // Get active ProductVariant(s) by Product
+        /** @var Collection $variants */
+        $variants = $product->variants()->statusActive()->get();
+
+        // Append attributes to each ProductVariant
+        /** @var ProductVariant $variant */
+        foreach ($variants as $variant) {
+            $variant->appendDisplayableFieldsForCustomer($this->store);
+        }
+        $product->variants = $variants;
+
+        return $product;
     }
 
     private function getProductsInfoByAggregation(array $productIDs, ?string $storeID = null)

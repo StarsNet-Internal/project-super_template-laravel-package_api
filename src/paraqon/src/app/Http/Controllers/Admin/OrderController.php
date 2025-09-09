@@ -2,24 +2,24 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
+// Laravel built-in
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
-
-use App\Constants\Model\CheckoutApprovalStatus;
-use App\Constants\Model\CheckoutType;
-use App\Constants\Model\ShipmentDeliveryStatus;
-
-use App\Models\Order;
-use App\Models\Product;
-
-use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
-use StarsNet\Project\Paraqon\App\Models\AuctionLot;
-
-// Validator
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
+
+// Models
+use App\Models\Order;
+use App\Models\Product;
+use StarsNet\Project\Paraqon\App\Models\AuctionLot;
+use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
+
+// Constants
+use App\Constants\Model\CheckoutApprovalStatus;
+use App\Constants\Model\CheckoutType;
+use App\Constants\Model\ShipmentDeliveryStatus;
 
 class OrderController extends Controller
 {
@@ -234,14 +234,14 @@ class OrderController extends Controller
         $formattedIssueDate = $createdAt->format('d/m/Y');
 
         $itemsData = collect($document['cart_items'])->map(function ($item) use ($language) {
-            $formatted = number_format($item['winning_bid'], 2, '.', ',');
+            $formatted = number_format($item['winning_bid'], 2, '.', '');
             return [
                 'lotNo' => $item['lot_number'],
                 'lotImage' => $item['image'],
                 'description' => $item['product_title'][$language],
                 'hammerPrice' => $formatted,
-                'commission' => number_format(0, 2, '.', ','),
-                'otherFees' => number_format(0, 2, '.', ','),
+                'commission' => number_format(0, 2, '.', ''),
+                'otherFees' => number_format(0, 2, '.', ''),
                 'totalOrSum' => $formatted
 
             ];
@@ -250,7 +250,7 @@ class OrderController extends Controller
         $total = floatval($document['calculations']['price']['total'] ?? 0);
         $deposit = floatval($document['calculations']['deposit'] ?? 0);
         $totalAmount = $total + $deposit;
-        $totalFormatted = number_format($totalAmount, 2, '.', ',');
+        $totalFormatted = number_format($totalAmount, 2, '.', '');
 
         $creditChargeText = $language === 'zh'
             ? "包括3.5%信用卡收費"

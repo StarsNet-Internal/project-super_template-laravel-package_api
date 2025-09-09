@@ -2,15 +2,20 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
-use App\Constants\Model\ReplyStatus;
-use App\Constants\Model\Status;
-use App\Constants\Model\StoreType;
+// Laravel built-in
 use App\Http\Controllers\Controller;
-use App\Models\Store;
 use Illuminate\Http\Request;
+
+// Models
+use App\Models\Store;
 use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
 use StarsNet\Project\Paraqon\App\Models\Deposit;
 use StarsNet\Project\Paraqon\App\Models\WatchlistItem;
+
+// Constants
+use App\Constants\Model\ReplyStatus;
+use App\Constants\Model\Status;
+use App\Constants\Model\StoreType;
 
 class AuctionController extends Controller
 {

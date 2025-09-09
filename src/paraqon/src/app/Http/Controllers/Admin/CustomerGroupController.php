@@ -2,38 +2,16 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
-use App\Constants\Model\Status;
-use App\Constants\Model\StoreType;
+// Laravel built-in
 use App\Http\Controllers\Controller;
-use App\Models\Product;
-use App\Models\Store;
-use App\Models\Customer;
-use App\Models\Configuration;
-use App\Models\ProductVariant;
-use App\Models\Order;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 
-use App\Constants\Model\WarehouseInventoryHistoryType;
-use App\Constants\Model\CheckoutType;
-use App\Constants\Model\OrderDeliveryMethod;
-use App\Constants\Model\OrderPaymentMethod;
-use App\Constants\Model\ReplyStatus;
-use App\Constants\Model\ShipmentDeliveryStatus;
+// Models
+use App\Models\Customer;
 use App\Models\CustomerGroup;
-use App\Traits\Utils\RoundingTrait;
-use Illuminate\Support\Str;
-use StarsNet\Project\Paraqon\App\Models\AuctionLot;
-use StarsNet\Project\Paraqon\App\Models\ProductStorageRecord;
 
+// Constants
 use App\Constants\Model\LoginType;
-
-// Validator
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
-use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
-use StarsNet\Project\Paraqon\App\Models\BidHistory;
-use StarsNet\Project\Paraqon\App\Models\Deposit;
 
 class CustomerGroupController extends Controller
 {

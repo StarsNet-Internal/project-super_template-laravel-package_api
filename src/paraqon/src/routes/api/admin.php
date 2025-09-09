@@ -38,10 +38,7 @@ use StarsNet\Project\Paraqon\App\Http\Controllers\Admin\LocationHistoryControlle
 Route::group(
     ['prefix' => 'tests'],
     function () {
-        $defaultController = TestingController::class;
-
-        Route::get('/health-check', [$defaultController, 'healthCheck']);
-        Route::get('/order', [$defaultController, 'createOrder']);
+        Route::get('/health-check', [TestingController::class, 'healthCheck']);
     }
 );
 
@@ -258,6 +255,8 @@ Route::group(
 
         Route::get('/auctions/{store_id}/state', [$defaultController, 'getAuctionCurrentState']);
         Route::put('/orders/capture', [$defaultController, 'captureOrderPayment']);
+
+        Route::post('/algolia/stores/{store_id}/products', [$defaultController, 'synchronizeAllProductsWithAlgolia']);
     }
 );
 
@@ -295,6 +294,16 @@ Route::group(
                 Route::put('/{id}/offline-payment', [$defaultController, 'approveOrderOfflinePayment']);
             }
         );
+    }
+);
+
+Route::group(
+    ['prefix' => '/stores/{store_id}/shopping-cart'],
+    function () {
+        Route::group(['middleware' => 'auth:api'], function () {
+            Route::post('/all', [ShoppingCartController::class, 'getAll']);
+            Route::post('/checkout', [ShoppingCartController::class, 'checkOut']);
+        });
     }
 );
 

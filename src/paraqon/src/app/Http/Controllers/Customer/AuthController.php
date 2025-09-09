@@ -2,6 +2,7 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
+// Laravel built-in
 use App\Http\Controllers\Controller;
 
 class AuthController extends Controller

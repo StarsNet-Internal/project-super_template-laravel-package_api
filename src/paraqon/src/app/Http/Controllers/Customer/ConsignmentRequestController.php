@@ -2,22 +2,20 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
+// Laravel built-in
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+
+// Models
 use StarsNet\Project\Paraqon\App\Models\ConsignmentRequest;
-use Illuminate\Support\Facades\Auth;
 
 class ConsignmentRequestController extends Controller
 {
     public function getAllConsignmentRequests(Request $request)
     {
-        $customer = $this->customer();
-
-        $forms = ConsignmentRequest::where('requested_by_customer_id', $customer->_id)
+        return ConsignmentRequest::where('requested_by_customer_id', $this->customer()->_id)
             ->with(['items'])
             ->get();
-
-        return $forms;
     }
 
     public function createConsignmentRequest(Request $request)

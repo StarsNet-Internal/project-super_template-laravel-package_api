@@ -2,34 +2,34 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
+// Laravel built-in
+use App\Http\Controllers\Controller;
+use Faker\Generator as Faker;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
+// Constants
 use App\Constants\Model\CheckoutType;
 use App\Constants\Model\LoginType;
 use App\Constants\Model\OrderPaymentMethod;
 use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\ShipmentDeliveryStatus;
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 
-use Carbon\Carbon;
-use App\Models\Store;
-use App\Models\Configuration;
+// Models
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
-use App\Models\ShoppingCartItem;
-use App\Traits\Utils\RoundingTrait;
+use App\Models\Store;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
-use StarsNet\Project\Paraqon\App\Models\ProductStorageRecord;
-
-use Illuminate\Support\Str;
-
-use Faker\Generator as Faker;
 use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
 use StarsNet\Project\Paraqon\App\Models\Bid;
 use StarsNet\Project\Paraqon\App\Models\BidHistory;
 use StarsNet\Project\Paraqon\App\Models\Deposit;
+
+// Traits
+use App\Traits\Utils\RoundingTrait;
 
 class SeederController extends Controller
 {

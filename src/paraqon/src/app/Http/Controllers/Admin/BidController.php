@@ -2,21 +2,21 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
+// Laravel built-in
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+
+// Models
 use App\Models\Customer;
-use StarsNet\Project\Paraqon\App\Models\Bid;
-use StarsNet\Project\Paraqon\App\Models\BidHistory;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
 use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
+use StarsNet\Project\Paraqon\App\Models\Bid;
+use StarsNet\Project\Paraqon\App\Models\BidHistory;
 
-use App\Constants\Model\Status;
+// Constants
 use App\Constants\Model\ReplyStatus;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-
-// Validator
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
+use App\Constants\Model\Status;
 
 class BidController extends Controller
 {

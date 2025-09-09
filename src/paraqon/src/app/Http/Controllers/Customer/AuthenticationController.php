@@ -2,23 +2,26 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
-use App\Constants\Model\LoginType;
+// Laravel built-in
 use App\Http\Controllers\Controller;
-use App\Models\Account;
-use App\Models\Warehouse;
-use App\Traits\Controller\AuthenticationTrait;
-use App\Constants\Model\VerificationCodeType;
-
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 
-use App\Events\Customer\Authentication\CustomerLogin;
+// Models
+use App\Models\Account;
 use App\Models\User;
-
-use App\Events\Customer\Authentication\CustomerRegistration;
 use App\Models\VerificationCode;
 use StarsNet\Project\Paraqon\App\Models\Notification;
+
+// Constants
+use App\Constants\Model\LoginType;
+use App\Constants\Model\VerificationCodeType;
+
+// Traits
+use App\Traits\Controller\AuthenticationTrait;
+
+// Events
+use App\Events\Customer\Authentication\CustomerLogin;
 
 class AuthenticationController extends Controller
 {
@@ -240,6 +243,8 @@ class AuthenticationController extends Controller
 
     public function migrateToRegistered(Request $request)
     {
+        $now = now();
+
         // Get User, then validate
         $user = $this->user();
 
@@ -288,6 +293,17 @@ class AuthenticationController extends Controller
             $this->updateAccountViaRegistration($account, $request);
         }
 
+        // Formulate client_no
+        $code = $now->format('ym');
+        $existingAccounts = Account::where('client_no', 'regex', '/CT' . $code . '/i')
+            ->orderBy('client_no', 'desc')
+            ->pluck('client_no')
+            ->all();
+        $nextSequence = empty($existingAccounts)
+            ? 1
+            : ((int) substr($existingAccounts[0], -4)) + 1;
+        $nextClientCode = 'CT' . $code . str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
+
         // Update User, then update Account
         $userUpdateAttributes = [
             'login_id' => $request->email
@@ -320,7 +336,9 @@ class AuthenticationController extends Controller
 
             // Admin Created Accounts
             'is_created_by_admin' => $request->input('is_created_by_admin', false),
-            'is_default_password_changed' => $request->input('is_default_password_changed', false)
+            'is_default_password_changed' => $request->input('is_default_password_changed', false),
+
+            'client_no' => $nextClientCode
         ];
         $account->update($accountUpdateAttributes);
 

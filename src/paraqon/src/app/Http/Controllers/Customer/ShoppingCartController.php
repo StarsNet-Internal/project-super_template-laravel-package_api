@@ -2,44 +2,53 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
+// Laravel built-in
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+
+// MongoDB
+use MongoDB\BSON\UTCDateTime;
+
+// Constants
 use App\Constants\Model\CheckoutApprovalStatus;
 use App\Constants\Model\CheckoutType;
-use App\Constants\Model\OrderDeliveryMethod;
-use App\Constants\Model\ShipmentDeliveryStatus;
-use App\Constants\Model\WarehouseInventoryHistoryType;
 use App\Constants\Model\DiscountTemplateDiscountType;
 use App\Constants\Model\DiscountTemplateType;
+use App\Constants\Model\OrderDeliveryMethod;
+use App\Constants\Model\ShipmentDeliveryStatus;
 use App\Constants\Model\Status;
-use App\Events\Common\Checkout\OfflineCheckoutImageUploaded;
-use App\Http\Controllers\Controller;
+use App\Constants\Model\WarehouseInventoryHistoryType;
+
+// Models
 use App\Models\Alias;
 use App\Models\Checkout;
 use App\Models\Courier;
 use App\Models\Customer;
-use App\Models\Order;
-use App\Models\Product;
 use App\Models\DiscountCode;
 use App\Models\DiscountTemplate;
+use App\Models\Order;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ShoppingCartItem;
-use App\Traits\Utils\RoundingTrait;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Warehouse;
-use App\Traits\StarsNet\PinkiePay;
-use Illuminate\Http\Request;
 use StarsNet\Project\Paraqon\App\Models\AuctionLot;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Collection;
-use MongoDB\BSON\UTCDateTime;
 
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
-
-use App\Constants\Model\OrderPaymentMethod;
-use App\Events\Common\Order\OrderPaid;
+// Traits
 use App\Traits\Controller\ShoppingCartTrait;
+use App\Traits\StarsNet\PinkiePay;
+use App\Traits\Utils\RoundingTrait;
+
+// Events
+use App\Constants\Model\OrderPaymentMethod;
+use App\Events\Common\Checkout\OfflineCheckoutImageUploaded;
+use App\Events\Common\Order\OrderPaid;
 
 class ShoppingCartController extends Controller
 {
@@ -611,9 +620,6 @@ class ShoppingCartController extends Controller
         $courierID = $deliveryInfo['method'] === OrderDeliveryMethod::DELIVERY ?
             $deliveryInfo['courier_id'] :
             null;
-        $warehouseID = $deliveryInfo['method'] === OrderDeliveryMethod::SELF_PICKUP ?
-            $deliveryInfo['warehouse_id'] :
-            null;
 
         // Get Checkout information
         foreach ($cartItems as $item) {
@@ -622,27 +628,32 @@ class ShoppingCartController extends Controller
             $item->global_discount = null;
         }
 
-        $subtotalPrice = $cartItems->sum('subtotal_price');
+        $checkoutItems = collect($cartItems)->filter(function ($item) {
+            return $item->is_checkout;
+        })
+            ->values();
+
+        $subtotalPrice = $checkoutItems->sum('subtotal_price');
         $localPriceDiscount = 0;
         $totalPrice = $subtotalPrice - $localPriceDiscount;
 
         $shippingFee = 0;
         if (!is_null($courierID)) {
             $courier = Courier::find($courierID);
-            $shippingFee = !is_null($courier) ?
-                $courier->getShippingFeeByTotalFee($totalPrice) :
-                0;
+            $shippingFee = !is_null($courier)
+                ? $courier->getShippingFeeByTotalFee($totalPrice)
+                : 0;
         }
         $totalPrice += $shippingFee;
 
         $rawCalculation = [
             'currency' => 'HKD',
             'price' => [
-                'subtotal' => number_format($subtotalPrice, 2, '.', ','),
-                'total' => number_format($totalPrice, 2, '.', ','),
+                'subtotal' => number_format($subtotalPrice, 2, '.', ''),
+                'total' => number_format($totalPrice, 2, '.', ''),
             ],
             'price_discount' => [
-                'local' => number_format($localPriceDiscount, 2, '.', ','),
+                'local' => number_format($localPriceDiscount, 2, '.', ''),
                 'global' => '0.00',
             ],
             'point' => [
@@ -664,16 +675,10 @@ class ShoppingCartController extends Controller
             'delivery_info' => $this->getDeliveryInfo($deliveryInfo),
             'delivery_details' => $deliveryDetails,
             'is_voucher_applied' => [],
-            'scheduled_payment_at' => new UTCDateTime(now()->addDay(1))
         ];
         $order = $customer->createOrder($orderAttributes, $store);
 
         // Create OrderCartItem(s)
-        $checkoutItems = collect($cartItems)->filter(function ($item) {
-            return $item->is_checkout;
-        })
-            ->values();
-
         foreach ($checkoutItems as $item) {
             $attributes = $item->toArray();
             unset($attributes['_id'], $attributes['is_checkout']);
@@ -710,7 +715,7 @@ class ShoppingCartController extends Controller
                     $clientSecret = $res['clientSecret'];
 
                     $checkout->update([
-                        'amount' => number_format($totalPrice, 2, '.', ','),
+                        'amount' => number_format($totalPrice, 2, '.', ''),
                         'currency' => 'HKD',
                         'online' => [
                             'payment_intent_id' => $paymentIntentID,

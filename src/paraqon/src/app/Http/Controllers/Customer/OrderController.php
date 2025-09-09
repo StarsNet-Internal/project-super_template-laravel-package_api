@@ -2,22 +2,23 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Customer;
 
+// Laravel built-in
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+
+// Models
+use App\Models\Order;
+use App\Models\Store;
+
+// Constants
 use App\Constants\Model\CheckoutApprovalStatus;
 use App\Constants\Model\CheckoutType;
 use App\Constants\Model\ShipmentDeliveryStatus;
-use App\Constants\Model\Status;
 use App\Constants\Model\StoreType;
-use App\Http\Controllers\Controller;
-use App\Models\Order;
-use App\Models\Product;
-use App\Models\Store;
+
+// Traits
 use App\Traits\Controller\CheckoutTrait;
-use Illuminate\Http\Request;
-use StarsNet\Project\Paraqon\App\Models\Bid;
-use StarsNet\Project\Paraqon\App\Models\ConsignmentRequest;
-use StarsNet\Project\Paraqon\App\Models\AuctionRegistrationRequest;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Http;
 
 class OrderController extends Controller
 {
@@ -189,7 +190,10 @@ class OrderController extends Controller
     {
         /** @var ?Order $order */
         $order = Order::find($request->route('order_id'));
-
+        // return [
+        //     'now' => now(),
+        //     'scheduled' => $order->scheduled_payment_at->toDateTime()
+        // ];
         if (is_null($order)) {
             return response()->json([
                 'message' => 'Order not found'
@@ -208,7 +212,7 @@ class OrderController extends Controller
             ], 400);
         }
 
-        if (now()->gt($order->scheduled_payment_at)) {
+        if (now()->gt($order->scheduled_payment_at->toDateTime())) {
             return response()->json([
                 'message' => 'The scheduled payment time has already passed.'
             ], 403);

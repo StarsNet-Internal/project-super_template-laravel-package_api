@@ -2,16 +2,13 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
-use App\Constants\Model\Status;
+// Laravel built-in
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-use App\Models\Store;
+// Models
+use App\Constants\Model\Status;
 use StarsNet\Project\Paraqon\App\Models\Notification;
-use Carbon\Carbon;
-
-// Validator
-use Illuminate\Support\Facades\Validator;
 
 class NotificationController extends Controller
 {

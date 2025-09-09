@@ -2,22 +2,16 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
-use App\Constants\Model\LoginType;
-use App\Constants\Model\ShipmentDeliveryStatus;
+// Laravel built-in
 use App\Http\Controllers\Controller;
-
-use Carbon\Carbon;
-use App\Models\Store;
-use App\Models\Configuration;
-use App\Models\Order;
-use App\Models\ShoppingCartItem;
-use StarsNet\Project\Paraqon\App\Models\AuctionLot;
-use StarsNet\Project\Paraqon\App\Models\Deposit;
-use StarsNet\Project\Paraqon\App\Models\ProductStorageRecord;
-use StarsNet\Project\Paraqon\App\Models\WatchlistItem;
-use App\Models\Customer;
-
 use Illuminate\Http\Request;
+
+// Models
+use App\Models\Customer;
+use StarsNet\Project\Paraqon\App\Models\WatchlistItem;
+
+// Constants
+use App\Constants\Model\LoginType;
 
 class WatchlistItemController extends Controller
 {

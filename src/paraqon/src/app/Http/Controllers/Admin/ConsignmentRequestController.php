@@ -2,11 +2,16 @@
 
 namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 
-use App\Constants\Model\Status;
+// Laravel built-in
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+
+// Models
 use StarsNet\Project\Paraqon\App\Models\ConsignmentRequest;
+
+// Constants
+use App\Constants\Model\Status;
 
 class ConsignmentRequestController extends Controller
 {
