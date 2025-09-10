@@ -328,12 +328,12 @@ class OrderController extends Controller
         // Get buyerName
         $buyerName = $account->username;
 
-        if (!empty($account->legal_name_verification->name)) {
-            $buyerName = $account->legal_name_verification->name;
+        if (!empty($account->legal_name_verification['name'])) {
+            $buyerName = $account->legal_name_verification['name'];
         } else {
             if (!$document->is_system) {
-                $firstName = optional($document->delivery_details)->recipient_name->first_name;
-                $lastName = optional($document->delivery_details)->recipient_name->last_name;
+                $firstName = optional($document->delivery_details)['recipient_name']['first_name'];
+                $lastName = optional($document->delivery_details)['recipient_name']['last_name'];
                 if ($lastName) {
                     $buyerName = "{$lastName}, {$firstName}";
                 }
