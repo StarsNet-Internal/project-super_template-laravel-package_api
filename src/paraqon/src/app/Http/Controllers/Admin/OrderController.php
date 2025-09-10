@@ -286,7 +286,7 @@ class OrderController extends Controller
         ];
 
         // Return
-        return $data;
+        return ['model' => 'INVOICE', 'type' => 'Buyer', 'data' => $data];
     }
 
     private function formatDateRange($startDateTime, $endDateTime)
