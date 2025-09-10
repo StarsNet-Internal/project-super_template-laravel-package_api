@@ -259,6 +259,21 @@ class ProductManagementController extends Controller
         return $products;
     }
 
+    public function getAllAuctionLotsAndNumber(Request $request)
+    {
+        return AuctionLot::where('store_id', $this->store->id)
+            ->statuses([Status::ACTIVE, Status::ARCHIVED])
+            ->get()
+            ->map(
+                function ($lot) {
+                    return [
+                        'auction_lot_id' => $lot->_id ?? null,
+                        'lot_number' => $lot->lot_number ?? null
+                    ];
+                }
+            );
+    }
+
     public function getRelatedAuctionProductsUrls(Request $request)
     {
         // Extract attributes from $request

@@ -218,6 +218,7 @@ Route::group(
             ['prefix' => 'product-management'],
             function () {
                 $defaultController = ProductManagementController::class;
+                Route::get('/auction-lots/number', [$defaultController, 'getAllAuctionLotsAndNumber'])->middleware(['pagination']);
 
                 Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
                     Route::get('/products/filter', [$defaultController, 'filterAuctionProductsByCategories'])->middleware(['pagination']);

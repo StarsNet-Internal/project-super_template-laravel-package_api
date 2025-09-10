@@ -107,19 +107,13 @@ class AuctionLotController extends Controller
 
         // Get current_bid
         $auctionLot->current_bid = $auctionLot->getCurrentBidPrice();
-
-        // Check is_reserve_met
         $auctionLot->is_reserve_price_met = $auctionLot->current_bid >= $auctionLot->reserve_price;
-        // $auctionLot->setHidden(['reserve_price']);
 
         // Get Watching Lots
-        $watchingAuctionIDs = WatchlistItem::where('customer_id', $customer->id)
+        $auctionLot->is_watching = WatchlistItem::where('customer_id', $customer->id)
             ->where('item_type', 'auction-lot')
-            ->get()
-            ->pluck('item_id')
-            ->all();
-
-        $auctionLot->is_watching = in_array($auctionLotId, $watchingAuctionIDs);
+            ->where('item_id', $auctionLotId)
+            ->exists();
 
         // Return Auction Store
         return $auctionLot;
