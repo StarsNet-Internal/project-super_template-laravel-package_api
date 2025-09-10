@@ -204,82 +204,89 @@ class OrderController extends Controller
             return response()->json(['error' => 'Order not found'], 404);
         }
 
-        $storeId = $document['store_id'];
-        $customerId = $document['customer_id'];
+        $storeId = $document->store_id;
+        $customerId = $document->customer_id;
 
         $store = $document->store;
+        $storeName = $store->title[$language];
+        $invoicePrefix = $store->invoice_prefix ?? 'OA1';
+
         $customer = $document->customer;
         $account = $customer->account;
 
-        $registrationRequest = AuctionRegistrationRequest::where('store_id', $storeId)
+        // Get AuctionRegistrationRequest
+        $auctionRegistrationRequest = AuctionRegistrationRequest::where('store_id', $storeId)
             ->where('requested_by_customer_id', $customerId)
             ->first();
+        $paddleId = $auctionRegistrationRequest->paddle_id;
 
-        $paddleId = $registrationRequest['paddle_id'];
-        $storeName = $store['title'][$language];
+        // Construct Store Name
+        $dateText = $this->formatDateRange($store->start_datetime, $store->display_end_datetime);
+        $storeNameText = "{$storeName} {$dateText}";
 
-        $dateText = $this->formatDateRange($store['start_datetime'], $store['display_end_datetime']);
-        $storeNameText = $storeName . ' ' . $dateText;
+        // Get buyerName
+        $buyerName = $account->username;
 
-        $buyerName = $account['username'];
-        if ($document['is_system'] === false && isset($document['delivery_details']['recipient_name'])) {
-            $first = $document['delivery_details']['recipient_name']['first_name'] ?? '';
-            $last = $document['delivery_details']['recipient_name']['last_name'] ?? '';
-            if ($last) {
-                $buyerName = "$last, $first";
+        if (!empty($account->legal_name_verification->name)) {
+            $buyerName = $account->legal_name_verification->name;
+        } else {
+            if (!$document->is_system) {
+                $firstName = optional($document->delivery_details)->recipient_name->first_name;
+                $lastName = optional($document->delivery_details)->recipient_name->last_name;
+                if ($lastName) {
+                    $buyerName = "{$lastName}, {$firstName}";
+                }
             }
         }
 
-        $createdAt = Carbon::parse($document['created_at'])->addHours(8);
-        $formattedIssueDate = $createdAt->format('d/m/Y');
+        // Format data
+        $issueDate = Carbon::parse($document->created_at)->addHours(8);
+        $formattedIssueDate = $issueDate->format('d/m/Y');
 
-        $itemsData = collect($document['cart_items'])->map(function ($item) use ($language) {
-            $formatted = number_format($item['winning_bid'], 2, '.', '');
+        $itemsData = collect($document->cart_items)->map(function ($item) use ($language) {
+            $hammerPrice = number_format($item->winning_bid, 2, '.', ',');
+            $commission = number_format($item->commission ?? 0, 2, '.', ',');
+            $otherFees = number_format(0, 2, '.', ',');
+            $totalOrSumValue = $item->sold_price ?? $item->winning_bid;
+            $totalOrSum = number_format($totalOrSumValue, 2, '.', ',');
+
             return [
-                'lotNo' => $item['lot_number'],
-                'lotImage' => $item['image'],
-                'description' => $item['product_title'][$language],
-                'hammerPrice' => $formatted,
-                'commission' => number_format(0, 2, '.', ''),
-                'otherFees' => number_format(0, 2, '.', ''),
-                'totalOrSum' => $formatted
-
+                'lotNo' => $item->lot_number,
+                'lotImage' => $item->image,
+                'description' => $item->product_title[$language],
+                'hammerPrice' => $hammerPrice,
+                'commission' => $commission,
+                'otherFees' => $otherFees,
+                'totalOrSum' => $totalOrSum,
             ];
-        })->toArray();
+        });
 
-        $total = floatval($document['calculations']['price']['total'] ?? 0);
-        $deposit = floatval($document['calculations']['deposit'] ?? 0);
-        $totalAmount = $total + $deposit;
-        $totalFormatted = number_format($totalAmount, 2, '.', '');
+        $total = (float) $document->calculations->price->total;
+        $deposit = (float) $document->calculations->deposit;
+        $totalPrice = is_nan($total) || is_nan($deposit) ? NAN : number_format($total + $deposit, 2, '.', ',');
+        $totalPriceText = ($document->payment_method == "ONLINE" && $invoicePrefix == 'OA1')
+            ? "{$totalPrice} (includes credit card charge of 3.5%)"
+            : $totalPrice;
 
-        $creditChargeText = $language === 'zh'
-            ? "包括3.5%信用卡收費"
-            : "Includes 3.5% credit card charge";
-
-        $totalPriceText = $document['payment_method'] === "ONLINE"
-            ? "$totalFormatted ($creditChargeText)"
-            : $totalFormatted;
-
+        // Construct entire data
         $newCustomerId = substr($customerId, -6);
-        $invoiceID = "OA1-{$paddleId}";
+        $invoiceId = "{$invoicePrefix}-{$paddleId}";
 
+        $data = [
+            'lang' => $language,
+            'buyerName' => $buyerName,
+            'date' => $formattedIssueDate,
+            'clientNo' => $newCustomerId,
+            'paddleNo' => "#{$paddleId}",
+            'auctionTitle' => $storeNameText,
+            'shipTo' => "In-store pick up",
+            'invoiceNum' => $invoiceId,
+            'items' => $itemsData,
+            'tableTotal' => $totalPriceText,
+        ];
 
-        return response()->json([
-            'model' => "INVOICE",
-            'type' => "Buyer",
-            'data' => [
-                'lang' => $language,
-                'buyerName' => $buyerName,
-                'date' => $formattedIssueDate,
-                'clientNo' => $newCustomerId,
-                'paddleNo' => "#$paddleId",
-                'auctionTitle' => $storeNameText,
-                'shipTo' => "In-store pick up",
-                'invoiceNum' => $invoiceID,
-                'items' => $itemsData,
-                'tableTotal' => $totalPriceText
-            ]
-        ]);
+        // Return
+        return $data;
     }
 
     private function formatDateRange($startDateTime, $endDateTime)
