@@ -364,7 +364,7 @@ class OrderController extends Controller
             ];
         });
 
-        $total = (float) $document->calculations->price->total;
+        $total = (float) $document->calculations['price']['total'];
         $totalPrice = is_nan($total) ? NAN : number_format($total, 2, '.', ',');
 
         // Construct entire data
