@@ -302,7 +302,7 @@ class OrderController extends Controller
         return ['model' => 'INVOICE', 'type' => 'Buyer', 'data' => $data];
     }
 
-    public function getPrivateSaleInvoiceData($language)
+    public function getPrivateSaleInvoiceData(Request $request)
     {
         $orderId = $request->route('id');
         $language = $request->route('language');
