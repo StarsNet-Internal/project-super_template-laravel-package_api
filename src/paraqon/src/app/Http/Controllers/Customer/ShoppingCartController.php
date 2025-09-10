@@ -682,6 +682,8 @@ class ShoppingCartController extends Controller
         foreach ($checkoutItems as $item) {
             $attributes = $item->toArray();
             unset($attributes['_id'], $attributes['is_checkout']);
+            $product = Product::find($attributes['product_id']);
+            $attributes['stock_no'] = $product->stock_no ?? null;
             $order->createCartItem($attributes);
         }
 

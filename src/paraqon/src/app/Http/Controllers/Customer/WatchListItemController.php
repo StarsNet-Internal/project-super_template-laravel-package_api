@@ -159,6 +159,10 @@ class WatchlistItemController extends Controller
 
         // Get Products
         $products = $this->getProductsInfoByAggregation($compareItemIDs);
+        $products = $products->filter(function ($product) {
+            $productStatus = Product::find($product->_id)->status;
+            return $productStatus == Status::ACTIVE;
+        });
 
         foreach ($products as $product) {
             unset(
