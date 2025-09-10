@@ -197,6 +197,19 @@ class OrderController extends Controller
     public function getInvoiceData(Request $request)
     {
         $orderId = $request->route('id');
+        $document = Order::find($orderId);
+        $store = $document->store;
+
+        if (isset($store->auction_type)) {
+            return $this->getAuctionInvoiceData($request);
+        } else {
+            return $this->getPrivateSaleInvoiceData($request);
+        }
+    }
+
+    public function getAuctionInvoiceData(Request $request)
+    {
+        $orderId = $request->route('id');
         $language = $request->route('language');
 
         $document = Order::find($orderId);
@@ -287,6 +300,90 @@ class OrderController extends Controller
 
         // Return
         return ['model' => 'INVOICE', 'type' => 'Buyer', 'data' => $data];
+    }
+
+    public function getPrivateSaleInvoiceData($language)
+    {
+        $orderId = $request->route('id');
+        $language = $request->route('language');
+
+        $document = Order::find($orderId);
+        if (!$document) {
+            return response()->json(['error' => 'Order not found'], 404);
+        }
+
+        $storeId = $document->store_id;
+        $customerId = $document->customer_id;
+
+        $store = $document->store;
+        $storeName = $store->title[$language];
+        $invoicePrefix = $store->invoice_prefix ?? 'OA1';
+
+        $customer = $document->customer;
+        $account = $customer->account;
+
+        // Construct Store Name
+        $storeNameText = $storeName;
+
+        // Get buyerName
+        $buyerName = $account->username;
+
+        if (!empty($account->legal_name_verification->name)) {
+            $buyerName = $account->legal_name_verification->name;
+        } else {
+            if (!$document->is_system) {
+                $firstName = optional($document->delivery_details)->recipient_name->first_name;
+                $lastName = optional($document->delivery_details)->recipient_name->last_name;
+                if ($lastName) {
+                    $buyerName = "{$lastName}, {$firstName}";
+                }
+            }
+        }
+
+        // Format data
+        $issueDate = Carbon::parse($document->created_at)->addHours(8);
+        $formattedIssueDate = $issueDate->format('d/m/Y');
+
+        $itemsData = collect($document->cart_items)->map(function ($item) use ($language) {
+            // Calculate values with fallbacks
+            $hammerPrice = number_format((float) $item->subtotal_price, 2, '.', ',');
+            $commission = number_format(0, 2, '.', ',');
+            $otherFees = number_format(0, 2, '.', ',');
+            $totalOrSumValue = $hammerPrice;
+
+            $totalOrSum = $totalOrSumValue;
+
+            return [
+                'lotNo' => $item->stock_no,
+                'lotImage' => $item->image,
+                'description' => $item->product_title[$language],
+                'hammerPrice' => $hammerPrice,
+                'commission' => $commission,
+                'otherFees' => $otherFees,
+                'totalOrSum' => $totalOrSum,
+            ];
+        });
+
+        $total = (float) $document->calculations->price->total;
+        $totalPrice = is_nan($total) ? NAN : number_format($total, 2, '.', ',');
+
+        // Construct entire data
+        $invoiceId = "{$invoicePrefix}-" . substr($orderId, -6);
+
+        $data = [
+            'lang' => $language,
+            'buyerName' => $buyerName,
+            'date' => $formattedIssueDate,
+            'clientNo' => $account->client_no ?? substr($customerId, -6),
+            'auctionTitle' => $storeNameText,
+            'shipTo' => "In-store pick up",
+            'invoiceNum' => $invoiceId,
+            'items' => $itemsData,
+            'tableTotal' => $totalPrice,
+        ];
+
+        // Return
+        return ['model' => 'PRIVATE_SALE_INVOICE', 'type' => 'Buyer', 'data' => $data];
     }
 
     private function formatDateRange($startDateTime, $endDateTime)
