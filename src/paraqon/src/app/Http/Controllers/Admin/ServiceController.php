@@ -1156,27 +1156,14 @@ class ServiceController extends Controller
     {
         $controller = new ProductManagementController($request);
         $data = $controller->filterProductsByCategories($request);
-        // $data = $data->map(function ($datum) {
-        //     $dateFields = ['created_at', 'updated_at', 'scheduled_at', 'published_at'];
-        //     foreach ($dateFields as $field) {
-        //         if (isset($datum[$field])) {
-        //             $datum[$field] = Carbon::parse($datum[$field])->timestamp;
-
-        //             echo $field . "\n";
-        //             echo $datum[$field] . "\n";
-        //             echo Carbon::parse($datum[$field])->timestamp . "\n";
-        //             echo $datum[$field] . "\n";
-        //             echo "\n";
-        //         }
-        //     }
-        //     return $datum;
-        // });
 
         $url = env('PARAQON_ALGOLIA_NODE_BASE_URL') . '/algolia/mass-update';
-        $res = Http::post($url, [
-            'index_name' => 'test_products',
-            'data' => $data
-        ]);
-        return $res;
+
+        $payload = ['data' => $data];
+        if ($request->has('index_name') && !is_null($request->index_name)) {
+            $payload['index_name'] = $request->index_name;
+        }
+
+        return Http::post($url, $payload);
     }
 }

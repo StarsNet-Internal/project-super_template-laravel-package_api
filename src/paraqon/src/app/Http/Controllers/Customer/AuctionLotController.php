@@ -479,15 +479,15 @@ class AuctionLotController extends Controller
                 $bid->type
             );
 
-            $auctionLot->update([
-                'is_bid_placed' => true,
-                'current_bid' => $newCurrentBid,
-                'latest_bid_customer_id' => $customer->_id,
-                'winning_bid_customer_id' => $winningCustomerID,
-            ]);
-
             // Create Bid History Record
             if ($isBidPlaced == false || $newCurrentBid > $currentBid) {
+                $auctionLot->update([
+                    'is_bid_placed' => true,
+                    'current_bid' => $newCurrentBid,
+                    'latest_bid_customer_id' => $customer->_id,
+                    'winning_bid_customer_id' => $winningCustomerID,
+                ]);
+
                 $bidHistory = BidHistory::where('auction_lot_id', $auctionLotId)->first();
                 if ($bidHistory == null) {
                     $bidHistory = BidHistory::create([
