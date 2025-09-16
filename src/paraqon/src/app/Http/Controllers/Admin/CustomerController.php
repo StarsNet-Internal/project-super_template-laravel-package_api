@@ -75,7 +75,7 @@ class CustomerController extends Controller
     {
         $customerId = $request->route('customer_id');
 
-        $products = Product::statusActive()
+        $products = Product::where('status', '!=', Status::DELETED)
             ->where('owned_by_customer_id', $customerId)
             ->get();
 
