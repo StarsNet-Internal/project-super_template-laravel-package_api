@@ -280,6 +280,9 @@ class OrderController extends Controller
         $totalPriceText = ($document->payment_method == "ONLINE" && $invoicePrefix == 'OA1')
             ? "{$totalPrice} (includes credit card charge of 3.5%)"
             : $totalPrice;
+        $depositText = number_format($deposit, 2, '.', ',');
+        $formattedDepositText = $deposit > 0 ? "($depositText)" : $depositText;
+        $amountPayableText = number_format($total, 2, '.', ',');
 
         // Construct entire data
         $newCustomerId = substr($customerId, -6);
@@ -296,6 +299,8 @@ class OrderController extends Controller
             'invoiceNum' => $invoiceId,
             'items' => $itemsData,
             'tableTotal' => $totalPriceText,
+            'tableDeposit' => $formattedDepositText,
+            'tableAmountPayable' => $amountPayableText,
         ];
 
         // Return
