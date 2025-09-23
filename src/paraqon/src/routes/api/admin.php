@@ -118,6 +118,8 @@ Route::group(
                 Route::put('/{store_id}/auction-lots/return', [$defaultController, 'returnAuctionLotToOriginalCustomer']);
 
                 Route::get('/{store_id}/close', [$defaultController, 'closeAllNonDisabledLots']);
+
+                Route::post('/aggregate', [$defaultController, 'aggregate']);
             }
         );
     }

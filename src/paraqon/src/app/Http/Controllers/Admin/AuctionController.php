@@ -6,6 +6,7 @@ namespace StarsNet\Project\Paraqon\App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -808,5 +809,21 @@ class AuctionController extends Controller
         return response()->json([
             'message' => 'Close all Lots successfully'
         ], 200);
+    }
+
+    public function aggregate(Request $request)
+    {
+        // Extract attributes from $request
+        $collection = $request->input('collection');
+        $pipeline = $request->input('pipeline');
+
+        $result = DB::connection('mongodb')
+            ->collection($collection)
+            ->raw(function ($collection) use ($pipeline) {
+                return $collection->aggregate($pipeline);
+            })
+            ->toArray();
+
+        return $result;
     }
 }
