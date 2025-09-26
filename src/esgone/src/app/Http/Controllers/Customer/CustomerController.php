@@ -94,14 +94,14 @@ class CustomerController extends Controller
                 });
 
                 $groups[$groupKey]['customers'][$customerKey]['user'] = [
-                    'username' => $groups[$groupKey]['customers'][$customerKey]['account']['username'],
+                    // 'username' => $groups[$groupKey]['customers'][$customerKey]['account']['username'],
                     'avatar' => $groups[$groupKey]['customers'][$customerKey]['account']['avatar'],
                 ];
-                $groups[$groupKey]['customers'][$customerKey]['country'] = $groups[$groupKey]['customers'][$customerKey]['account']['country'];
-                $groups[$groupKey]['customers'][$customerKey]['gender'] = $groups[$groupKey]['customers'][$customerKey]['account']['gender'];
-                $groups[$groupKey]['customers'][$customerKey]['email'] = $groups[$groupKey]['customers'][$customerKey]['account']['email'];
-                $groups[$groupKey]['customers'][$customerKey]['area_code'] = $groups[$groupKey]['customers'][$customerKey]['account']['area_code'];
-                $groups[$groupKey]['customers'][$customerKey]['phone'] = $groups[$groupKey]['customers'][$customerKey]['account']['phone'];
+                // $groups[$groupKey]['customers'][$customerKey]['country'] = $groups[$groupKey]['customers'][$customerKey]['account']['country'];
+                // $groups[$groupKey]['customers'][$customerKey]['gender'] = $groups[$groupKey]['customers'][$customerKey]['account']['gender'];
+                // $groups[$groupKey]['customers'][$customerKey]['email'] = $groups[$groupKey]['customers'][$customerKey]['account']['email'];
+                // $groups[$groupKey]['customers'][$customerKey]['area_code'] = $groups[$groupKey]['customers'][$customerKey]['account']['area_code'];
+                // $groups[$groupKey]['customers'][$customerKey]['phone'] = $groups[$groupKey]['customers'][$customerKey]['account']['phone'];
                 $groups[$groupKey]['customers'][$customerKey]['company_name'] = $groups[$groupKey]['customers'][$customerKey]['account']['company_name'] ?? null;
                 // Tree
                 $groups[$groupKey]['customers'][$customerKey]['website'] = $groups[$groupKey]['customers'][$customerKey]['account']['website'] ?? null;
