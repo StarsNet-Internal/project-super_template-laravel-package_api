@@ -160,7 +160,6 @@ Route::group(
             function () use ($defaultController) {
                 Route::post('/register', [$defaultController, 'registerAuction']);
                 Route::get('/all', [$defaultController, 'getAllRegisteredAuctions'])->middleware(['pagination']);
-                // Route::post('/{id}/deposit', [$defaultController, 'createDeposit']);
                 Route::put('/{id}/archive', [$defaultController, 'archiveAuctionRegistrationRequest']);
                 Route::put('/{id}/details', [$defaultController, 'updateAuctionRegistrationRequest']);
             }

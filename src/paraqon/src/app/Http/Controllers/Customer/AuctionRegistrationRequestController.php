@@ -133,6 +133,15 @@ class AuctionRegistrationRequestController extends Controller
 
     public function createDeposit(Request $request)
     {
+        $user = $this->user();
+        if ($user->type === 'TEMP') {
+            return response()->json([
+                'message' => 'Customer is a TEMP user',
+                'error_status' => 1,
+                'current_user' => $user
+            ], 401);
+        }
+
         // Extract attributes from $request
         $formID = $request->route('id');
         $paymentMethod = $request->payment_method;
@@ -150,7 +159,8 @@ class AuctionRegistrationRequestController extends Controller
         if (is_null($form)) {
             return response()->json([
                 'message' => 'Auction Registration Request not found',
-            ], 200);
+                'error_status' => 2,
+            ], 404);
         }
 
         if ($form->requested_by_customer_id != $customer->_id) {
