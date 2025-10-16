@@ -24,11 +24,11 @@ class AuctionRegistrationRequestController extends Controller
         // Check User
         $user = $this->user();
         if ($user->type === 'TEMP') {
-            return [
+            return response()->json([
                 'message' => 'Customer is a TEMP user',
                 'error_status' => 1,
                 'current_user' => $user
-            ];
+            ], 401);
         }
 
         // Get authenticated User information

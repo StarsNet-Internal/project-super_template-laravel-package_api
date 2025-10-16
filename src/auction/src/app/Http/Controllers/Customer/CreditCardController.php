@@ -21,11 +21,11 @@ class CreditCardController extends Controller
     {
         $user = $this->user();
         if ($user->type === 'TEMP') {
-            return [
+            return response()->json([
                 'message' => 'Customer is a TEMP user',
                 'error_status' => 1,
                 'current_user' => $user
-            ];
+            ], 401);
         }
 
         $customer = $this->customer();
