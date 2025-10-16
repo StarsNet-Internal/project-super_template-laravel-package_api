@@ -19,32 +19,47 @@ class CreditCardController extends Controller
 {
     public function bindCard(Request $request)
     {
+        $user = $this->user();
+        if ($user->type === 'TEMP') {
+            return [
+                'message' => 'Customer is a TEMP user',
+                'error_status' => 1,
+                'current_user' => $user
+            ];
+        }
+
         $customer = $this->customer();
         $account = $this->account();
 
-        // Create payment-intent
-        $data = [
-            "metadata" => [
-                "model_type" => "customer",
-                "model_id" => $customer->_id
-            ]
-        ];
+        try {
+            // Create payment-intent
+            $data = [
+                "metadata" => [
+                    "model_type" => "customer",
+                    "model_id" => $customer->_id
+                ]
+            ];
 
-        // Create Stripe setup intent
-        $url = env('TCG_BID_STRIPE_BASE_URL', 'http://192.168.0.83:8083') . '/setup-intents';
+            // Create Stripe setup intent
+            $url = env('TCG_BID_STRIPE_BASE_URL', 'http://192.168.0.83:8083') . '/setup-intents';
+            $response = Http::post($url, $data);
+            $clientSecret = $response['client_secret'];
 
-        $response = Http::post(
-            $url,
-            $data
-        );
-        $clientSecret = $response['client_secret'];
-
-        // Return client secret to generate link
-        return response()->json([
-            'message' => 'Created Setup Intent on Stripe successfully',
-            'client_secret' => $clientSecret,
-            'account' => $account
-        ], 200);
+            // Return client secret to generate link
+            return response()->json([
+                'message' => 'Created Setup Intent on Stripe successfully',
+                'client_secret' => $clientSecret,
+                'account' => $account
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Unable to reach Stripe Node Container via nginx correctly, or url given below is incorrect',
+                'url' => $url,
+                'data' => $data,
+                'current_user' => $user,
+                'error_status' => 2
+            ], 500);
+        }
     }
 
     public function validateCard(Request $request)
