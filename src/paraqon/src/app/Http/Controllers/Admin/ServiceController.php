@@ -57,7 +57,8 @@ class ServiceController extends Controller
             'charge.refunded',
             'charge.captured',
             'charge.expired',
-            'charge.failed'
+            'charge.failed',
+            'payment_intent.canceled'
         ];
 
         if (!in_array($eventType, $acceptableEventTypes)) {
@@ -137,7 +138,7 @@ class ServiceController extends Controller
                             'message' => 'Deposit status updated as on-hold',
                             'deposit_id' => $deposit->_id
                         ], 200);
-                    } else if ($eventType == 'charge.refunded') {
+                    } else if (in_array($eventType, ['charge.refunded', 'payment_intent.canceled'])) {
                         $deposit->updateStatus('returned');
 
                         $amountCaptured = $request->data['object']['amount_captured'] ?? 0;

@@ -141,6 +141,8 @@ class AuctionController extends Controller
         $storeID = $request->route('auction_id');
 
         $records = AuctionRegistrationRequest::where('store_id', $storeID)
+            ->whereNotNull('paddle_id')
+            ->where('status', '!=', Status::DELETED)
             ->get();
 
         $records = $records->map(function ($item) {
