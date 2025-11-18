@@ -8,7 +8,6 @@ use App\Events\Common\Order\OrderPaid;
 use StarsNet\Project\Capi\App\Events\Common\Payment\PaidFromPinkiePay;
 use App\Events\Customer\Authentication\CustomerLogin;
 use App\Events\Customer\Authentication\CustomerRegistration;
-use App\Listeners\Common\Checkout\ApproveOfflineCheckoutImage;
 use StarsNet\Project\Capi\App\Listeners\Common\Payment\UpdateOrderCheckoutIsPaid;
 use App\Listeners\Customer\Authentication\SaveCustomer;
 use App\Listeners\Customer\Authentication\SaveCustomerLoginHistory;

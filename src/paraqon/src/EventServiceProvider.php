@@ -7,7 +7,6 @@ use App\Events\Common\Order\OrderCreated;
 use App\Events\Common\Order\OrderPaid;
 use App\Events\Customer\Authentication\CustomerLogin;
 use App\Events\Customer\Authentication\CustomerRegistration;
-use App\Listeners\Common\Checkout\ApproveOfflineCheckoutImage;
 use App\Listeners\Customer\Authentication\SaveCustomer;
 use App\Listeners\Customer\Authentication\SaveCustomerLoginHistory;
 use App\Listeners\Customer\MembershipPoint\DistributePoint;

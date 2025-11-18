@@ -258,6 +258,8 @@ Route::group(
         Route::put('/orders/capture', [$defaultController, 'captureOrderPayment']);
 
         Route::post('/algolia/stores/{store_id}/products', [$defaultController, 'synchronizeAllProductsWithAlgolia']);
+
+        Route::post('/users/delete', [$defaultController, 'deleteAllTemporaryUsers']);
     }
 );
 

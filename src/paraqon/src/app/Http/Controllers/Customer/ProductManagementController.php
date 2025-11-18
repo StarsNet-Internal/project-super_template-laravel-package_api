@@ -195,7 +195,9 @@ class ProductManagementController extends Controller
             ->where('store_id', $this->store->id)
             ->statuses([Status::ACTIVE, Status::ARCHIVED])
             ->with(['watchlistItems'])
+            ->latest()
             ->get()
+            ->unique('product_id')
             ->map(function ($lot) {
                 $lot->watchlist_item_count = $lot->watchlistItems->count();
                 unset($lot->watchlistItems);
@@ -257,7 +259,6 @@ class ProductManagementController extends Controller
             }
         );
 
-        // Return data
         return $products;
     }
 
@@ -265,7 +266,9 @@ class ProductManagementController extends Controller
     {
         return AuctionLot::where('store_id', $this->store->id)
             ->statuses([Status::ACTIVE, Status::ARCHIVED])
+            ->latest()
             ->get()
+            ->unique('lot_number')
             ->map(
                 function ($lot) {
                     return [
@@ -626,6 +629,11 @@ class ProductManagementController extends Controller
                             ],
                         ],
                     ],
+                    [
+                        '$sort' => [
+                            'created_at' => -1
+                        ]
+                    ]
                 ],
                 'as' => 'auction_lots',
             ];
