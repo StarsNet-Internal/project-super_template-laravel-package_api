@@ -2,12 +2,14 @@
 
 // Default Imports
 use Illuminate\Support\Facades\Route;
-use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\TestingController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\UserController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\CustomerController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\OrderManagementController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\ProductController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\RefillInventoryRequestController;
-use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\OrderManagementController;
-use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\CustomerController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\StaffManagementController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\TestingController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\LoginRecordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +21,13 @@ use StarsNet\Project\TripleGaga\App\Http\Controllers\Admin\StaffManagementContro
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+Route::group(
+    ['prefix' => 'users'],
+    function () {
+        Route::put('/password', [UserController::class, 'updateUserPassword']);
+    }
+);
 
 Route::group(
     ['prefix' => 'tests'],
@@ -99,6 +108,22 @@ Route::group(
             ['middleware' => 'auth:api'],
             function () use ($defaultController) {
                 Route::put('/{id}/tracking-number', [$defaultController, 'updateTrackingNumber']);
+            }
+        );
+    }
+);
+
+
+Route::group(
+    ['prefix' => 'login-records'],
+    function () {
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () {
+                Route::get('/accounts/all', [LoginRecordController::class, 'getAllAccounts'])->middleware(['pagination']);
+                Route::get('/all', [LoginRecordController::class, 'getAll'])->middleware(['pagination']);
+                Route::put('/{id}/details', [LoginRecordController::class, 'updateLoginRecord']);
+                Route::post('/', [LoginRecordController::class, 'createLoginRecord']);
             }
         );
     }

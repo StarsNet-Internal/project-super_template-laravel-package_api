@@ -3,10 +3,11 @@
 // Default Imports
 use Illuminate\Support\Facades\Route;
 
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Customer\CheckoutController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Customer\LoginRecordController;
+use StarsNet\Project\TripleGaga\App\Http\Controllers\Customer\ShoppingCartController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Customer\TestingController;
 use StarsNet\Project\TripleGaga\App\Http\Controllers\Customer\TenantController;
-use StarsNet\Project\TripleGaga\App\Http\Controllers\Customer\ShoppingCartController;
-use StarsNet\Project\TripleGaga\App\Http\Controllers\Customer\CheckoutController;
 
 /*
 |--------------------------------------------------------------------------
@@ -63,6 +64,19 @@ Route::group(
                 Route::group(['middleware' => 'auth:api'], function () use ($defaultController) {
                     Route::post('/', [$defaultController, 'checkOut']);
                 });
+            }
+        );
+    }
+);
+
+
+Route::group(
+    ['prefix' => 'login-records'],
+    function () {
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function () {
+                Route::post('/', [LoginRecordController::class, 'createLoginRecord']);
             }
         );
     }

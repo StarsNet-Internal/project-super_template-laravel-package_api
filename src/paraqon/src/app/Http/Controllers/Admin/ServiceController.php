@@ -38,8 +38,6 @@ use App\Constants\Model\CheckoutType;
 use App\Constants\Model\ReplyStatus;
 use App\Constants\Model\ShipmentDeliveryStatus;
 use App\Constants\Model\Status;
-use App\Models\Account;
-use App\Models\User;
 
 // Traits
 use App\Traits\Utils\RoundingTrait;

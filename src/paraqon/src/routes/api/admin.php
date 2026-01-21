@@ -254,10 +254,10 @@ Route::group(
         Route::post('/deposits/return', [$defaultController, 'returnDeposit']);
         Route::post('/orders/paid', [$defaultController, 'confirmOrderPaid']);
 
+        Route::post('/algolia/stores/{store_id}/products', [$defaultController, 'synchronizeAllProductsWithAlgolia']);
+
         Route::get('/auctions/{store_id}/state', [$defaultController, 'getAuctionCurrentState']);
         Route::put('/orders/capture', [$defaultController, 'captureOrderPayment']);
-
-        Route::post('/algolia/stores/{store_id}/products', [$defaultController, 'synchronizeAllProductsWithAlgolia']);
 
         Route::post('/users/delete', [$defaultController, 'deleteAllTemporaryUsers']);
     }
