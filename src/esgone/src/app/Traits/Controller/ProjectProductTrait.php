@@ -2,11 +2,7 @@
 
 namespace StarsNet\Project\Esgone\App\Traits\Controller;
 
-// Default
-
-use App\Constants\Model\ProductVariantDiscountType;
 use App\Models\Product;
-use Illuminate\Support\Facades\Auth;
 
 trait ProjectProductTrait
 {
@@ -20,20 +16,28 @@ trait ProjectProductTrait
             'deleted_at',
             'reviews',
             'warehouse_inventories',
-            'wishlist_items'
+            'wishlist_items',
         ];
 
         $products = Product::with([
-            'variants' => function ($productVariant) {
-                $productVariant
-                    ->statusActive()
-                    ->get();
+            'variants' => function ($query) {
+                $query->statusActive();
             },
-        ])
-            ->find($productIDs)
-            ->append(['first_product_variant_id', 'price', 'point']);
+            'variants.warehouseInventories' => function ($query) {
+                $query->select(['product_variant_id', 'qty']);
+            },
+        ])->find($productIDs);
 
         foreach ($products as $product) {
+            // Property access ($product->variants) would use eager load when present, but
+            // getRelation() guarantees we never hit variants() and issue a new query.
+            $variants = $product->getRelation('variants');
+            $firstVariant = $variants->first();
+
+            $product->first_product_variant_id = $firstVariant ? $firstVariant->_id : null;
+            $product->price = $firstVariant ? $firstVariant->price : null;
+            $product->point = $firstVariant ? $firstVariant->point : null;
+
             $product['local_discount_type'] = null;
             $product['global_discount'] = null;
             $product['rating'] = null;
@@ -41,15 +45,18 @@ trait ProjectProductTrait
             $product['inventory_count'] = 0;
             $product['wishlist_item_count'] = 0;
             $product['is_liked'] = false;
-            $product['discounted_price'] = strval($product['price'] ?? 0);
+            $product['discounted_price'] = strval($product->price ?? 0);
 
             foreach ($hiddenKeys as $hiddenKey) {
                 unset($product[$hiddenKey]);
             }
 
-            foreach ($product['variants'] as $variant) {
-                $variant['inventory_count'] = collect($variant->warehouseInventories)->sum('qty') ?? 0;
-                unset($variant['warehouseInventories']);
+            foreach ($variants as $variant) {
+                $inventories = $variant->relationLoaded('warehouseInventories')
+                    ? $variant->getRelation('warehouseInventories')
+                    : collect();
+                $variant['inventory_count'] = $inventories->sum('qty');
+                $variant->unsetRelation('warehouseInventories');
             }
         }
 
