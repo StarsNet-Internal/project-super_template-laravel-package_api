@@ -28,38 +28,56 @@ trait ProjectProductTrait
             },
         ])->find($productIDs);
 
-        foreach ($products as $product) {
-            // Property access ($product->variants) would use eager load when present, but
-            // getRelation() guarantees we never hit variants() and issue a new query.
+        return $products->map(function ($product) use ($hiddenKeys) {
+            // getRelation('variants') guarantees we never call the relationship method variants().
             $variants = $product->getRelation('variants');
             $firstVariant = $variants->first();
 
-            $product->first_product_variant_id = $firstVariant ? $firstVariant->_id : null;
-            $product->price = $firstVariant ? $firstVariant->price : null;
-            $product->point = $firstVariant ? $firstVariant->point : null;
-
-            $product['local_discount_type'] = null;
-            $product['global_discount'] = null;
-            $product['rating'] = null;
-            $product['review_count'] = 0;
-            $product['inventory_count'] = 0;
-            $product['wishlist_item_count'] = 0;
-            $product['is_liked'] = false;
-            $product['discounted_price'] = strval($product->price ?? 0);
-
-            foreach ($hiddenKeys as $hiddenKey) {
-                unset($product[$hiddenKey]);
-            }
-
             foreach ($variants as $variant) {
-                $inventories = $variant->relationLoaded('warehouseInventories')
-                    ? $variant->getRelation('warehouseInventories')
-                    : collect();
-                $variant['inventory_count'] = $inventories->sum('qty');
+                $inventoryCount = 0;
+                if ($variant->relationLoaded('warehouseInventories')) {
+                    foreach ($variant->getRelation('warehouseInventories') as $inventory) {
+                        $inventoryCount += (int) ($inventory->qty ?? 0);
+                    }
+                }
+
+                // Use a plain attribute so we don't trigger any Product accessors.
+                $variant->inventory_count = $inventoryCount;
                 $variant->unsetRelation('warehouseInventories');
             }
-        }
 
-        return $products;
+            // Convert to array before adding computed keys, to avoid host Product accessors
+            // (getPriceAttribute/getPointAttribute) calling $this->variants() during serialization.
+            $productArray = $product->toArray();
+
+            // Match the previous response shape but derive from eager-loaded first variant.
+            $productArray['first_product_variant_id'] = $firstVariant ? $firstVariant->_id : null;
+            $productArray['price'] = $firstVariant ? $firstVariant->price : null;
+            $productArray['point'] = $firstVariant ? $firstVariant->point : null;
+            $productArray['discounted_price'] = strval($firstVariant ? $firstVariant->price : 0);
+
+            // Fields previously added by this trait.
+            $productArray['local_discount_type'] = null;
+            $productArray['global_discount'] = null;
+            $productArray['rating'] = null;
+            $productArray['review_count'] = 0;
+            $productArray['inventory_count'] = 0;
+            $productArray['wishlist_item_count'] = 0;
+            $productArray['is_liked'] = false;
+
+            foreach ($hiddenKeys as $hiddenKey) {
+                unset($productArray[$hiddenKey]);
+            }
+
+            // Ensure variant inventory relation isn't present in the output.
+            if (isset($productArray['variants'])) {
+                foreach ($productArray['variants'] as &$variantArray) {
+                    unset($variantArray['warehouse_inventories'], $variantArray['warehouseInventories']);
+                }
+                unset($variantArray);
+            }
+
+            return $productArray;
+        })->values();
     }
 }
