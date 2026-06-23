@@ -39,6 +39,16 @@ class ProductManagementController extends CustomerProductManagementController
 
     public function filterProductsByCategories(Request $request)
     {
+        // Cache the filtered Product(s) for 1 hour on the shared Redis store.
+        // The key is derived from the request URL (store_id path + query params),
+        // so each distinct filter combination is cached independently.
+        return $this->rememberChunked($this->generateRememberKeyByRequest(), 3600, function () use ($request) {
+            return $this->resolveFilteredProductsByCategories($request);
+        });
+    }
+
+    private function resolveFilteredProductsByCategories(Request $request)
+    {
         // Extract attributes from $request
         $categoryIDs = $request->input('category_ids', []);
         $keyword = $request->input('keyword');
