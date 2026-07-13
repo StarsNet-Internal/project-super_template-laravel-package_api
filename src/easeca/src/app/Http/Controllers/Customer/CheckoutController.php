@@ -58,6 +58,18 @@ class CheckoutController extends CustomerCheckoutController
         $cartItems = $customer->getAllCartItemsByStore($this->store);
         $addedProductVariantIDs = $cartItems->pluck('product_variant_id')->all();
 
+        // Drop any checkout_product_variant_ids that are no longer in the cart.
+        // The frontend may keep stale IDs in state after an item is removed, which
+        // would otherwise fail the Rule::in validation below and reject the checkout.
+        $request->merge([
+            'checkout_product_variant_ids' => collect($request->checkout_product_variant_ids ?? [])
+                ->filter(function ($variantID) use ($addedProductVariantIDs) {
+                    return in_array($variantID, $addedProductVariantIDs);
+                })
+                ->values()
+                ->all(),
+        ]);
+
         // Validate Request
         $validator = Validator::make($request->all(), [
             'checkout_product_variant_ids' => [
